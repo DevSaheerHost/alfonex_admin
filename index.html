@@ -186,8 +186,46 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
 /* SUPERADMIN BANNER */
 .super-banner { background:linear-gradient(90deg,#1a1500,#2a2000,#1a1500);border:1px solid #5a4000;border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:10px;font-size:0.82rem;color:var(--gold);margin-bottom:18px; }
 
-/* Mobile table scroll */
-.adm-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+/* ══ SUBSCRIBERS & COMMENTS ══ */
+.sub-badge {
+  display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;
+  font-size:0.7rem;font-weight:700;font-family:'DM Mono',monospace;
+  background:#0d2a1a;color:var(--green);border:1px solid #1b5e33;
+}
+.comment-user-row {
+  display:flex;align-items:center;gap:14px;
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background 0.15s;
+}
+.comment-user-row:hover { background:var(--bg3); }
+.comment-user-row:last-child { border-bottom:none; }
+.cu-avatar {
+  width:38px;height:38px;border-radius:50%;background:var(--bg3);
+  border:1px solid var(--border);display:flex;align-items:center;
+  justify-content:center;font-size:1rem;font-weight:800;
+  color:var(--accent);flex-shrink:0;text-transform:uppercase;
+}
+.cu-info { flex:1;min-width:0; }
+.cu-name  { font-size:0.88rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.cu-email { font-size:0.75rem;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.cu-meta  { font-size:0.72rem;color:var(--text2);text-align:right;flex-shrink:0; }
+.cu-count { font-size:1.1rem;font-weight:800;color:var(--green);font-family:'DM Mono',monospace; }
+.cu-count-lbl { font-size:0.65rem;color:var(--text3); }
+.cu-arrow { color:var(--text3);font-size:0.9rem;margin-left:4px; }
+
+/* Comment detail panel */
+.comment-detail-panel { display:none; }
+.comment-detail-panel.active { display:block; }
+.comment-list-panel { display:block; }
+.comment-list-panel.hidden { display:none; }
+.cmt-bubble {
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-bottom:10px;
+}
+.cmt-text { font-size:0.88rem;color:var(--text);line-height:1.6;word-break:break-word; }
+.cmt-time { font-size:0.7rem;color:var(--text3);font-family:'DM Mono',monospace;margin-top:8px; }
+
+
 .category-section { overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .price-table { min-width:520px; }
 .adm-table { min-width:580px; }
@@ -480,6 +518,8 @@ tr.member-row:hover td { background:var(--bg3); }
         <button class="adm-nav-btn" data-sec="colours">Colours</button>
         <button class="adm-nav-btn" data-sec="orders">📦 Orders<span class="nav-badge" id="orders-badge-desktop">0</span></button>
         <button class="adm-nav-btn" data-sec="members">👥 Members<span class="nav-badge" id="members-badge-desktop">0</span></button>
+        <button class="adm-nav-btn" data-sec="subscribers">📧 Subscribers</button>
+        <button class="adm-nav-btn" data-sec="comments">💬 Comments</button>
         <button class="adm-nav-btn" data-sec="settings">Settings</button>
         <button class="adm-nav-btn super-only" data-sec="users" id="nav-users-desktop" style="display:none;">⬡ Users</button>
       </div>
@@ -497,6 +537,8 @@ tr.member-row:hover td { background:var(--bg3); }
       <button class="adm-nav-btn" data-sec="colours" style="white-space:nowrap">Colours</button>
       <button class="adm-nav-btn" data-sec="orders" style="white-space:nowrap">📦 Orders<span class="nav-badge" id="orders-badge-mobile">0</span></button>
       <button class="adm-nav-btn" data-sec="members" style="white-space:nowrap">👥 Members<span class="nav-badge" id="members-badge-mobile">0</span></button>
+      <button class="adm-nav-btn" data-sec="subscribers" style="white-space:nowrap">📧 Subscribers</button>
+      <button class="adm-nav-btn" data-sec="comments" style="white-space:nowrap">💬 Comments</button>
       <button class="adm-nav-btn" data-sec="settings" style="white-space:nowrap">Settings</button>
       <button class="adm-nav-btn super-only" data-sec="users" id="nav-users-mobile" style="display:none;white-space:nowrap">⬡ Users</button>
     </div>
@@ -592,6 +634,92 @@ tr.member-row:hover td { background:var(--bg3); }
           <tbody id="colour-tbody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- SUBSCRIBERS -->
+    <div class="adm-section" id="sec-subscribers">
+      <div class="adm-toolbar">
+        <h2>📧 Email Subscribers</h2>
+        <button class="btn-add" onclick="loadSubscribers()" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);">↻ Refresh</button>
+      </div>
+      <div class="stats-row" style="margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-label">Total Subscribers</div>
+          <div class="stat-val" id="sub-stat-total" style="color:var(--accent)">0</div>
+          <div class="stat-sub">signed up</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Logged-in Users</div>
+          <div class="stat-val" id="sub-stat-users" style="color:var(--green)">0</div>
+          <div class="stat-sub">with account</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Guest Signups</div>
+          <div class="stat-val" id="sub-stat-guests" style="color:var(--gold)">0</div>
+          <div class="stat-sub">no account</div>
+        </div>
+      </div>
+      <div class="adm-table-wrap">
+        <table class="adm-table" style="min-width:560px;">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Email</th>
+              <th>Account</th>
+              <th>Signed Up</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sub-tbody">
+            <tr><td colspan="5" class="empty-state" style="padding:40px">Loading subscribers…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMMENTS -->
+    <div class="adm-section" id="sec-comments">
+
+      <!-- User list panel -->
+      <div class="comment-list-panel" id="cmt-list-panel">
+        <div class="adm-toolbar">
+          <h2>💬 Comments</h2>
+          <button class="btn-add" onclick="loadComments()" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);">↻ Refresh</button>
+        </div>
+        <div class="stats-row" style="margin-bottom:20px;">
+          <div class="stat-card">
+            <div class="stat-label">Total Comments</div>
+            <div class="stat-val" id="cmt-stat-total" style="color:var(--accent)">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unique Users</div>
+            <div class="stat-val" id="cmt-stat-users" style="color:var(--green)">0</div>
+          </div>
+        </div>
+        <div class="adm-table-wrap" style="overflow:hidden;">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:0.78rem;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:0.4px;text-transform:uppercase;font-weight:600;">
+            Click a user to view their comments
+          </div>
+          <div id="cmt-user-list">
+            <div class="empty-state" style="padding:40px">Loading comments…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comment detail panel (per user) -->
+      <div class="comment-detail-panel" id="cmt-detail-panel">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+          <button class="btn-back-member" onclick="backToCommentList()">← Back to Comments</button>
+          <div>
+            <div style="font-size:1rem;font-weight:700;" id="cmt-detail-name">—</div>
+            <div style="font-size:0.78rem;color:var(--text3);font-family:'DM Mono',monospace;" id="cmt-detail-email">—</div>
+          </div>
+        </div>
+        <div id="cmt-detail-list">
+          <div class="empty-state">No comments found.</div>
+        </div>
+      </div>
+
     </div>
 
     <!-- SETTINGS -->
@@ -1278,13 +1406,190 @@ function updateAdminNav(sec) {
   document.querySelectorAll('.adm-nav-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.sec === sec);
   });
-  if (sec === 'users')   loadUsersList();
-  if (sec === 'orders')  renderOrdersTable();
-  if (sec === 'members') renderMembersTable();
+  if (sec === 'users')       loadUsersList();
+  if (sec === 'orders')      renderOrdersTable();
+  if (sec === 'members')     renderMembersTable();
+  if (sec === 'subscribers') loadSubscribers();
+  if (sec === 'comments')    loadComments();
   if (sec === 'member-profile') {
-    // Keep members nav button highlighted when on profile sub-page
     document.querySelectorAll('[data-sec="members"]').forEach(b => b.classList.add('active'));
   }
+}
+
+/* ══════════════════════════════════════
+   SUBSCRIBERS
+══════════════════════════════════════ */
+function loadSubscribers() {
+  const tbody = document.getElementById('sub-tbody');
+  tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">Loading…</td></tr>`;
+
+  db.ref('subscribers').orderByChild('timestamp').once('value', snap => {
+    const all = [];
+    snap.forEach(c => all.unshift({ id: c.key, ...c.val() }));
+
+    const withUser  = all.filter(s => s.userId).length;
+    const guests    = all.filter(s => !s.userId).length;
+    document.getElementById('sub-stat-total').textContent  = all.length;
+    document.getElementById('sub-stat-users').textContent  = withUser;
+    document.getElementById('sub-stat-guests').textContent = guests;
+
+    if (!all.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="padding:40px">No subscribers yet</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = all.map((s, i) => `
+      <tr>
+        <td style="color:var(--text3);font-family:'DM Mono',monospace;font-size:0.78rem">${i+1}</td>
+        <td style="font-weight:600;font-family:'DM Mono',monospace;font-size:0.84rem">${s.email}</td>
+        <td>
+          ${s.userId
+            ? `<span class="sub-badge">✓ User</span>`
+            : `<span style="color:var(--text3);font-size:0.75rem">Guest</span>`}
+        </td>
+        <td style="color:var(--text3);font-family:'DM Mono',monospace;font-size:0.76rem">
+          ${s.createdAt ? new Date(s.createdAt).toLocaleString() : '—'}
+        </td>
+        <td>
+          <button class="btn-del" onclick="deleteSubscriber('${s.id}')">Remove</button>
+        </td>
+      </tr>`).join('');
+  });
+}
+
+function deleteSubscriber(id) {
+  if (!confirm('Remove this subscriber?')) return;
+  db.ref('subscribers/' + id).remove()
+    .then(() => { showToast('Subscriber removed', 'success'); loadSubscribers(); })
+    .catch(() => showToast('Failed to remove', 'error'));
+}
+
+/* ══════════════════════════════════════
+   COMMENTS
+══════════════════════════════════════ */
+let _allComments = {};   // keyed by userId/email
+
+function loadComments() {
+  backToCommentList();   // always start at list view
+  const listEl = document.getElementById('cmt-user-list');
+  listEl.innerHTML = `<div class="empty-state" style="padding:40px">Loading…</div>`;
+
+  db.ref('comments').orderByChild('timestamp').once('value', snap => {
+    _allComments = {};   // { key → [comments] }  key = userId or email
+    let total = 0;
+
+    snap.forEach(c => {
+      const d = c.val();
+      const key = d.userId && d.userId !== 'guest' ? d.userId : (d.userEmail || 'guest');
+      if (!_allComments[key]) {
+        _allComments[key] = {
+          name: d.userName  || 'Guest',
+          email: d.userEmail || '—',
+          userId: d.userId  || null,
+          comments: []
+        };
+      }
+      _allComments[key].comments.push({ id: c.key, ...d });
+      total++;
+    });
+
+    // Sort each user's comments newest-first
+    Object.values(_allComments).forEach(u => u.comments.sort((a,b) => b.timestamp - a.timestamp));
+
+    const users = Object.entries(_allComments).sort((a,b) =>
+      b[1].comments[0].timestamp - a[1].comments[0].timestamp
+    );
+
+    document.getElementById('cmt-stat-total').textContent = total;
+    document.getElementById('cmt-stat-users').textContent = users.length;
+
+    if (!users.length) {
+      listEl.innerHTML = `<div class="empty-state" style="padding:40px">No comments yet</div>`;
+      return;
+    }
+
+    listEl.innerHTML = users.map(([key, u]) => {
+      const initial = (u.name || '?')[0].toUpperCase();
+      const last    = u.comments[0];
+      const preview = last.text.length > 55 ? last.text.slice(0,55)+'…' : last.text;
+      const timeAgo = formatAgo(last.timestamp);
+      return `
+        <div class="comment-user-row" onclick="viewUserComments('${key}')">
+          <div class="cu-avatar">${initial}</div>
+          <div class="cu-info">
+            <div class="cu-name">${esc(u.name)}</div>
+            <div class="cu-email">${esc(u.email)}</div>
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:4px;font-style:italic">"${esc(preview)}"</div>
+          </div>
+          <div class="cu-meta">
+            <div class="cu-count">${u.comments.length}</div>
+            <div class="cu-count-lbl">comment${u.comments.length>1?'s':''}</div>
+            <div style="font-size:0.68rem;color:var(--text3);margin-top:4px">${timeAgo}</div>
+          </div>
+          <div class="cu-arrow">›</div>
+        </div>`;
+    }).join('');
+  });
+}
+
+function viewUserComments(key) {
+  const u = _allComments[key];
+  if (!u) return;
+
+  document.getElementById('cmt-detail-name').textContent  = u.name;
+  document.getElementById('cmt-detail-email').textContent = u.email;
+
+  document.getElementById('cmt-detail-list').innerHTML = u.comments.map(c => `
+    <div class="cmt-bubble">
+      <div class="cmt-text">${esc(c.text)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div class="cmt-time">🕐 ${c.createdAt ? new Date(c.createdAt).toLocaleString() : '—'}</div>
+        <button class="btn-del" style="padding:3px 10px;font-size:0.72rem"
+          onclick="deleteComment('${c.id}','${key}')">Delete</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('cmt-list-panel').classList.add('hidden');
+  document.getElementById('cmt-detail-panel').classList.add('active');
+}
+
+function backToCommentList() {
+  document.getElementById('cmt-list-panel').classList.remove('hidden');
+  document.getElementById('cmt-detail-panel').classList.remove('active');
+}
+
+function deleteComment(id, userKey) {
+  if (!confirm('Delete this comment?')) return;
+  db.ref('comments/' + id).remove()
+    .then(() => {
+      showToast('Comment deleted', 'success');
+      const u = _allComments[userKey];
+      if (u) {
+        u.comments = u.comments.filter(c => c.id !== id);
+        if (!u.comments.length) {
+          delete _allComments[userKey];
+          backToCommentList();
+          loadComments();
+        } else {
+          viewUserComments(userKey);
+        }
+      }
+    })
+    .catch(() => showToast('Failed to delete', 'error'));
+}
+
+/* helpers */
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatAgo(ts) {
+  if (!ts) return '—';
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000), h = Math.floor(diff/3600000), d = Math.floor(diff/86400000);
+  if (d  > 0) return `${d}d ago`;
+  if (h  > 0) return `${h}h ago`;
+  if (m  > 0) return `${m}m ago`;
+  return 'just now';
 }
 
 document.querySelectorAll('.adm-nav-btn').forEach(b => {
