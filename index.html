@@ -2481,7 +2481,11 @@ function renderMembersTable() {
   updateMemberBadges();
   const filter = document.getElementById('member-status-filter')?.value || '';
   let entries = Object.entries(state.members || {})
-    .sort((a, b) => (b[1].appliedAt || '').localeCompare(a[1].appliedAt || ''));
+    .sort((a, b) => {
+      const da = b[1].appliedAt || b[1].createdAt || '';
+      const db_ = a[1].appliedAt || a[1].createdAt || '';
+      return da.localeCompare(db_);
+    });
   if (filter) entries = entries.filter(([, m]) => (m.status || 'pending') === filter);
 
   let i = 0;
@@ -2491,41 +2495,53 @@ function renderMembersTable() {
     const badgeCls = { pending:'mbadge-pending', approved:'mbadge-approved', rejected:'mbadge-rejected' }[status];
     const badgeTxt = { pending:'⏳ Pending', approved:'✅ Approved', rejected:'🚫 Rejected' }[status];
 
-    // Format date
-    let dateStr = m.appliedAt || '—';
-    if (dateStr.includes('T')) {
-      try { dateStr = new Date(dateStr).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch(e){}
+    // Support both wholesale (appliedAt) and app signup (createdAt)
+    const rawDate = m.appliedAt || m.createdAt || '';
+    let dateStr = rawDate || '—';
+    if (rawDate.includes('T')) {
+      try { dateStr = new Date(rawDate).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}); } catch(e){}
     }
 
-    // Action buttons (only approve/reject/revoke quick actions)
+    // Source: wholesale form vs app signup
+    const isAppSignup = !m.shopName && !m.businessType;
+    const sourceTag = isAppSignup
+      ? `<span style="font-size:0.68rem;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(99,102,241,0.12);color:#6366f1;border:1px solid rgba(99,102,241,0.25)">📱 App</span>`
+      : `<span style="font-size:0.68rem;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(0,230,118,0.10);color:var(--green);border:1px solid rgba(0,230,118,0.2)">🏪 Wholesale</span>`;
+
+    // Second line: shopName for wholesale, reason for app signup
+    const secondLine = m.shopName
+      ? `<div style="font-weight:700;font-size:0.85rem">${m.shopName}</div><div style="font-size:0.73rem;color:var(--text3)">${BTYPE_LABELS[m.businessType] || m.businessType || '—'}</div>`
+      : m.reason
+      ? `<div style="font-size:0.82rem;color:var(--text2);font-style:italic">"${m.reason.slice(0,60)}${m.reason.length>60?'…':''}"</div>`
+      : `<div style="color:var(--text3);font-size:0.8rem">No info provided</div>`;
+
+    const location = [m.city, m.country].filter(Boolean).join(', ') || '—';
+
     let actions = '';
     if (status === 'pending') {
-      actions += `<button class="btn-approve" onclick="event.stopPropagation();approveMember('${uid}','${(m.shopName||'').replace(/'/g,"\\'")}')">✅ Approve</button>`;
-      actions += `<button class="btn-reject"  onclick="event.stopPropagation();rejectMember('${uid}','${(m.shopName||'').replace(/'/g,"\\'")}')">🚫 Reject</button>`;
+      actions += `<button class="btn-approve" onclick="event.stopPropagation();approveMember('${uid}','${(m.name||m.shopName||'').replace(/'/g,"\\'")}')">✅ Approve</button>`;
+      actions += `<button class="btn-reject"  onclick="event.stopPropagation();rejectMember('${uid}','${(m.name||m.shopName||'').replace(/'/g,"\\'")}')">🚫 Reject</button>`;
     } else if (status === 'approved') {
-      actions += `<button class="btn-reject"  onclick="event.stopPropagation();rejectMember('${uid}','${(m.shopName||'').replace(/'/g,"\\'")}')">🚫 Revoke</button>`;
+      actions += `<button class="btn-reject"  onclick="event.stopPropagation();rejectMember('${uid}','${(m.name||m.shopName||'').replace(/'/g,"\\'")}')">🚫 Revoke</button>`;
     } else if (status === 'rejected') {
-      actions += `<button class="btn-approve" onclick="event.stopPropagation();approveMember('${uid}','${(m.shopName||'').replace(/'/g,"\\'")}')">✅ Approve</button>`;
+      actions += `<button class="btn-approve" onclick="event.stopPropagation();approveMember('${uid}','${(m.name||m.shopName||'').replace(/'/g,"\\'")}')">✅ Re-Approve</button>`;
     }
 
     return `<tr onclick="openMemberProfile('${uid}')" style="cursor:pointer" class="member-row">
       <td style="font-family:'DM Mono',monospace;color:var(--text3);font-size:0.75rem">#${i}</td>
       <td>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">${sourceTag}</div>
         <div style="font-weight:700">${m.name || '—'}</div>
         <div style="font-size:0.75rem;color:var(--text3);font-family:'DM Mono',monospace">${m.email || ''}</div>
       </td>
-      <td>
-        <div style="font-weight:700;font-size:0.85rem">${m.shopName || '—'}</div>
-        <div style="font-size:0.73rem;color:var(--text3)">${BTYPE_LABELS[m.businessType] || m.businessType || '—'}</div>
-      </td>
-      <td style="font-size:0.82rem;color:var(--text2)">${[m.city, m.country].filter(Boolean).join(', ') || '—'}</td>
+      <td>${secondLine}</td>
+      <td style="font-size:0.82rem;color:var(--text2)">${location}</td>
       <td>
         ${m.whatsapp
           ? `<a href="https://wa.me/${m.whatsapp.replace(/\D/g,'')}" target="_blank"
                onclick="event.stopPropagation()"
                style="color:var(--green);font-family:'DM Mono',monospace;font-size:0.78rem;text-decoration:none;display:flex;align-items:center;gap:4px">
-               💬 ${m.whatsapp}
-             </a>`
+               💬 ${m.whatsapp}</a>`
           : '<span style="color:var(--text3)">—</span>'}
       </td>
       <td style="font-family:'DM Mono',monospace;font-size:0.75rem;color:${m.license ? 'var(--accent)' : 'var(--text3)'}">
