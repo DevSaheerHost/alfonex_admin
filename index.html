@@ -52,7 +52,7 @@ input,textarea,select{font-family:var(--font-body)}
 #toast.info{background:var(--blue)}
 
 /* ── LOGIN ── */
-#view-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#f0faf4 0%,#e8f5ed 50%,#f3f4f6 100%);padding:24px}
+#view-login{min-height:100vh;align-items:center;justify-content:center;background:linear-gradient(145deg,#f0faf4 0%,#e8f5ed 50%,#f3f4f6 100%);padding:24px}
 .login-card{background:var(--surface);border-radius:20px;padding:38px 34px;width:100%;max-width:400px;box-shadow:0 4px 48px rgba(0,0,0,.10);animation:fadeUp .4s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .login-logo{text-align:center;margin-bottom:6px}
@@ -1229,7 +1229,8 @@ function renderOrderDetailBody(orderId){
 
   /* Items */
   const itemRows=(o.items||[]).map(it=>`<tr>
-    <td>${esc(it.title||'—')}</td>
+    <td style="font-weight:600">${esc(it.title||'—')}</td>
+    <td>${it.variantLabel ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#e8f9ef;color:#1d7a40;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700"><i class="fa-solid fa-tag" style="font-size:9px"></i>${esc(it.variantLabel)}</span>` : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
     <td style="text-align:center">${it.qty||1}</td>
     <td style="text-align:right">$${Number(it.unitPrice||0).toFixed(2)}</td>
     <td style="text-align:right;font-weight:700">$${Number(it.lineTotal||0).toFixed(2)}</td>
@@ -1255,14 +1256,14 @@ function renderOrderDetailBody(orderId){
       </div>
     </div>
 
-    <!-- Items -->`
+    <!-- Items -->
     <div class="detail-section">
       <div class="detail-section-title"><i class="fa-solid fa-list"></i> Items</div>
       <div class="items-table-wrap"><table class="items-table">
-        <thead><tr><th>Product</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
+        <thead><tr><th>Product</th><th>Variants</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
         <tbody>${itemRows}</tbody>
         <tfoot><tr style="background:var(--bg)">
-          <td colspan="3" style="padding:10px 14px;font-weight:700">Order Total</td>
+          <td colspan="4" style="padding:10px 14px;font-weight:700">Order Total</td>
           <td style="padding:10px 14px;text-align:right;font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--green)">$${Number(o.total||0).toFixed(2)}</td>
         </tr></tfoot>
       </table></div>
@@ -1403,7 +1404,10 @@ function generateInvoicePDF(){
   doc.setDrawColor(229,235,235); doc.line(M,y,W-M,y); y+=7;
 
   /* ── Line items table ── */
-  const body=(o.items||[]).map(it=>[it.title||'—',String(it.qty||1),`$${Number(it.unitPrice||0).toFixed(2)}`,`$${Number(it.lineTotal||0).toFixed(2)}`]);
+  const body=(o.items||[]).map(it=>{
+    const title = it.variantLabel ? `${it.title||'—'} (${it.variantLabel})` : (it.title||'—');
+    return [title, String(it.qty||1), `$${Number(it.unitPrice||0).toFixed(2)}`, `$${Number(it.lineTotal||0).toFixed(2)}`];
+  });
   doc.autoTable({
     startY:y, margin:{left:M,right:M},
     head:[['Product / Description','Qty','Unit Price','Total']],
