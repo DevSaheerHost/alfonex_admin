@@ -191,6 +191,10 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.46);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
 .modal-backdrop.open{display:flex}
 .modal{background:var(--surface);border-radius:18px;width:100%;max-width:540px;max-height:94vh;overflow-y:auto;box-shadow:0 20px 64px rgba(0,0,0,.22);animation:modalIn .24s ease both;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){
+  @keyframes modalIn{from{opacity:0;transform:translateY(60px)}to{opacity:1;transform:translateY(0)}}
+}
 @keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:13px;position:sticky;top:0;background:var(--surface);z-index:2;border-radius:18px 18px 0 0}
 .modal-hicon{width:40px;height:40px;border-radius:10px;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
@@ -333,27 +337,151 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .items-table tr:first-child td{border-top:none}
 
 /* ── RESPONSIVE ── */
+/* ══ RESPONSIVE — TABLET (≤768px) ══════════════════ */
 @media(max-width:768px){
   :root{--sidebar-w:0px}
-  #admin-sidebar{transform:translateX(-248px);width:248px}
-  #admin-sidebar.open{transform:translateX(0)}
+
+  /* Sidebar */
+  #admin-sidebar{transform:translateX(-260px);width:260px;z-index:500}
+  #admin-sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.18)}
   #main-area{margin-left:0}
   #ham-btn{display:flex}
-  .stats-grid{grid-template-columns:1fr 1fr}
+
+  /* Header */
+  .admin-header{padding:0 14px}
+  #header-page-title{font-size:15px}
+  .header-right{gap:8px}
+  .search-box input{width:120px;font-size:13px}
+
+  /* Stats */
+  .stats-grid{grid-template-columns:1fr 1fr;gap:10px}
+
+  /* Layout */
+  .content-section{padding:14px 12px}
+  .table-topbar{flex-wrap:wrap;gap:8px}
+  .table-topbar-title{font-size:14px}
+
+  /* Forms */
   .mf-row{grid-template-columns:1fr}
-  .content-section{padding:16px 14px}
-  .search-box input{width:150px}
-  .action-cell{flex-direction:column;align-items:flex-start}
+
+  /* Tables */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius)}
   .hide-mobile{display:none !important}
+
+  /* Orders detail grid */
   .detail-grid{grid-template-columns:1fr}
+
+  /* Line items */
   .line-items-head,.line-item-row{grid-template-columns:2fr 52px 80px 28px}
   .lh-cost,.li-cost{display:none}
-  .modal.wide{max-width:100%}
+
+  /* Modals */
+  .modal-backdrop{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;max-width:100%;max-height:92vh;width:100%}
+  .modal.wide{max-width:100%;border-radius:20px 20px 0 0}
+  .modal.sm{max-width:100%;border-radius:20px 20px 0 0}
+  .modal-header{padding:16px 18px 12px}
+  .modal-body{padding:14px 18px}
+  .modal-footer{padding:12px 18px 16px;gap:8px;flex-wrap:wrap}
+  .modal-footer .btn-primary,.modal-footer .btn-secondary{flex:1;min-width:0;justify-content:center}
+
+  /* Order detail modal items table */
+  .order-items-table{font-size:12px}
+  .order-items-table th,.order-items-table td{padding:7px 8px}
+
+  /* Order stepper */
+  .order-stepper{gap:0;overflow-x:auto;padding-bottom:6px}
+  .step-item{min-width:60px}
+  .step-label{font-size:10px}
+  .step-ts{font-size:9px}
+
+  /* Filter tabs */
+  .filter-tabs{padding:10px 12px;gap:6px;overflow-x:auto;flex-wrap:nowrap}
+  .filter-tabs button{white-space:nowrap;flex-shrink:0}
+
+  /* Action cells */
+  .action-cell{flex-direction:row;flex-wrap:wrap;gap:4px}
+
+  /* Admin header search hide on small */
+  .search-box{display:none}
 }
-@media(max-width:420px){
-  .login-card{padding:28px 20px}
-  .modal-body,.modal-footer,.modal-header{padding-left:16px;padding-right:16px}
-  .filter-tabs{padding:10px 12px}
+
+/* ══ RESPONSIVE — MOBILE (≤480px) ═══════════════════ */
+@media(max-width:480px){
+  /* Login */
+  #view-login{padding:16px}
+  .login-card{padding:28px 18px;border-radius:16px}
+  .login-logo .brand{font-size:20px}
+
+  /* Stats — stack to 1 col */
+  .stats-grid{grid-template-columns:1fr}
+  .stat-card{padding:14px 16px}
+  .stat-val{font-size:28px}
+
+  /* Header */
+  #header-page-title span{font-size:14px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+
+  /* Tables — card-style on mobile */
+  .orders-table thead{display:none}
+  .orders-table tbody tr{
+    display:flex;flex-direction:column;
+    padding:12px 14px;margin-bottom:8px;
+    background:var(--surface);border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);border:none;
+    gap:4px;
+  }
+  .orders-table tbody td{
+    display:flex;align-items:center;justify-content:space-between;
+    border:none;padding:0;font-size:13px;
+  }
+  .orders-table tbody td::before{
+    content:attr(data-label);
+    font-size:10px;font-weight:700;letter-spacing:.5px;
+    text-transform:uppercase;color:var(--muted);flex-shrink:0;
+  }
+  .orders-table tbody td.td-actions{justify-content:flex-end;margin-top:6px;padding-top:8px;border-top:1px solid var(--border)}
+
+  /* Products table — simpler card */
+  .products-table thead{display:none}
+  .products-table tbody tr{
+    display:grid;grid-template-columns:48px 1fr auto;
+    align-items:center;gap:10px;
+    padding:10px 12px;margin-bottom:8px;
+    background:var(--surface);border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);border:none;
+  }
+  .products-table .hide-mobile{display:none !important}
+  .products-table .td-actions{grid-column:3}
+
+  /* Modal */
+  .modal{max-height:96vh;border-radius:16px 16px 0 0}
+  .modal-header{padding:14px 16px 10px}
+  .modal-body{padding:12px 16px}
+  .modal-footer{padding:10px 16px 20px;flex-direction:column}
+  .modal-footer .btn-primary,.modal-footer .btn-secondary,.modal-footer .btn-danger{width:100%;justify-content:center}
+
+  /* Order detail in modal */
+  .order-detail-section{margin-bottom:14px}
+  .detail-info-grid{grid-template-columns:1fr}
+  .order-items-table .col-variant{display:none}
+  .order-items-table th:nth-child(2),.order-items-table td:nth-child(2){display:none}
+
+  /* Content section */
+  .content-section{padding:12px 10px}
+  .section-topbar{flex-direction:column;align-items:flex-start;gap:10px}
+  .section-topbar .btn-primary{width:100%;justify-content:center}
+
+  /* Filter tabs scroll */
+  .filter-tabs{padding:8px 10px}
+}
+
+/* ══ RESPONSIVE — VERY SMALL (≤360px) ═══════════════ */
+@media(max-width:360px){
+  .login-card{padding:22px 14px}
+  .admin-header{padding:0 10px}
+  .content-section{padding:10px 8px}
+  .stat-val{font-size:24px}
+  .modal-footer{gap:6px}
 }
 </style>
 </head>
@@ -1039,14 +1167,14 @@ function renderOrdersTable(){
   tbody.innerHTML=E.map(([id,o])=>{
     const ic=Array.isArray(o.items)?o.items.length:0;
     return `<tr>
-      <td><span style="font-family:var(--font-head);font-weight:800;font-size:13px;color:var(--green)">${shortId(id)}</span></td>
-      <td><div style="font-weight:600;font-size:13px">${esc(o.customerName||'—')}</div><div style="font-size:11px;color:var(--muted)">${esc(o.customerPhone||'')}</div></td>
-      <td class="hide-mobile" style="color:var(--muted);font-size:12px">${ic} item${ic!==1?'s':''}</td>
-      <td><strong>$${Number(o.total||0).toFixed(2)}</strong></td>
-      <td>${orderBadge(o.status)}</td>
-      <td class="hide-mobile">${payBadge(o.paymentStatus)}</td>
-      <td class="hide-mobile" style="font-size:12px;color:var(--muted);white-space:nowrap">${fmtDate(o.createdAt)}</td>
-      <td><div class="action-cell">
+      <td data-label="Order"><span style="font-family:var(--font-head);font-weight:800;font-size:13px;color:var(--green)">${shortId(id)}</span></td>
+      <td data-label="Customer"><div style="font-weight:600;font-size:13px">${esc(o.customerName||'—')}</div><div style="font-size:11px;color:var(--muted)">${esc(o.customerPhone||'')}</div></td>
+      <td class="hide-mobile" data-label="Items" style="color:var(--muted);font-size:12px">${ic} item${ic!==1?'s':''}</td>
+      <td data-label="Total"><strong>$${Number(o.total||0).toFixed(2)}</strong></td>
+      <td data-label="Status">${orderBadge(o.status)}</td>
+      <td class="hide-mobile" data-label="Payment">${payBadge(o.paymentStatus)}</td>
+      <td class="hide-mobile" data-label="Date" style="font-size:12px;color:var(--muted);white-space:nowrap">${fmtDate(o.createdAt)}</td>
+      <td class="td-actions"><div class="action-cell">
         <button class="btn-edit btn-sm" onclick="openOrderDetail('${esc(id)}')"><i class="fa-solid fa-eye"></i> View</button>
         <button class="btn-danger btn-sm" onclick="promptDelete('order','${esc(id)}','${shortId(id)}')"><i class="fa-solid fa-trash"></i></button>
       </div></td>
@@ -1227,10 +1355,10 @@ function renderOrderDetailBody(orderId){
     </div>`;
   }).join('');
 
-  /* Items */
+  /* Items */console.log(o.items)
   const itemRows=(o.items||[]).map(it=>`<tr>
-    <td style="font-weight:600">${esc(it.title||'—')}</td>
-    <td>${it.variantLabel ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#e8f9ef;color:#1d7a40;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700"><i class="fa-solid fa-tag" style="font-size:9px"></i>${esc(it.variantLabel)}</span>` : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+    <td>${esc(it.title||'—')}</td>
+    <td>${it.variant || "_"}</td>
     <td style="text-align:center">${it.qty||1}</td>
     <td style="text-align:right">$${Number(it.unitPrice||0).toFixed(2)}</td>
     <td style="text-align:right;font-weight:700">$${Number(it.lineTotal||0).toFixed(2)}</td>
@@ -1260,10 +1388,12 @@ function renderOrderDetailBody(orderId){
     <div class="detail-section">
       <div class="detail-section-title"><i class="fa-solid fa-list"></i> Items</div>
       <div class="items-table-wrap"><table class="items-table">
-        <thead><tr><th>Product</th><th>Variants</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
+        <thead><tr><th>Product</th>
+        <th>Varients<th>
+        <th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
         <tbody>${itemRows}</tbody>
         <tfoot><tr style="background:var(--bg)">
-          <td colspan="4" style="padding:10px 14px;font-weight:700">Order Total</td>
+          <td colspan="3" style="padding:10px 14px;font-weight:700">Order Total</td>
           <td style="padding:10px 14px;text-align:right;font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--green)">$${Number(o.total||0).toFixed(2)}</td>
         </tr></tfoot>
       </table></div>
@@ -1328,13 +1458,27 @@ async function advanceOrderStatus(){
   const nextStatus=ORDER_STATUSES[curIdx+1];
   const tsField=STATUS_TS[nextStatus];
   const btn=document.getElementById('btn-advance');
+  const originalHTML=btn.innerHTML;
   btn.disabled=true; btn.innerHTML='<div class="spin-ring" style="width:14px;height:14px;border-width:2px;border-top-color:#fff"></div>';
   try{
     const update={status:nextStatus,updatedAt:Date.now()};
     if(tsField) update[tsField]=Date.now();
     await db.ref(`orders/${id}`).update(update);
     showToast(`Marked as ${nextStatus}!`,'success');
-  }catch(err){ showToast('Update failed: '+err.message,'error'); btn.disabled=false; }
+    // Update button for the NEXT step immediately (don't wait for listener)
+    const afterIdx=curIdx+2;
+    if(afterIdx<ORDER_STATUSES.length){
+      btn.dataset.orderId=id;
+      btn.innerHTML=`<i class="fa-solid fa-arrow-right"></i> <span id="advance-label">Mark as ${ORDER_STATUSES[afterIdx]}</span>`;
+      btn.disabled=false;
+    }else{
+      btn.style.display='none';
+    }
+  }catch(err){
+    showToast('Update failed: '+err.message,'error');
+    btn.disabled=false;
+    btn.innerHTML=originalHTML;
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1404,10 +1548,7 @@ function generateInvoicePDF(){
   doc.setDrawColor(229,235,235); doc.line(M,y,W-M,y); y+=7;
 
   /* ── Line items table ── */
-  const body=(o.items||[]).map(it=>{
-    const title = it.variantLabel ? `${it.title||'—'} (${it.variantLabel})` : (it.title||'—');
-    return [title, String(it.qty||1), `$${Number(it.unitPrice||0).toFixed(2)}`, `$${Number(it.lineTotal||0).toFixed(2)}`];
-  });
+  const body=(o.items||[]).map(it=>[it.title||'—',String(it.qty||1),`$${Number(it.unitPrice||0).toFixed(2)}`,`$${Number(it.lineTotal||0).toFixed(2)}`]);
   doc.autoTable({
     startY:y, margin:{left:M,right:M},
     head:[['Product / Description','Qty','Unit Price','Total']],
