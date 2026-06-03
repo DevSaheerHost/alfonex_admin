@@ -1313,7 +1313,7 @@ function renderOrdersTable(){
       <td data-label="Order"><span style="font-family:var(--font-head);font-weight:800;font-size:13px;color:var(--green)">${shortId(id)}</span></td>
       <td data-label="Customer"><div style="font-weight:600;font-size:13px">${esc(o.customerName||'—')}</div><div style="font-size:11px;color:var(--muted)">${esc(o.customerPhone||'')}</div></td>
       <td class="hide-mobile" data-label="Items" style="color:var(--muted);font-size:12px">${ic} item${ic!==1?'s':''}</td>
-      <td data-label="Total"><strong>$${Number(o.total||0).toFixed(2)}</strong></td>
+      <td data-label="Total"><strong>${({USD:'$',AED:'AED ',INR:'₹'}[(o.currency||'USD').toUpperCase()]||'$')}${Number(o.total||0).toLocaleString()}</strong></td>
       <td data-label="Status">${orderBadge(o.status)}</td>
       <td class="hide-mobile" data-label="Payment">${payBadge(o.paymentStatus)}</td>
       <td class="hide-mobile" data-label="Date" style="font-size:12px;color:var(--muted);white-space:nowrap">${fmtDate(o.createdAt)}</td>
@@ -1498,13 +1498,16 @@ function renderOrderDetailBody(orderId){
     </div>`;
   }).join('');
 
-  /* Items */console.log(o.items)
+  /* Currency symbol — use whatever currency the order was placed in */
+  const sym = {USD:'$', AED:'AED ', INR:'₹'}[(o.currency||'USD').toUpperCase()] || '$';
+
+  /* Items */
   const itemRows=(o.items||[]).map(it=>`<tr>
     <td>${esc(it.title||'—')}</td>
-    <td>${it.variant || "_"}</td>
+    <td>${it.variantLabel ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--green-light);color:var(--green);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700"><i class="fa-solid fa-tag" style="font-size:9px"></i>${esc(it.variantLabel)}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
     <td style="text-align:center">${it.qty||1}</td>
-    <td style="text-align:right">$${Number(it.unitPrice||0).toFixed(2)}</td>
-    <td style="text-align:right;font-weight:700">$${Number(it.lineTotal||0).toFixed(2)}</td>
+    <td style="text-align:right">${sym}${Number(it.unitPrice||0).toLocaleString()}</td>
+    <td style="text-align:right;font-weight:700">${sym}${Number(it.lineTotal||0).toLocaleString()}</td>
   </tr>`).join('');
 
   const bal=Math.max(0,(o.total||0)-(o.amountPaid||0));
@@ -1536,8 +1539,8 @@ function renderOrderDetailBody(orderId){
         <th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
         <tbody>${itemRows}</tbody>
         <tfoot><tr style="background:var(--bg)">
-          <td colspan="3" style="padding:10px 14px;font-weight:700">Order Total</td>
-          <td style="padding:10px 14px;text-align:right;font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--green)">$${Number(o.total||0).toFixed(2)}</td>
+          <td colspan="4" style="padding:10px 14px;font-weight:700">Order Total</td>
+          <td style="padding:10px 14px;text-align:right;font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--green)">${sym}${Number(o.total||0).toLocaleString()}</td>
         </tr></tfoot>
       </table></div>
     </div>
@@ -1550,11 +1553,11 @@ function renderOrderDetailBody(orderId){
           <select id="dp-pay-status" onchange="savePaymentInfo('${orderId}')" style="-webkit-appearance:auto;appearance:auto;">
             ${['Unpaid','Partial','Paid'].map(s=>`<option value="${s}" ${o.paymentStatus===s?'selected':''}>${s}</option>`).join('')}
           </select></div>
-        <div class="detail-field"><label>Amount Paid ($)</label>
+        <div class="detail-field"><label>Amount Paid (${sym.trim()})</label>
           <input type="number" id="dp-amt-paid" value="${Number(o.amountPaid||0).toFixed(2)}" min="0" step="0.01" onchange="savePaymentInfo('${orderId}')"></div>
-        <div class="detail-field"><label>Order Total</label><div class="df-val">$${Number(o.total||0).toFixed(2)}</div></div>
+        <div class="detail-field"><label>Order Total</label><div class="df-val">${sym}${Number(o.total||0).toLocaleString()}</div></div>
         <div class="detail-field"><label>Balance Due</label>
-          <div class="df-val" style="color:${bal>0?'var(--red)':'var(--green)'}">$${bal.toFixed(2)}</div></div>
+          <div class="df-val" style="color:${bal>0?'var(--red)':'var(--green)'}">${sym}${Number(bal).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
       </div>
     </div>
 
