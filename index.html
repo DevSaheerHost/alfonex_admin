@@ -230,6 +230,18 @@ tbody td{padding:12px 16px;vertical-align:middle}
 @keyframes indeterminate{0%,100%{width:15%;margin-left:0}50%{width:70%;margin-left:15%}}
 .upload-bar-txt{font-size:11px;color:var(--green);font-weight:600;margin-top:5px}
 .callout{border-radius:var(--radius-sm);padding:11px 14px;font-size:12px;font-weight:500;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
+
+/* ── MULTI-IMAGE GALLERY ── */
+.img-thumb-tile{position:relative;width:80px;height:80px;border-radius:var(--radius-sm);overflow:hidden;border:2px solid var(--border);background:var(--bg);flex-shrink:0;cursor:grab;transition:border-color .15s,box-shadow .15s}
+.img-thumb-tile:hover{border-color:var(--green);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.img-thumb-tile.primary{border-color:var(--green);box-shadow:0 0 0 3px rgba(46,160,86,.18)}
+.img-thumb-tile img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.img-thumb-badge{position:absolute;top:3px;left:3px;background:var(--green);color:#fff;font-size:8px;font-weight:700;letter-spacing:.4px;padding:2px 5px;border-radius:4px;text-transform:uppercase;pointer-events:none}
+.img-thumb-del{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:4px;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;line-height:1}
+.img-thumb-del:hover{background:var(--red)}
+.img-thumb-tile.dragging{opacity:.45;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+.img-thumb-tile.drag-over{border-color:var(--green);border-style:dashed}
+#img-upload-zone.drag-active{border-color:var(--green);background:var(--green-light)}
 .callout.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
 .modal.sm{max-width:400px}
 .del-body{padding:20px 24px;font-size:14px;color:var(--text-soft);line-height:1.65}
@@ -635,8 +647,29 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <div class="mf-group"><label class="mf-label">Product Title *</label><input type="text" id="prod-title" class="mf-input" placeholder="e.g. iPhone 15 Pro Max 256GB"></div>
       <div class="mf-group"><label class="mf-label">Description</label><textarea id="prod-desc" class="mf-textarea" placeholder="Brief description…"></textarea></div>
       <div class="mf-row">
-        <div class="mf-group"><label class="mf-label">Price (USD) *</label><input type="number" id="prod-price" class="mf-input" placeholder="0.00" min="0" step="0.01"></div>
-        <div class="mf-group"><label class="mf-label">Cost Price (USD)</label><input type="number" id="prod-cost" class="mf-input" placeholder="0.00" min="0" step="0.01"></div>
+        <div class="mf-group"><label class="mf-label">Price (USD) *</label><div style="position:relative"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none">$</span><input type="number" id="prod-price" class="mf-input" placeholder="0.00" min="0" step="0.01" style="padding-left:26px"></div></div>
+        <div class="mf-group"><label class="mf-label">Cost Price (USD)</label><div style="position:relative"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none">$</span><input type="number" id="prod-cost" class="mf-input" placeholder="0.00" min="0" step="0.01" style="padding-left:26px"></div></div>
+      </div>
+      <!-- Multi-Currency Prices -->
+      <div class="mf-group">
+        <label class="mf-label" style="display:flex;align-items:center;gap:6px"><i class="fa-solid fa-globe" style="color:var(--green)"></i> Prices by Currency</label>
+        <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border)">
+            <div style="padding:8px 12px;border-right:1px solid var(--border)">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">🇺🇸 USD</div>
+              <div style="position:relative"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;pointer-events:none">$</span><input type="number" id="prod-price-usd" class="mf-input" placeholder="0.00" min="0" step="0.01" style="padding:7px 8px 7px 22px;font-size:13px"></div>
+            </div>
+            <div style="padding:8px 12px;border-right:1px solid var(--border)">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">🇦🇪 AED</div>
+              <div style="position:relative"><span style="position:absolute;left:4px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:9px;pointer-events:none;font-weight:700">AED</span><input type="number" id="prod-price-aed" class="mf-input" placeholder="0.00" min="0" step="0.01" style="padding:7px 8px 7px 32px;font-size:13px"></div>
+            </div>
+            <div style="padding:8px 12px">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">🇮🇳 INR</div>
+              <div style="position:relative"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;pointer-events:none">₹</span><input type="number" id="prod-price-inr" class="mf-input" placeholder="0" min="0" step="1" style="padding:7px 8px 7px 22px;font-size:13px"></div>
+            </div>
+          </div>
+          <div style="padding:7px 12px;font-size:11px;color:var(--muted);line-height:1.4"><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:4px"></i>Set individual prices per currency. If left blank, the app will fall back to the USD price above.</div>
+        </div>
       </div>
       <div class="mf-group"><label class="mf-label">Stock Quantity *</label><input type="number" id="prod-stock" class="mf-input" placeholder="0" min="0" step="1"></div>
       <!-- VARIANTS -->
@@ -650,14 +683,13 @@ tbody td{padding:12px 16px;vertical-align:middle}
       </div>
 
       <div class="mf-group">
-        <label class="mf-label">Product Image</label>
-        <div class="img-upload-zone" id="img-upload-zone">
-          <input type="file" id="prod-img-file" accept="image/*" onchange="handleImageFileSelect(this)">
-          <div id="upload-placeholder" class="upload-placeholder"><div class="up-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div><div class="up-txt">Click to upload image</div><div class="up-sub">JPG, PNG, WEBP — max 5 MB</div></div>
-          <img id="img-preview" class="img-preview" style="display:none" alt="">
-          <div id="img-change-hint" class="img-change-hint" style="display:none"><i class="fa-solid fa-repeat"></i> Click to change</div>
+        <label class="mf-label"><i class="fa-solid fa-images" style="color:var(--green)"></i> Product Images <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11px">(up to 6 &middot; first = main)</span></label>
+        <div id="img-gallery-strip" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:0"></div>
+        <div class="img-upload-zone" id="img-upload-zone" style="padding:16px">
+          <input type="file" id="prod-img-file" accept="image/*" multiple onchange="handleMultiImageSelect(this)">
+          <div class="upload-placeholder"><div class="up-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div><div class="up-txt">Click or drag to add images</div><div class="up-sub">JPG, PNG, WEBP &mdash; max 5 MB each &middot; up to 6 total</div></div>
         </div>
-        <div class="upload-progress" id="upload-progress"><div class="upload-bar"><div class="upload-bar-fill"></div></div><div class="upload-bar-txt">Uploading to Cloudinary…</div></div>
+        <div class="upload-progress" id="upload-progress"><div class="upload-bar"><div class="upload-bar-fill"></div></div><div class="upload-bar-txt" id="upload-bar-txt">Uploading…</div></div>
         <input type="hidden" id="prod-img-url">
       </div>
     </div>
@@ -930,7 +962,12 @@ function renderProductsTable(){
   tbody.innerHTML=E.map(([id,p])=>{
     const src=p.imageUrl?cldThumb(p.imageUrl):'';
     const img=src?`<img src="${esc(src)}" loading="lazy">`:`<span class="no-img"><i class="fa-regular fa-image"></i></span>`;
-    return `<tr><td><div class="prod-title-cell"><div class="prod-thumb-wrap">${img}</div><div class="prod-info-text"><div class="pt-name">${esc(p.title||'—')}</div><div class="pt-desc">${esc(p.description||'—')}</div></div></div></td><td><strong>$${Number(p.price||0).toFixed(2)}</strong></td><td class="hide-mobile">${Number(p.stock||0)}</td><td><span class="${sBadgeClass(p.stock)}">${sLabel(p.stock)}</span></td><td><div class="action-cell"><button class="btn-edit btn-sm" onclick="openProductModal('${esc(id)}')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-danger btn-sm" onclick="promptDelete('product','${esc(id)}','${esc(p.title||'')}')"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+    const priceHTML=`<div style="line-height:1.5">
+      <div style="font-weight:700;font-size:13px">$${Number(p.price||0).toFixed(2)}</div>
+      ${p.priceAED?`<div style="font-size:11px;color:var(--muted)">AED ${Number(p.priceAED).toFixed(2)}</div>`:''}
+      ${p.priceINR?`<div style="font-size:11px;color:var(--muted)">₹${Number(p.priceINR).toFixed(0)}</div>`:''}
+    </div>`;
+    return `<tr><td><div class="prod-title-cell"><div class="prod-thumb-wrap">${img}</div><div class="prod-info-text"><div class="pt-name">${esc(p.title||'—')}</div><div class="pt-desc">${esc(p.description||'—')}</div></div></div></td><td>${priceHTML}</td><td class="hide-mobile">${Number(p.stock||0)}</td><td><span class="${sBadgeClass(p.stock)}">${sLabel(p.stock)}</span></td><td><div class="action-cell"><button class="btn-edit btn-sm" onclick="openProductModal('${esc(id)}')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-danger btn-sm" onclick="promptDelete('product','${esc(id)}','${esc(p.title||'')}')"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
   }).join('');
 }
 function filterProductsTable(){ renderProductsTable(); }
@@ -946,8 +983,10 @@ function openProductModal(id=null){
     document.getElementById('prod-price').value=p.price||'';
     document.getElementById('prod-cost').value=p.costPrice||'';
     document.getElementById('prod-stock').value=p.stock||'';
-    document.getElementById('prod-img-url').value=p.imageUrl||'';
-    if(p.imageUrl) showImgPreview(cldThumb(p.imageUrl,'f_auto,q_auto,w_400'));
+    document.getElementById('prod-price-usd').value=p.priceUSD||'';
+    document.getElementById('prod-price-aed').value=p.priceAED||'';
+    document.getElementById('prod-price-inr').value=p.priceINR||'';
+    loadGalleryFromProduct(p);
     loadVariantsIntoEditor(p.variants || []);
   }else{
     document.getElementById('modal-prod-title').textContent='Add Product';
@@ -957,15 +996,9 @@ function openProductModal(id=null){
 }
 function closeProductModal(){ document.getElementById('modal-product').classList.remove('open'); resetProductForm(); }
 function resetProductForm(){
-  ['edit-prod-id','prod-title','prod-desc','prod-price','prod-cost','prod-stock','prod-img-url'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  ['edit-prod-id','prod-title','prod-desc','prod-price','prod-cost','prod-stock','prod-price-usd','prod-price-aed','prod-price-inr'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
   resetVariantsEditor();
-  document.getElementById('prod-img-file').value='';
-  document.getElementById('img-upload-zone').classList.remove('has-img');
-  document.getElementById('upload-placeholder').style.display='block';
-  document.getElementById('img-preview').style.display='none';
-  document.getElementById('img-preview').src='';
-  document.getElementById('img-change-hint').style.display='none';
-  document.getElementById('upload-progress').style.display='none';
+  resetGallery();
 }
 async function saveProduct(){
   const editId=document.getElementById('edit-prod-id').value;
@@ -974,15 +1007,24 @@ async function saveProduct(){
   const price=parseFloat(document.getElementById('prod-price').value);
   const cost=parseFloat(document.getElementById('prod-cost').value)||0;
   const stock=parseInt(document.getElementById('prod-stock').value,10);
-  const file=document.getElementById('prod-img-file').files[0];
-  let imgUrl=document.getElementById('prod-img-url').value;
   if(!title){showToast('Title is required.','error');return;}
   if(isNaN(price)){showToast('Valid price required.','error');return;}
   if(isNaN(stock)){showToast('Valid stock required.','error');return;}
+  if(!_IMGS.length){showToast('Add at least one product image.','error');return;}
   const btn=setBtnLoading('btn-save-prod');
   try{
-    if(file) imgUrl=await uploadToCloudinary(file);
-    const payload={title,description:desc,price,costPrice:cost,stock,imageUrl:imgUrl||'',updatedAt:Date.now()};
+    await uploadAllPendingImages();
+    const allUrls = _IMGS.map(img => img.url).filter(Boolean);
+    const imgUrl  = allUrls[0] || '';
+    const extraUrls = allUrls.slice(1);
+    const payload={title,description:desc,price,costPrice:cost,stock,imageUrl:imgUrl,imageUrls:extraUrls.length?extraUrls:null,updatedAt:Date.now()};
+    /* Multi-currency prices */
+    const priceUSD=parseFloat(document.getElementById('prod-price-usd').value)||null;
+    const priceAED=parseFloat(document.getElementById('prod-price-aed').value)||null;
+    const priceINR=parseFloat(document.getElementById('prod-price-inr').value)||null;
+    if(priceUSD!==null)payload.priceUSD=priceUSD; else payload.priceUSD=null;
+    if(priceAED!==null)payload.priceAED=priceAED; else payload.priceAED=null;
+    if(priceINR!==null)payload.priceINR=priceINR; else payload.priceINR=null;
     const variants = readVariantsFromEditor();
     if (variants) payload.variants = variants; else payload.variants = null;
     if(editId){ await db.ref(`products/${editId}`).update(payload); showToast('Product updated!','success'); }
@@ -1091,30 +1133,131 @@ function resetVariantsEditor() {
 }
   /* No API Secret — only cloud name + unsigned preset
 ═══════════════════════════════════════════════ */
-function handleImageFileSelect(input){
-  const f=input.files[0]; if(!f)return;
-  if(f.size>5*1024*1024){showToast('Image must be < 5 MB.','error');input.value='';return;}
-  const r=new FileReader(); r.onload=e=>showImgPreview(e.target.result); r.readAsDataURL(f);
+/* ═══════════════════════════════════════════════
+   MULTI-IMAGE GALLERY
+   _IMGS = array of { src (data url or cloudinary url), file (File|null), url (cloudinary url|null) }
+   First entry = primary imageUrl. Rest go into imageUrls[].
+   Max 6 images.
+═══════════════════════════════════════════════ */
+let _IMGS = [];   /* working image list */
+
+function renderGalleryStrip() {
+  const strip = document.getElementById('img-gallery-strip');
+  if (!_IMGS.length) { strip.innerHTML = ''; return; }
+  strip.innerHTML = _IMGS.map((img, i) => `
+    <div class="img-thumb-tile${i===0?' primary':''}" draggable="true"
+      ondragstart="galleryDragStart(event,${i})"
+      ondragover="galleryDragOver(event,${i})"
+      ondrop="galleryDrop(event,${i})"
+      ondragend="galleryDragEnd()"
+      title="${i===0?'Primary image (shown first)':'Drag to reorder'}">
+      <img src="${img.src}" alt="">
+      ${i===0?'<div class="img-thumb-badge">Main</div>':''}
+      <button class="img-thumb-del" type="button" onclick="removeGalleryImg(${i})" title="Remove"><i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('');
+
+  /* show/hide the drop zone based on count */
+  const zone = document.getElementById('img-upload-zone');
+  zone.style.display = _IMGS.length >= 6 ? 'none' : '';
 }
-function showImgPreview(src){
-  document.getElementById('img-preview').src=src;
-  document.getElementById('img-preview').style.display='block';
-  document.getElementById('upload-placeholder').style.display='none';
-  document.getElementById('img-change-hint').style.display='block';
-  document.getElementById('img-upload-zone').classList.add('has-img');
+
+function handleMultiImageSelect(input) {
+  const files = Array.from(input.files);
+  input.value = '';  /* reset so same file can be re-added after removal */
+  const slots = 6 - _IMGS.length;
+  if (!slots) { showToast('Max 6 images reached.', 'error'); return; }
+  const chosen = files.slice(0, slots);
+  if (files.length > slots) showToast(`Only ${slots} slot(s) left — added first ${slots}.`, 'info');
+  chosen.forEach(f => {
+    if (f.size > 5*1024*1024) { showToast(`${f.name} is > 5 MB — skipped.`, 'error'); return; }
+    const r = new FileReader();
+    r.onload = e => {
+      _IMGS.push({ src: e.target.result, file: f, url: null });
+      renderGalleryStrip();
+    };
+    r.readAsDataURL(f);
+  });
 }
-async function uploadToCloudinary(file){
-  document.getElementById('upload-progress').style.display='block';
-  try{
-    const fd=new FormData();
-    fd.append('file',file);
-    fd.append('upload_preset',CLD.preset);
-    /* api_key and signature intentionally omitted — unsigned upload */
-    const res=await fetch(CLD.url,{method:'POST',body:fd});
-    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e?.error?.message||`HTTP ${res.status}`); }
-    const data=await res.json();
-    return data.secure_url; /* original URL stored; thumbnails derived at display time */
-  }finally{ document.getElementById('upload-progress').style.display='none'; }
+
+function removeGalleryImg(i) {
+  _IMGS.splice(i, 1);
+  renderGalleryStrip();
+}
+
+/* ── Drag-to-reorder ── */
+let _dragIdx = null;
+function galleryDragStart(e, i) {
+  _dragIdx = i;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => e.target.classList.add('dragging'), 0);
+}
+function galleryDragOver(e, i) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.img-thumb-tile').forEach((t,ti) =>
+    t.classList.toggle('drag-over', ti === i && i !== _dragIdx));
+}
+function galleryDrop(e, i) {
+  e.preventDefault();
+  if (_dragIdx === null || _dragIdx === i) return;
+  const moved = _IMGS.splice(_dragIdx, 1)[0];
+  _IMGS.splice(i, 0, moved);
+  renderGalleryStrip();
+}
+function galleryDragEnd() {
+  _dragIdx = null;
+  document.querySelectorAll('.img-thumb-tile').forEach(t => {
+    t.classList.remove('dragging'); t.classList.remove('drag-over');
+  });
+}
+
+/* ── Upload one file to Cloudinary ── */
+async function uploadToCloudinary(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLD.preset);
+  const res = await fetch(CLD.url, { method: 'POST', body: fd });
+  if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e?.error?.message || `HTTP ${res.status}`); }
+  const data = await res.json();
+  return data.secure_url;
+}
+
+/* ── Upload all pending images (those without a url yet) ── */
+async function uploadAllPendingImages() {
+  const pending = _IMGS.filter(img => !img.url && img.file);
+  if (!pending.length) return;
+  const prog = document.getElementById('upload-progress');
+  const txt  = document.getElementById('upload-bar-txt');
+  prog.style.display = 'block';
+  for (let i = 0; i < _IMGS.length; i++) {
+    const img = _IMGS[i];
+    if (img.url || !img.file) continue;
+    const num = pending.indexOf(img) + 1;
+    txt.textContent = `Uploading image ${num} of ${pending.length}…`;
+    img.url = await uploadToCloudinary(img.file);
+    img.src = img.url;  /* replace preview with final URL */
+  }
+  prog.style.display = 'none';
+}
+
+/* ── Load existing images when editing ── */
+function loadGalleryFromProduct(p) {
+  _IMGS = [];
+  if (p.imageUrl) _IMGS.push({ src: p.imageUrl, file: null, url: p.imageUrl });
+  if (Array.isArray(p.imageUrls)) {
+    p.imageUrls.forEach(u => { if (u) _IMGS.push({ src: u, file: null, url: u }); });
+  }
+  renderGalleryStrip();
+}
+
+/* ── Reset gallery ── */
+function resetGallery() {
+  _IMGS = [];
+  renderGalleryStrip();
+  const zone = document.getElementById('img-upload-zone');
+  if (zone) zone.style.display = '';
+  const prog = document.getElementById('upload-progress');
+  if (prog) prog.style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════
