@@ -231,6 +231,25 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .upload-bar-txt{font-size:11px;color:var(--green);font-weight:600;margin-top:5px}
 .callout{border-radius:var(--radius-sm);padding:11px 14px;font-size:12px;font-weight:500;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
 
+/* ── BANNER MANAGER ── */
+.banner-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);transition:background .12s}
+.banner-row:last-child{border-bottom:none}
+.banner-row:hover{background:var(--surface2)}
+.banner-thumb{width:80px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;position:relative}
+.banner-thumb-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px}
+.banner-row-info{flex:1;min-width:0}
+.banner-row-title{font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.banner-row-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.banner-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.3px;flex-shrink:0}
+.banner-status.on{background:#dcfce7;color:#15803d}
+.banner-status.off{background:#f3f4f6;color:#6b7280}
+.bn-cat-chip{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.bn-cat-chip.active{border-color:var(--green);background:var(--green-light);color:var(--green)}
+.bn-grad-chip{width:36px;height:36px;border-radius:8px;border:3px solid transparent;cursor:pointer;transition:border-color .15s;flex-shrink:0}
+.bn-grad-chip.active{border-color:var(--green);box-shadow:0 0 0 2px rgba(46,160,86,.3)}
+#bn-active:checked + span#bn-toggle-track{background:var(--green)}
+#bn-active:checked ~ span#bn-toggle-thumb{left:23px}
+
 /* ── MULTI-IMAGE GALLERY ── */
 .img-thumb-tile{position:relative;width:80px;height:80px;border-radius:var(--radius-sm);overflow:hidden;border:2px solid var(--border);background:var(--bg);flex-shrink:0;cursor:grab;transition:border-color .15s,box-shadow .15s}
 .img-thumb-tile:hover{border-color:var(--green);box-shadow:0 2px 10px rgba(0,0,0,.12)}
@@ -548,6 +567,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link active" data-section="overview" onclick="showSection('overview')"><span class="sb-ic"><i class="fa-solid fa-gauge-high"></i></span>Overview</button>
       <button class="sb-link" data-section="products" onclick="showSection('products')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Products<span class="sb-badge" id="sb-prod-count">0</span></button>
       <button class="sb-link" data-section="orders" onclick="showSection('orders')"><span class="sb-ic"><i class="fa-solid fa-clipboard-list"></i></span>Orders<span class="sb-badge" id="sb-order-count">0</span></button>
+      <button class="sb-link" data-section="banners" onclick="showSection('banners')"><span class="sb-ic"><i class="fa-solid fa-image"></i></span>Banners</button>
       <div id="sb-admin-nav" style="display:none">
         <div class="sb-section-label">Administration</div>
         <button class="sb-link" data-section="admins" onclick="showSection('admins')"><span class="sb-ic"><i class="fa-solid fa-users-gear"></i></span>Manage Admins</button>
@@ -621,6 +641,19 @@ tbody td{padding:12px 16px;vertical-align:middle}
       </div>
     </section>
 
+    <!-- BANNERS -->
+    <section id="section-banners" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Banner Manager</div><div class="sec-sub">Control hero carousel slides on the storefront</div></div>
+        <div class="sec-header-right"><button class="btn-primary" onclick="openBannerModal()"><i class="fa-solid fa-plus"></i> Add Banner</button></div>
+      </div>
+      <div class="table-card" style="padding:0">
+        <div id="banner-list" style="padding:16px">
+          <div class="empty-state"><div class="empty-icon">🖼️</div><p>No banners yet. Add one to get started.</p></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ADMINS -->
     <section id="section-admins" class="content-section">
       <div class="sec-header">
@@ -635,6 +668,134 @@ tbody td{padding:12px 16px;vertical-align:middle}
         </table></div>
       </div>
     </section>
+  </div>
+</div>
+
+<!-- ══ MODAL: ADD/EDIT BANNER ══ -->
+<div id="modal-banner" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-hicon"><i class="fa-solid fa-image"></i></div>
+      <div class="modal-title" id="modal-banner-title">Add Banner</div>
+      <button class="modal-close" onclick="closeBannerModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-banner-id">
+
+      <!-- Badge label (e.g. "New Arrival", "Sale") -->
+      <div class="mf-group">
+        <label class="mf-label">Badge Label</label>
+        <input type="text" id="bn-badge" class="mf-input" placeholder="e.g. New Arrival, Sale, Featured">
+      </div>
+
+      <!-- Main title -->
+      <div class="mf-group">
+        <label class="mf-label">Title *</label>
+        <input type="text" id="bn-title" class="mf-input" placeholder="e.g. iPhone 17 Pro Max">
+      </div>
+
+      <!-- Subtitle -->
+      <div class="mf-group">
+        <label class="mf-label">Subtitle</label>
+        <input type="text" id="bn-subtitle" class="mf-input" placeholder="e.g. Starting from ₹89,999">
+      </div>
+
+      <!-- Button label -->
+      <div class="mf-group">
+        <label class="mf-label">Button Text</label>
+        <input type="text" id="bn-btn-label" class="mf-input" placeholder="Shop Now" value="Shop Now">
+      </div>
+
+      <!-- Action type -->
+      <div class="mf-group">
+        <label class="mf-label">Click Action</label>
+        <select id="bn-action-type" class="mf-input" onchange="onBannerActionChange()">
+          <option value="product">Open specific product</option>
+          <option value="category">Filter by category</option>
+          <option value="new_arrivals">New Arrivals</option>
+          <option value="featured">Featured Products</option>
+          <option value="all">Browse all products</option>
+        </select>
+      </div>
+
+      <!-- Product picker (shown when action=product) -->
+      <div class="mf-group" id="bn-product-wrap">
+        <label class="mf-label">Select Product</label>
+        <select id="bn-product-id" class="mf-input">
+          <option value="">— choose product —</option>
+        </select>
+      </div>
+
+      <!-- Category picker (shown when action=category) -->
+      <div class="mf-group" id="bn-category-wrap" style="display:none">
+        <label class="mf-label">Category / Keyword</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px" id="bn-cat-chips">
+          <button type="button" class="bn-cat-chip active" data-cat="iphone" onclick="selectBannerCat(this)">📱 iPhone</button>
+          <button type="button" class="bn-cat-chip" data-cat="macbook" onclick="selectBannerCat(this)">💻 MacBook</button>
+          <button type="button" class="bn-cat-chip" data-cat="airpod" onclick="selectBannerCat(this)">🎧 AirPods</button>
+          <button type="button" class="bn-cat-chip" data-cat="ipad" onclick="selectBannerCat(this)">🖥️ iPad</button>
+          <button type="button" class="bn-cat-chip" data-cat="watch" onclick="selectBannerCat(this)">⌚ Watch</button>
+          <button type="button" class="bn-cat-chip" data-cat="case" onclick="selectBannerCat(this)">🛡️ Cases</button>
+        </div>
+        <input type="text" id="bn-category" class="mf-input" placeholder="or type custom keyword…">
+      </div>
+
+      <!-- Background gradient -->
+      <div class="mf-group">
+        <label class="mf-label">Background Style</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="bn-gradient-chips">
+          <button type="button" class="bn-grad-chip active" data-grad="linear-gradient(135deg,#0f2027,#203a43,#2c5364)" onclick="selectBannerGrad(this)" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)"></button>
+          <button type="button" class="bn-grad-chip" data-grad="linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)" onclick="selectBannerGrad(this)" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)"></button>
+          <button type="button" class="bn-grad-chip" data-grad="linear-gradient(135deg,#134e5e,#71b280)" onclick="selectBannerGrad(this)" style="background:linear-gradient(135deg,#134e5e,#71b280)"></button>
+          <button type="button" class="bn-grad-chip" data-grad="linear-gradient(135deg,#2d1b69,#11998e)" onclick="selectBannerGrad(this)" style="background:linear-gradient(135deg,#2d1b69,#11998e)"></button>
+          <button type="button" class="bn-grad-chip" data-grad="linear-gradient(135deg,#4a0072,#8e24aa)" onclick="selectBannerGrad(this)" style="background:linear-gradient(135deg,#4a0072,#8e24aa)"></button>
+          <button type="button" class="bn-grad-chip" data-grad="linear-gradient(135deg,#b71c1c,#e53935)" onclick="selectBannerGrad(this)" style="background:linear-gradient(135deg,#b71c1c,#e53935)"></button>
+          <button type="button" class="bn-grad-chip" data-grad="linear-gradient(135deg,#e65c00,#f9d423)" onclick="selectBannerGrad(this)" style="background:linear-gradient(135deg,#e65c00,#f9d423)"></button>
+          <button type="button" class="bn-grad-chip" data-grad="linear-gradient(135deg,#005c97,#363795)" onclick="selectBannerGrad(this)" style="background:linear-gradient(135deg,#005c97,#363795)"></button>
+        </div>
+        <input type="text" id="bn-gradient" class="mf-input" placeholder="or enter CSS gradient…" style="margin-top:8px" oninput="document.querySelectorAll('.bn-grad-chip').forEach(c=>c.classList.remove('active'))">
+      </div>
+
+      <!-- Product image shown on banner -->
+      <div class="mf-group">
+        <label class="mf-label">Banner Image URL <span style="font-weight:400;color:var(--muted);font-size:11px">(optional — auto-picked from product if blank)</span></label>
+        <input type="text" id="bn-img-url" class="mf-input" placeholder="https://…">
+      </div>
+
+      <!-- Sort order -->
+      <div class="mf-group">
+        <label class="mf-label">Sort Order</label>
+        <input type="number" id="bn-order" class="mf-input" placeholder="0 = first" min="0" step="1" value="0">
+      </div>
+
+      <!-- Active toggle -->
+      <div class="mf-group" style="display:flex;align-items:center;justify-content:space-between">
+        <label class="mf-label" style="margin:0">Active (visible on storefront)</label>
+        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+          <input type="checkbox" id="bn-active" checked style="opacity:0;width:0;height:0">
+          <span style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s" id="bn-toggle-track"></span>
+          <span style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)" id="bn-toggle-thumb"></span>
+        </label>
+      </div>
+
+      <!-- Live preview -->
+      <div class="mf-group">
+        <label class="mf-label">Preview</label>
+        <div id="bn-preview" style="border-radius:12px;overflow:hidden;aspect-ratio:2/1;min-height:120px;display:flex;align-items:center;padding:20px 24px;gap:16px;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);position:relative">
+          <div style="flex:1;z-index:1">
+            <div id="bp-badge" style="display:inline-block;background:rgba(255,255,255,.18);color:#fff;font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 10px;border-radius:20px;margin-bottom:8px;text-transform:uppercase">New Arrival</div>
+            <div id="bp-title" style="font-family:Sora,sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:4px">Banner Title</div>
+            <div id="bp-sub" style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:10px"></div>
+            <div style="display:inline-block;background:#fff;color:#111;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px" id="bp-btn">Shop Now</div>
+          </div>
+          <div id="bp-img-wrap" style="position:absolute;right:0;top:0;bottom:0;width:45%;overflow:hidden;opacity:.85"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeBannerModal()">Cancel</button>
+      <button class="btn-primary" id="btn-save-banner" onclick="saveBanner()"><i class="fa-solid fa-floppy-disk"></i> Save Banner</button>
+    </div>
   </div>
 </div>
 
@@ -808,10 +969,11 @@ function cldThumb(u, t='f_auto,q_auto,w_200'){ return u ? u.replace('/upload/',`
 ═══════════════════════════════════════════════ */
 const APP = {
   user:null, role:null,
-  products:{}, orders:{}, admins:{},
+  products:{}, orders:{}, admins:{}, banners:{},
   deleteTarget:null,
-  activeOrderId:null,   /* order currently open in detail modal */
-  orderFilter:'all'     /* active status tab */
+  activeOrderId:null,
+  orderFilter:'all',
+  editBannerId:null
 };
 
 /* ═══════════════════════════════════════════════
@@ -835,7 +997,7 @@ function showSection(name){
   document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
   document.querySelectorAll('.sb-link').forEach(l=>l.classList.toggle('active',l.dataset.section===name));
-  const T={overview:'Overview',products:'Products',orders:'Orders',admins:'Admin Management'};
+  const T={overview:'Overview',products:'Products',orders:'Orders',banners:'Banner Manager',admins:'Admin Management'};
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
 }
@@ -912,6 +1074,11 @@ function attachProductsListener(){
   });
 }
 function attachOrdersListener(){
+  db.ref('banners').on('value', snap=>{
+    APP.banners = snap.val()||{};
+    renderBannerList();
+  });
+
   db.ref('orders').orderByChild('createdAt').on('value',snap=>{
     APP.orders=snap.val()||{};
     renderOrdersTable(); renderOverviewStats(); updateTabCounts();
@@ -1131,7 +1298,234 @@ function resetVariantsEditor() {
   document.getElementById('variant-types-wrap').innerHTML = '';
   _vtCount = 0; _vvCount = 0;
 }
-  /* No API Secret — only cloud name + unsigned preset
+  /* ═══════════════════════════════════════════════
+   BANNER MANAGER
+═══════════════════════════════════════════════ */
+
+function renderBannerList() {
+  const el = document.getElementById('banner-list');
+  if (!el) return;
+  const entries = Object.entries(APP.banners).sort(([,a],[,b]) => (a.order||0)-(b.order||0));
+  if (!entries.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🖼️</div><p>No banners yet. Add one to get started.</p></div>`;
+    return;
+  }
+  el.innerHTML = entries.map(([id, b]) => {
+    const grad = b.gradient || 'linear-gradient(135deg,#0f2027,#2c5364)';
+    const actionLabel = {
+      product:'Product → '+esc(b.productTitle||b.productId||'?'),
+      category:'Category → '+esc(b.category||'?'),
+      new_arrivals:'New Arrivals',
+      featured:'Featured',
+      all:'All Products'
+    }[b.actionType] || '—';
+    return `<div class="banner-row">
+      <div class="banner-thumb">
+        <div class="banner-thumb-bg" style="background:${grad}">
+          ${b.imageUrl ? `<img src="${esc(b.imageUrl)}" style="width:100%;height:100%;object-fit:cover" alt="">` : '<span style="font-size:20px">🖼️</span>'}
+        </div>
+      </div>
+      <div class="banner-row-info">
+        <div class="banner-row-title">${esc(b.title||'Untitled')}</div>
+        <div class="banner-row-meta">${esc(b.badge||'')}${b.badge&&actionLabel?' · ':''}${actionLabel} · Order: ${b.order||0}</div>
+      </div>
+      <span class="banner-status ${b.active?'on':'off'}">${b.active?'Live':'Off'}</span>
+      <div class="action-cell">
+        <button class="btn-edit btn-sm" onclick="openBannerModal('${esc(id)}')"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="btn-danger btn-sm" onclick="deleteBanner('${esc(id)}','${esc(b.title||'')}')"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openBannerModal(id) {
+  APP.editBannerId = id || null;
+  document.getElementById('modal-banner-title').textContent = id ? 'Edit Banner' : 'Add Banner';
+  document.getElementById('edit-banner-id').value = id || '';
+
+  // Populate product dropdown
+  const sel = document.getElementById('bn-product-id');
+  sel.innerHTML = '<option value="">— choose product —</option>' +
+    Object.entries(APP.products).map(([pid, p]) =>
+      `<option value="${esc(pid)}">${esc(p.title||pid)}</option>`
+    ).join('');
+
+  if (id && APP.banners[id]) {
+    const b = APP.banners[id];
+    document.getElementById('bn-badge').value     = b.badge || '';
+    document.getElementById('bn-title').value     = b.title || '';
+    document.getElementById('bn-subtitle').value  = b.subtitle || '';
+    document.getElementById('bn-btn-label').value = b.btnLabel || 'Shop Now';
+    document.getElementById('bn-action-type').value = b.actionType || 'product';
+    document.getElementById('bn-product-id').value  = b.productId || '';
+    document.getElementById('bn-category').value    = b.category || '';
+    document.getElementById('bn-gradient').value    = '';
+    document.getElementById('bn-img-url').value   = b.imageUrl || '';
+    document.getElementById('bn-order').value     = b.order ?? 0;
+    document.getElementById('bn-active').checked  = b.active !== false;
+
+    // Restore gradient chip selection
+    document.querySelectorAll('.bn-grad-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.grad === b.gradient);
+    });
+    if (b.gradient && !document.querySelector('.bn-grad-chip.active')) {
+      document.getElementById('bn-gradient').value = b.gradient;
+    }
+
+    // Restore cat chip
+    document.querySelectorAll('.bn-cat-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.cat === b.category);
+    });
+  } else {
+    // Defaults for new banner
+    ['bn-badge','bn-title','bn-subtitle','bn-category','bn-gradient','bn-img-url'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('bn-btn-label').value = 'Shop Now';
+    document.getElementById('bn-order').value = Object.keys(APP.banners).length;
+    document.getElementById('bn-active').checked = true;
+    document.getElementById('bn-action-type').value = 'product';
+    document.querySelectorAll('.bn-grad-chip').forEach((c,i) => c.classList.toggle('active', i===0));
+    document.querySelectorAll('.bn-cat-chip').forEach((c,i) => c.classList.toggle('active', i===0));
+  }
+
+  onBannerActionChange();
+  updateBannerPreview();
+  document.getElementById('modal-banner').classList.add('open');
+
+  // Live preview listeners
+  ['bn-badge','bn-title','bn-subtitle','bn-btn-label','bn-img-url','bn-gradient'].forEach(fid => {
+    const el = document.getElementById(fid);
+    if (el) el.oninput = updateBannerPreview;
+  });
+  document.getElementById('bn-action-type').onchange = () => { onBannerActionChange(); updateBannerPreview(); };
+  document.getElementById('bn-active').onchange = () => {
+    const chk = document.getElementById('bn-active').checked;
+    document.getElementById('bn-toggle-track').style.background = chk ? 'var(--green)' : '#ccc';
+    document.getElementById('bn-toggle-thumb').style.left = chk ? '23px' : '3px';
+  };
+  // Init toggle visual
+  const chk = document.getElementById('bn-active').checked;
+  document.getElementById('bn-toggle-track').style.background = chk ? 'var(--green)' : '#ccc';
+  document.getElementById('bn-toggle-thumb').style.left = chk ? '23px' : '3px';
+}
+
+function closeBannerModal() {
+  document.getElementById('modal-banner').classList.remove('open');
+  APP.editBannerId = null;
+}
+
+function onBannerActionChange() {
+  const type = document.getElementById('bn-action-type').value;
+  document.getElementById('bn-product-wrap').style.display  = type === 'product'  ? '' : 'none';
+  document.getElementById('bn-category-wrap').style.display = type === 'category' ? '' : 'none';
+}
+
+function selectBannerCat(btn) {
+  document.querySelectorAll('.bn-cat-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('bn-category').value = btn.dataset.cat;
+  updateBannerPreview();
+}
+
+function selectBannerGrad(btn) {
+  document.querySelectorAll('.bn-grad-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('bn-gradient').value = '';
+  updateBannerPreview();
+}
+
+function _getSelectedGradient() {
+  const manual = document.getElementById('bn-gradient').value.trim();
+  if (manual) return manual;
+  const chip = document.querySelector('.bn-grad-chip.active');
+  return chip ? chip.dataset.grad : 'linear-gradient(135deg,#0f2027,#2c5364)';
+}
+
+function updateBannerPreview() {
+  const grad    = _getSelectedGradient();
+  const badge   = document.getElementById('bn-badge').value  || 'New Arrival';
+  const title   = document.getElementById('bn-title').value  || 'Banner Title';
+  const sub     = document.getElementById('bn-subtitle').value;
+  const btnTxt  = document.getElementById('bn-btn-label').value || 'Shop Now';
+  const imgUrl  = document.getElementById('bn-img-url').value.trim();
+
+  document.getElementById('bn-preview').style.background  = grad;
+  document.getElementById('bp-badge').textContent  = badge;
+  document.getElementById('bp-title').textContent  = title;
+  document.getElementById('bp-sub').textContent    = sub;
+  document.getElementById('bp-btn').textContent    = btnTxt;
+
+  const wrap = document.getElementById('bp-img-wrap');
+  if (imgUrl) {
+    wrap.innerHTML = `<img src="${esc(imgUrl)}" style="width:100%;height:100%;object-fit:contain;padding:8px" alt="">`;
+  } else {
+    // Try to auto-pick from selected product
+    const pid = document.getElementById('bn-product-id').value;
+    const prod = pid ? APP.products[pid] : null;
+    wrap.innerHTML = prod?.imageUrl
+      ? `<img src="${esc(prod.imageUrl)}" style="width:100%;height:100%;object-fit:contain;padding:8px" alt="">`
+      : '';
+  }
+}
+
+async function saveBanner() {
+  const title = document.getElementById('bn-title').value.trim();
+  if (!title) { showToast('Title is required.','error'); return; }
+
+  const actionType = document.getElementById('bn-action-type').value;
+  let productId = '', productTitle = '', category = '';
+  if (actionType === 'product') {
+    productId = document.getElementById('bn-product-id').value;
+    if (!productId) { showToast('Select a product.','error'); return; }
+    productTitle = APP.products[productId]?.title || '';
+  } else if (actionType === 'category') {
+    category = document.getElementById('bn-category').value.trim() ||
+               (document.querySelector('.bn-cat-chip.active')?.dataset.cat || '');
+    if (!category) { showToast('Select or enter a category.','error'); return; }
+  }
+
+  const payload = {
+    badge:      document.getElementById('bn-badge').value.trim(),
+    title,
+    subtitle:   document.getElementById('bn-subtitle').value.trim(),
+    btnLabel:   document.getElementById('bn-btn-label').value.trim() || 'Shop Now',
+    actionType,
+    productId,
+    productTitle,
+    category,
+    gradient:   _getSelectedGradient(),
+    imageUrl:   document.getElementById('bn-img-url').value.trim(),
+    order:      parseInt(document.getElementById('bn-order').value)||0,
+    active:     document.getElementById('bn-active').checked,
+    updatedAt:  Date.now(),
+  };
+
+  const btn = setBtnLoading('btn-save-banner');
+  try {
+    const id = APP.editBannerId;
+    if (id) {
+      await db.ref('banners/'+id).update(payload);
+      showToast('Banner updated!','success');
+    } else {
+      payload.createdAt = Date.now();
+      await db.ref('banners').push(payload);
+      showToast('Banner added!','success');
+    }
+    closeBannerModal();
+  } catch(e) {
+    showToast('Error: '+e.message,'error');
+  } finally {
+    resetBtn(btn);
+  }
+}
+
+function deleteBanner(id, title) {
+  APP.deleteTarget = { type:'banner', id, label:title };
+  document.getElementById('delete-label').textContent = `banner "${title}"`;
+  document.getElementById('modal-delete').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════
+   No API Secret — only cloud name + unsigned preset
 ═══════════════════════════════════════════════ */
 /* ═══════════════════════════════════════════════
    MULTI-IMAGE GALLERY
@@ -1776,6 +2170,7 @@ async function executeDelete(){
     if(type==='product')await db.ref(`products/${id}`).remove();
     if(type==='order')  await db.ref(`orders/${id}`).remove();
     if(type==='admin')  await db.ref(`admins/${id}`).remove();
+    if(type==='banner') await db.ref(`banners/${id}`).remove();
     showToast(`${type.charAt(0).toUpperCase()+type.slice(1)} deleted.`,'success');
     closeDeleteModal();
   }catch(err){showToast('Delete failed: '+err.message,'error');}
