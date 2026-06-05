@@ -231,6 +231,62 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .upload-bar-txt{font-size:11px;color:var(--green);font-weight:600;margin-top:5px}
 .callout{border-radius:var(--radius-sm);padding:11px 14px;font-size:12px;font-weight:500;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
 
+/* ── PRODUCT STATUS FLAGS ── */
+.status-flags-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 0;
+}
+.flag-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  border: 2px solid var(--border); background: var(--bg);
+  cursor: pointer; transition: all .14s; font-size: 12px;
+  font-weight: 700; color: var(--text); text-align: left;
+  user-select: none;
+}
+.flag-btn .flag-icon { font-size: 16px; flex-shrink: 0; }
+.flag-btn .flag-label { flex: 1; font-size: 11px; font-weight: 700; letter-spacing: .2px; }
+.flag-toggle { width: 32px; height: 18px; border-radius: 9px; background: #d1d5db; position: relative; transition: background .15s; flex-shrink: 0; }
+.flag-toggle::after { content:''; position: absolute; left: 3px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.flag-btn.active .flag-toggle { background: var(--green); }
+.flag-btn.active .flag-toggle::after { left: 17px; }
+/* Per-flag active colours */
+.flag-btn.active.flag-hidden    { border-color: #6b7280; background: #f3f4f6; }
+.flag-btn.active.flag-hidden .flag-toggle { background: #6b7280; }
+.flag-btn.active.flag-coming    { border-color: #7c3aed; background: #f5f3ff; }
+.flag-btn.active.flag-coming .flag-toggle { background: #7c3aed; }
+.flag-btn.active.flag-oos       { border-color: #dc2626; background: #fff1f2; }
+.flag-btn.active.flag-oos .flag-toggle { background: #dc2626; }
+.flag-btn.active.flag-lowstock  { border-color: #d97706; background: #fffbeb; }
+.flag-btn.active.flag-lowstock .flag-toggle { background: #d97706; }
+.flag-btn.active.flag-newarrival{ border-color: var(--green); background: var(--green-light); }
+.flag-btn.active.flag-featured  { border-color: #2563eb; background: #eff6ff; }
+.flag-btn.active.flag-featured .flag-toggle { background: #2563eb; }
+.flag-btn.active.flag-sale      { border-color: #db2777; background: #fdf2f8; }
+.flag-btn.active.flag-sale .flag-toggle { background: #db2777; }
+
+/* ── QUICK VARIANT PRESETS ── */
+.preset-section { margin-top: 10px; }
+.preset-section-title { font-size: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.preset-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.preset-chip {
+  padding: 4px 11px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  font-size: 11px; font-weight: 700; cursor: pointer;
+  transition: all .13s; color: var(--text);
+}
+.preset-chip:hover { border-color: var(--green); color: var(--green); background: var(--green-light); }
+
+/* ── STATUS BADGE in products table ── */
+.flag-pill { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-weight:800; padding:2px 7px; border-radius:20px; letter-spacing:.3px; text-transform:uppercase; margin:1px; }
+.fp-hidden     { background:#f3f4f6; color:#6b7280; }
+.fp-coming     { background:#f5f3ff; color:#7c3aed; }
+.fp-oos        { background:#fff1f2; color:#dc2626; }
+.fp-low        { background:#fffbeb; color:#d97706; }
+.fp-new        { background:#f0fdf4; color:#16a34a; }
+.fp-feat       { background:#eff6ff; color:#2563eb; }
+.fp-sale       { background:#fdf2f8; color:#db2777; }
+
 /* ── BANNER MANAGER ── */
 .banner-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);transition:background .12s}
 .banner-row:last-child{border-bottom:none}
@@ -805,12 +861,92 @@ tbody td{padding:12px 16px;vertical-align:middle}
     <div class="modal-header"><div class="modal-hicon"><i class="fa-solid fa-box-open"></i></div><div class="modal-title" id="modal-prod-title">Add Product</div><button class="modal-close" onclick="closeProductModal()">&times;</button></div>
     <div class="modal-body">
       <input type="hidden" id="edit-prod-id">
-      <div class="mf-group"><label class="mf-label">Product Title *</label><input type="text" id="prod-title" class="mf-input" placeholder="e.g. iPhone 15 Pro Max 256GB"></div>
-      <div class="mf-group"><label class="mf-label">Description</label><textarea id="prod-desc" class="mf-textarea" placeholder="Brief description…"></textarea></div>
+
+      <!-- ① BASIC INFO -->
+      <div class="mf-group"><label class="mf-label"><i class="fa-solid fa-tag" style="color:var(--green)"></i> Product Title *</label><input type="text" id="prod-title" class="mf-input" placeholder="e.g. iPhone 17 Pro Max 256GB"></div>
+      <div class="mf-group"><label class="mf-label">Description</label><textarea id="prod-desc" class="mf-textarea" placeholder="Brief product description…" rows="3"></textarea></div>
+
+      <!-- ② CATEGORY -->
+      <div class="mf-group">
+        <label class="mf-label">Category</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="prod-category" class="mf-input" style="flex:1">
+            <option value="">— Select category —</option>
+            <option value="iphone">iPhone</option>
+            <option value="macbook">MacBook</option>
+            <option value="ipad">iPad</option>
+            <option value="airpods">AirPods</option>
+            <option value="watch">Apple Watch</option>
+            <option value="accessories">Accessories</option>
+            <option value="cases">Cases</option>
+            <option value="chargers">Chargers</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ③ STATUS FLAGS — 7 toggles in a 2-col grid -->
+      <div class="mf-group">
+        <label class="mf-label"><i class="fa-solid fa-sliders" style="color:var(--green)"></i> Product Status</label>
+        <div class="status-flags-grid">
+
+          <!-- Hidden from storefront -->
+          <button type="button" class="flag-btn flag-hidden" id="flag-hidden" onclick="toggleFlag('hidden')" title="Hidden products won't appear on the storefront">
+            <span class="flag-icon">🙈</span>
+            <span class="flag-label">Hidden<br><span style="font-weight:400;opacity:.7">Hide from storefront</span></span>
+            <span class="flag-toggle"></span>
+          </button>
+
+          <!-- Coming Soon -->
+          <button type="button" class="flag-btn flag-coming" id="flag-coming" onclick="toggleFlag('coming')" title="Show product with a Coming Soon badge instead of price">
+            <span class="flag-icon">⏳</span>
+            <span class="flag-label">Coming Soon<br><span style="font-weight:400;opacity:.7">No purchase yet</span></span>
+            <span class="flag-toggle"></span>
+          </button>
+
+          <!-- Out of Stock -->
+          <button type="button" class="flag-btn flag-oos" id="flag-oos" onclick="toggleFlag('oos')" title="Force out-of-stock regardless of quantity">
+            <span class="flag-icon">🚫</span>
+            <span class="flag-label">Out of Stock<br><span style="font-weight:400;opacity:.7">Disable Add to Cart</span></span>
+            <span class="flag-toggle"></span>
+          </button>
+
+          <!-- Low Stock Alert -->
+          <button type="button" class="flag-btn flag-lowstock" id="flag-lowstock" onclick="toggleFlag('lowstock')" title="Show a low stock warning badge">
+            <span class="flag-icon">⚠️</span>
+            <span class="flag-label">Low Stock Alert<br><span style="font-weight:400;opacity:.7">Show urgency badge</span></span>
+            <span class="flag-toggle"></span>
+          </button>
+
+          <!-- New Arrival -->
+          <button type="button" class="flag-btn flag-newarrival" id="flag-newarrival" onclick="toggleFlag('newarrival')" title="Show a New Arrival badge on this product">
+            <span class="flag-icon">🆕</span>
+            <span class="flag-label">New Arrival<br><span style="font-weight:400;opacity:.7">New badge on card</span></span>
+            <span class="flag-toggle"></span>
+          </button>
+
+          <!-- Featured -->
+          <button type="button" class="flag-btn flag-featured" id="flag-featured" onclick="toggleFlag('featured')" title="Show in Featured Products section on home page">
+            <span class="flag-icon">⭐</span>
+            <span class="flag-label">Featured<br><span style="font-weight:400;opacity:.7">Home page spotlight</span></span>
+            <span class="flag-toggle"></span>
+          </button>
+
+          <!-- On Sale -->
+          <button type="button" class="flag-btn flag-sale" id="flag-sale" onclick="toggleFlag('sale')" title="Show a Sale badge on this product">
+            <span class="flag-icon">🏷️</span>
+            <span class="flag-label">On Sale<br><span style="font-weight:400;opacity:.7">Show sale badge</span></span>
+            <span class="flag-toggle"></span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- ④ PRICING -->
       <div class="mf-row">
-        <div class="mf-group"><label class="mf-label">Price (USD) *</label><div style="position:relative"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none">$</span><input type="number" id="prod-price" class="mf-input" placeholder="0.00" min="0" step="0.01" style="padding-left:26px"></div></div>
+        <div class="mf-group"><label class="mf-label">Base Price (USD) *</label><div style="position:relative"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none">$</span><input type="number" id="prod-price" class="mf-input" placeholder="0.00" min="0" step="0.01" style="padding-left:26px"></div></div>
         <div class="mf-group"><label class="mf-label">Cost Price (USD)</label><div style="position:relative"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none">$</span><input type="number" id="prod-cost" class="mf-input" placeholder="0.00" min="0" step="0.01" style="padding-left:26px"></div></div>
       </div>
+
       <!-- Multi-Currency Prices -->
       <div class="mf-group">
         <label class="mf-label" style="display:flex;align-items:center;gap:6px"><i class="fa-solid fa-globe" style="color:var(--green)"></i> Prices by Currency</label>
@@ -829,20 +965,38 @@ tbody td{padding:12px 16px;vertical-align:middle}
               <div style="position:relative"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;pointer-events:none">₹</span><input type="number" id="prod-price-inr" class="mf-input" placeholder="0" min="0" step="1" style="padding:7px 8px 7px 22px;font-size:13px"></div>
             </div>
           </div>
-          <div style="padding:7px 12px;font-size:11px;color:var(--muted);line-height:1.4"><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:4px"></i>Set individual prices per currency. If left blank, the app will fall back to the USD price above.</div>
+          <div style="padding:7px 12px;font-size:11px;color:var(--muted);line-height:1.4"><i class="fa-solid fa-circle-info" style="color:var(--green);margin-right:4px"></i>Leave blank to fall back to the USD base price.</div>
         </div>
       </div>
+
+      <!-- ⑤ STOCK -->
       <div class="mf-group"><label class="mf-label">Stock Quantity *</label><input type="number" id="prod-stock" class="mf-input" placeholder="0" min="0" step="1"></div>
-      <!-- VARIANTS -->
+
+      <!-- ⑥ VARIANTS — with Quick Presets -->
       <div class="mf-group variants-section">
         <div class="variants-header">
-          <span class="mf-label" style="margin:0">Product Variants</span>
+          <span class="mf-label" style="margin:0"><i class="fa-solid fa-layer-group" style="color:var(--green)"></i> Product Variants</span>
           <button class="btn-add-opt-type" type="button" onclick="addVariantType()"><i class="fa-solid fa-plus"></i> Add Option</button>
         </div>
         <div class="variants-callout"><i class="fa-solid fa-circle-info" style="flex-shrink:0;margin-top:1px"></i><span>Add option types like <strong>Storage</strong>, <strong>Colour</strong>, <strong>RAM</strong> etc. Each value can have its own price and stock.</span></div>
-        <div id="variant-types-wrap"></div>
+
+        <!-- Quick Preset Buttons -->
+        <div class="preset-section">
+          <div class="preset-section-title">Quick add preset</div>
+          <div class="preset-chips">
+            <button type="button" class="preset-chip" onclick="addPresetVariant('storage')">💾 Storage</button>
+            <button type="button" class="preset-chip" onclick="addPresetVariant('color')">🎨 Colour</button>
+            <button type="button" class="preset-chip" onclick="addPresetVariant('version')">🌍 Version</button>
+            <button type="button" class="preset-chip" onclick="addPresetVariant('ram')">⚡ RAM</button>
+            <button type="button" class="preset-chip" onclick="addPresetVariant('size')">📐 Size</button>
+            <button type="button" class="preset-chip" onclick="addPresetVariant('connectivity')">📡 Connectivity</button>
+          </div>
+        </div>
+
+        <div id="variant-types-wrap" style="margin-top:10px"></div>
       </div>
 
+      <!-- ⑦ IMAGES -->
       <div class="mf-group">
         <label class="mf-label"><i class="fa-solid fa-images" style="color:var(--green)"></i> Product Images <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11px">(up to 6 &middot; first = main)</span></label>
         <div id="img-gallery-strip" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:0"></div>
@@ -1109,15 +1263,40 @@ function renderRecentProducts(){
   el.innerHTML=entries.map(([,p])=>{
     const src=p.imageUrl?cldThumb(p.imageUrl):'';
     const img=src?`<img src="${esc(src)}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`:'📦';
-    return `<li class="mini-prod-item"><div class="mini-thumb">${img}</div><div class="mini-info"><div class="mini-info-name">${esc(p.title||'—')}</div><div class="mini-info-price">$${Number(p.price||0).toFixed(2)}</div></div><span class="${sBadgeClass(p.stock)}">${sLabel(p.stock)}</span></li>`;
+    return `<li class="mini-prod-item"><div class="mini-thumb">${img}</div><div class="mini-info"><div class="mini-info-name">${esc(p.title||'—')}</div><div class="mini-info-price">$${Number(p.price||0).toFixed(2)}</div></div><span class="${sBadgeClass(p)}">${sLabel(p)}</span></li>`;
   }).join('');
 }
 
 /* ═══════════════════════════════════════════════
    ⑨ PRODUCTS CRUD
 ═══════════════════════════════════════════════ */
-function sBadgeClass(s){ const q=Number(s); if(q<=0)return'badge-stock out'; if(q<=5)return'badge-stock low'; return'badge-stock in'; }
-function sLabel(s){ const q=Number(s); if(q<=0)return'Out of Stock'; if(q<=5)return`Low (${q})`; return`In Stock (${q})`; }
+function sBadgeClass(p){
+  /* p can be a product object or a raw stock number (legacy calls) */
+  if (typeof p === 'object' && p !== null) {
+    if (p.isHidden)     return 'badge-stock out';
+    if (p.isComingSoon) return 'badge-stock';
+    if (p.isOOS)        return 'badge-stock out';
+    if (p.isLowStock)   return 'badge-stock low';
+    const q = Number(p.stock);
+    if (q <= 0) return 'badge-stock out';
+    if (q <= 5) return 'badge-stock low';
+    return 'badge-stock in';
+  }
+  const q = Number(p);
+  if (q <= 0) return 'badge-stock out'; if (q <= 5) return 'badge-stock low'; return 'badge-stock in';
+}
+function sLabel(p){
+  if (typeof p === 'object' && p !== null) {
+    if (p.isHidden)     return 'Hidden';
+    if (p.isComingSoon) return 'Coming Soon';
+    if (p.isOOS)        return 'Out of Stock';
+    if (p.isLowStock)   return `Low (${Number(p.stock)})`;
+    const q = Number(p.stock);
+    if (q <= 0) return 'Out of Stock'; if (q <= 5) return `Low (${q})`; return `In Stock (${q})`;
+  }
+  const q = Number(p);
+  if (q <= 0) return 'Out of Stock'; if (q <= 5) return `Low (${q})`; return `In Stock (${q})`;
+}
 
 function renderProductsTable(){
   const tbody=document.getElementById('prod-tbody');
@@ -1134,36 +1313,115 @@ function renderProductsTable(){
       ${p.priceAED?`<div style="font-size:11px;color:var(--muted)">AED ${Number(p.priceAED).toFixed(2)}</div>`:''}
       ${p.priceINR?`<div style="font-size:11px;color:var(--muted)">₹${Number(p.priceINR).toFixed(0)}</div>`:''}
     </div>`;
-    return `<tr><td><div class="prod-title-cell"><div class="prod-thumb-wrap">${img}</div><div class="prod-info-text"><div class="pt-name">${esc(p.title||'—')}</div><div class="pt-desc">${esc(p.description||'—')}</div></div></div></td><td>${priceHTML}</td><td class="hide-mobile">${Number(p.stock||0)}</td><td><span class="${sBadgeClass(p.stock)}">${sLabel(p.stock)}</span></td><td><div class="action-cell"><button class="btn-edit btn-sm" onclick="openProductModal('${esc(id)}')"><i class="fa-solid fa-pen"></i> Edit</button><button class="btn-danger btn-sm" onclick="promptDelete('product','${esc(id)}','${esc(p.title||'')}')"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+    /* Build status flag pills */
+    const flagPills = [
+      p.isHidden     ? '<span class="flag-pill fp-hidden">🙈 Hidden</span>'      : '',
+      p.isComingSoon ? '<span class="flag-pill fp-coming">⏳ Soon</span>'         : '',
+      p.isOOS        ? '<span class="flag-pill fp-oos">🚫 OOS</span>'             : '',
+      p.isLowStock   ? '<span class="flag-pill fp-low">⚠️ Low</span>'            : '',
+      p.isNewArrival ? '<span class="flag-pill fp-new">🆕 New</span>'             : '',
+      p.isFeatured   ? '<span class="flag-pill fp-feat">⭐ Featured</span>'       : '',
+      p.isOnSale     ? '<span class="flag-pill fp-sale">🏷️ Sale</span>'          : '',
+    ].filter(Boolean).join('');
+    return `<tr${p.isHidden?' style="opacity:.55"':''}>
+      <td><div class="prod-title-cell"><div class="prod-thumb-wrap">${img}</div>
+        <div class="prod-info-text">
+          <div class="pt-name">${esc(p.title||'—')}${p.category?` <span style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">${esc(p.category)}</span>`:''}</div>
+          <div style="margin-top:3px">${flagPills}</div>
+          <div class="pt-desc">${esc(p.description||'—')}</div>
+        </div>
+      </div></td>
+      <td>${priceHTML}</td>
+      <td class="hide-mobile">${Number(p.stock||0)}</td>
+      <td><span class="${sBadgeClass(p)}">${sLabel(p)}</span></td>
+      <td><div class="action-cell">
+        <button class="btn-edit btn-sm" onclick="openProductModal('${esc(id)}')"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="btn-danger btn-sm" onclick="promptDelete('product','${esc(id)}','${esc(p.title||'')}')"><i class="fa-solid fa-trash"></i></button>
+      </div></td></tr>`;
   }).join('');
 }
 function filterProductsTable(){ renderProductsTable(); }
 
+/* ── Flag state — boolean map, set/reset per modal open ── */
+const _FLAGS = { hidden:false, coming:false, oos:false, lowstock:false, newarrival:false, featured:false, sale:false };
+
+function toggleFlag(key) {
+  _FLAGS[key] = !_FLAGS[key];
+  const btn = document.getElementById('flag-' + key);
+  if (btn) btn.classList.toggle('active', _FLAGS[key]);
+}
+
+function setFlag(key, val) {
+  _FLAGS[key] = !!val;
+  const btn = document.getElementById('flag-' + key);
+  if (btn) btn.classList.toggle('active', _FLAGS[key]);
+}
+
+function resetFlags() {
+  Object.keys(_FLAGS).forEach(k => setFlag(k, false));
+}
+
+/* ── Preset variant definitions ── */
+const VARIANT_PRESETS = {
+  storage:     { name: 'Storage',       values: ['256GB', '512GB', '1TB'] },
+  color:       { name: 'Colour',        values: ['Black', 'Silver', 'Blue', 'White', 'Natural Titanium', 'Desert Titanium'] },
+  version:     { name: 'Version',       values: ['TDRA', 'LLA', 'JP', 'ZA/A', 'LL/A'] },
+  ram:         { name: 'RAM',           values: ['8GB', '16GB', '32GB', '64GB'] },
+  size:        { name: 'Size',          values: ['13"', '14"', '15"', '16"'] },
+  connectivity:{ name: 'Connectivity',  values: ['Wi-Fi', 'Wi-Fi + Cellular'] },
+};
+
+function addPresetVariant(presetKey) {
+  const preset = VARIANT_PRESETS[presetKey];
+  if (!preset) return;
+  /* If this option type already exists in the editor, don't add duplicate */
+  const existing = [...document.querySelectorAll('.opt-type-name')]
+    .find(el => el.value.toLowerCase().trim() === preset.name.toLowerCase());
+  if (existing) { showToast(`"${preset.name}" already added.`, 'info'); return; }
+  addVariantType(preset.name, preset.values.map(v => ({ label: v, price: '', stock: '' })));
+}
+
 function openProductModal(id=null){
   resetProductForm();
-  if(id&&APP.products[id]){
-    const p=APP.products[id];
-    document.getElementById('modal-prod-title').textContent='Edit Product';
-    document.getElementById('edit-prod-id').value=id;
-    document.getElementById('prod-title').value=p.title||'';
-    document.getElementById('prod-desc').value=p.description||'';
-    document.getElementById('prod-price').value=p.price||'';
-    document.getElementById('prod-cost').value=p.costPrice||'';
-    document.getElementById('prod-stock').value=p.stock||'';
-    document.getElementById('prod-price-usd').value=p.priceUSD||'';
-    document.getElementById('prod-price-aed').value=p.priceAED||'';
-    document.getElementById('prod-price-inr').value=p.priceINR||'';
+  if(id && APP.products[id]){
+    const p = APP.products[id];
+    document.getElementById('modal-prod-title').textContent = 'Edit Product';
+    document.getElementById('edit-prod-id').value = id;
+    document.getElementById('prod-title').value   = p.title || '';
+    document.getElementById('prod-desc').value    = p.description || '';
+    document.getElementById('prod-price').value   = p.price || '';
+    document.getElementById('prod-cost').value    = p.costPrice || '';
+    document.getElementById('prod-stock').value   = p.stock || '';
+    document.getElementById('prod-price-usd').value = p.priceUSD || '';
+    document.getElementById('prod-price-aed').value = p.priceAED || '';
+    document.getElementById('prod-price-inr').value = p.priceINR || '';
+    /* category */
+    const catEl = document.getElementById('prod-category');
+    if (catEl) catEl.value = p.category || '';
+    /* restore flags */
+    resetFlags();
+    if (p.isHidden)     setFlag('hidden',    true);
+    if (p.isComingSoon) setFlag('coming',    true);
+    if (p.isOOS)        setFlag('oos',       true);
+    if (p.isLowStock)   setFlag('lowstock',  true);
+    if (p.isNewArrival) setFlag('newarrival',true);
+    if (p.isFeatured)   setFlag('featured',  true);
+    if (p.isOnSale)     setFlag('sale',      true);
     loadGalleryFromProduct(p);
     loadVariantsIntoEditor(p.variants || []);
-  }else{
-    document.getElementById('modal-prod-title').textContent='Add Product';
-    document.getElementById('edit-prod-id').value='';
+  } else {
+    document.getElementById('modal-prod-title').textContent = 'Add Product';
+    document.getElementById('edit-prod-id').value = '';
+    resetFlags();
   }
   document.getElementById('modal-product').classList.add('open');
 }
 function closeProductModal(){ document.getElementById('modal-product').classList.remove('open'); resetProductForm(); }
 function resetProductForm(){
   ['edit-prod-id','prod-title','prod-desc','prod-price','prod-cost','prod-stock','prod-price-usd','prod-price-aed','prod-price-inr'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  const catEl = document.getElementById('prod-category');
+  if (catEl) catEl.value = '';
+  if (typeof resetFlags === 'function') resetFlags();
   resetVariantsEditor();
   resetGallery();
 }
@@ -1184,7 +1442,21 @@ async function saveProduct(){
     const allUrls = _IMGS.map(img => img.url).filter(Boolean);
     const imgUrl  = allUrls[0] || '';
     const extraUrls = allUrls.slice(1);
-    const payload={title,description:desc,price,costPrice:cost,stock,imageUrl:imgUrl,imageUrls:extraUrls.length?extraUrls:null,updatedAt:Date.now()};
+    const category = (document.getElementById('prod-category')?.value || '').trim();
+    const payload={
+      title, description:desc, price, costPrice:cost, stock,
+      category: category || null,
+      imageUrl:imgUrl, imageUrls:extraUrls.length?extraUrls:null,
+      updatedAt:Date.now(),
+      /* Status flags — stored as booleans, null when false to keep DB clean */
+      isHidden:     _FLAGS.hidden     || null,
+      isComingSoon: _FLAGS.coming     || null,
+      isOOS:        _FLAGS.oos        || null,
+      isLowStock:   _FLAGS.lowstock   || null,
+      isNewArrival: _FLAGS.newarrival || null,
+      isFeatured:   _FLAGS.featured   || null,
+      isOnSale:     _FLAGS.sale       || null,
+    };
     /* Multi-currency prices */
     const priceUSD=parseFloat(document.getElementById('prod-price-usd').value)||null;
     const priceAED=parseFloat(document.getElementById('prod-price-aed').value)||null;
