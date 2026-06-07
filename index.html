@@ -3636,14 +3636,36 @@ async function deleteDealer(id, name) {
 
 /* ─── CUSTOMER MANAGEMENT ────────────────────────────────── */
 function buildCustomerList() {
-  const orders = Object.values(APP.orders||{});
+  const orders = Object.entries(APP.orders||{});
   const map = {};
-  orders.forEach(o => {
-    const email = o.email || o.customerEmail || 'unknown';
-    if (!map[email]) map[email] = { name: o.customerName||o.name||'—', email, phone: o.phone||'—', orders:0, spent:0, lastTs:0 };
-    map[email].orders++;
-    map[email].spent += Number(o.total||0);
-    if ((o.createdAt||0) > map[email].lastTs) map[email].lastTs = o.createdAt||0;
+  orders.forEach(([oid, o]) => {
+    /* Group by phone (most reliable unique key from client orders).
+       Fall back to name, then userId, then order id. */
+    const phone = o.customerPhone || o.whatsapp || o.phone || '';
+    const name  = o.customerName  || o.userName || o.name || 'Unknown';
+    /* Key: prefer phone, else name (normalised) */
+    const key = phone.replace(/\D/g,'') || name.toLowerCase().trim() || oid;
+    if (!map[key]) {
+      map[key] = {
+        name,
+        phone,
+        email:    o.email || o.customerEmail || '—',
+        country:  o.customerCountry || o.country || '—',
+        userId:   o.userId || o.createdBy || '',
+        orders:   0,
+        spent:    0,
+        currency: o.currency || 'USD',
+        lastTs:   0,
+        orderIds: []
+      };
+    }
+    map[key].orders++;
+    map[key].spent += Number(o.total||0);
+    map[key].orderIds.push(oid);
+    if ((o.createdAt||0) > map[key].lastTs) {
+      map[key].lastTs   = o.createdAt||0;
+      map[key].currency = o.currency || map[key].currency;
+    }
   });
   return Object.values(map);
 }
@@ -3651,24 +3673,63 @@ function buildCustomerList() {
 function renderCustomerTable(filter = '') {
   const tbody = document.getElementById('customer-tbody');
   if (!tbody) return;
+  const ql = (filter||'').toLowerCase();
   const list = buildCustomerList().filter(c =>
-    !filter || c.name.toLowerCase().includes(filter) || c.email.toLowerCase().includes(filter));
+    !ql ||
+    c.name.toLowerCase().includes(ql) ||
+    c.phone.includes(ql) ||
+    c.email.toLowerCase().includes(ql) ||
+    c.country.toLowerCase().includes(ql)
+  );
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>No customer data yet.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>No customers yet. Orders placed from the storefront will appear here.</p></div></td></tr>`;
     return;
   }
-  list.sort((a,b)=>b.spent-a.spent);
-  tbody.innerHTML = list.map(c => `<tr>
-    <td><div style="font-weight:700">${esc(c.name)}</div></td>
-    <td><div>${esc(c.email)}</div><div style="font-size:11px;color:var(--muted)">${esc(c.phone)}</div></td>
-    <td style="font-weight:700;text-align:center">${c.orders}</td>
-    <td style="font-weight:700;color:var(--green)">$${c.spent.toFixed(2)}</td>
-    <td style="font-size:12px;color:var(--muted)">${fmtDate(c.lastTs)}</td>
-    <td><button class="btn-ghost btn-sm" onclick="showSection('orders')"><i class="fa-solid fa-eye"></i> Orders</button></td>
-  </tr>`).join('');
+  list.sort((a,b) => b.lastTs - a.lastTs);
+  const SYMS = { USD:'$', AED:'AED ', INR:'₹', GBP:'£', EUR:'€' };
+  tbody.innerHTML = list.map(c => {
+    const sym = SYMS[(c.currency||'USD').toUpperCase()] || '$';
+    /* Avatar initials */
+    const initials = c.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase() || '?';
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">${initials}</div>
+          <div>
+            <div style="font-weight:700;font-size:13px">${esc(c.name)}</div>
+            <div style="font-size:11px;color:var(--muted)">${esc(c.country)}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div style="font-size:12px">${esc(c.phone||'—')}</div>
+        <div style="font-size:11px;color:var(--muted)">${esc(c.email==='—'?'':c.email)}</div>
+      </td>
+      <td style="font-weight:700;text-align:center;color:var(--text)">${c.orders}</td>
+      <td style="font-weight:800;color:var(--green);font-size:13px">${sym}${Number(c.spent).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="font-size:12px;color:var(--muted)">${fmtDate(c.lastTs)}</td>
+      <td>
+        <button class="btn-ghost btn-sm" onclick="filterOrdersByCustomer('${esc(c.phone||c.name)}')">
+          <i class="fa-solid fa-eye"></i> Orders
+        </button>
+        ${c.phone ? `<a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank" class="btn-ghost btn-sm" style="margin-left:4px;color:#25D366;border-color:#25D366">
+          <i class="fa-brands fa-whatsapp"></i>
+        </a>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function filterCustomers(q) { renderCustomerTable(q.toLowerCase()); }
+
+/* Jump to Orders tab pre-filtered to this customer */
+function filterOrdersByCustomer(phoneOrName) {
+  showSection('orders');
+  setTimeout(() => {
+    const input = document.querySelector('#section-orders .search-input');
+    if (input) { input.value = phoneOrName; input.dispatchEvent(new Event('input')); }
+  }, 100);
+}
 
 /* ─── WAREHOUSE SYSTEM ───────────────────────────────────── */
 let _warehouseListenerAttached = false;
