@@ -39,9 +39,29 @@ input,textarea,select{font-family:var(--font-body)}
 
 
 /* ── LOADER ── */
-#loader{position:fixed;inset:0;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:9999;transition:opacity 0.4s}
+#loader{position:fixed;inset:0;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:9999;transition:opacity 0.4s}
 .spin-ring{width:40px;height:40px;border:3px solid var(--green-light);border-top-color:var(--green);border-radius:50%;animation:spin 0.75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Cart preloader animation */
+.admin-preloader{text-align:center;max-width:20em;width:100%}
+.admin-preloader__text{position:relative;height:1.5em;color:var(--green);font-weight:700;font-size:13px;margin-top:8px;font-family:var(--font-head)}
+.admin-preloader__msg{animation:adminPreloaderMsg 0.3s 1.4s linear forwards;position:absolute;width:100%}
+.admin-preloader__msg--last{animation-direction:reverse;animation-delay:1.6s;visibility:hidden;font-weight:400}
+@keyframes adminPreloaderMsg{from{opacity:1;visibility:visible}99.9%{opacity:0;visibility:visible}to{opacity:0;visibility:hidden}}
+.Lcart-admin{display:block;margin:0 auto;width:72px;height:72px}
+.cart__lines,.cart__top,.cart__wheel1,.cart__wheel2,.cart__wheel-stroke{animation:cartLines 2s ease-in-out infinite}
+.cart__lines{stroke:var(--green)}
+.cart__top{animation-name:cartTop}
+.cart__wheel1{animation-name:cartWheel1;transform:rotate(-0.25turn);transform-origin:43px 111px}
+.cart__wheel2{animation-name:cartWheel2;transform:rotate(0.25turn);transform-origin:102px 111px}
+.cart__wheel-stroke{animation-name:cartWheelStroke}
+.cart__track-admin{stroke:var(--green-light)}
+@keyframes cartLines{from,to{opacity:0}8%,92%{opacity:1}}
+@keyframes cartTop{from{stroke-dashoffset:-338}50%{stroke-dashoffset:0}to{stroke-dashoffset:338}}
+@keyframes cartWheel1{from{transform:rotate(-0.25turn)}to{transform:rotate(2.75turn)}}
+@keyframes cartWheel2{from{transform:rotate(0.25turn)}to{transform:rotate(3.25turn)}}
+@keyframes cartWheelStroke{from,to{stroke-dashoffset:81.68}50%{stroke-dashoffset:40.84}}
 .loader-brand{font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--green)}
 .loader-brand em{color:var(--text);font-style:normal}
 .loader-sub{font-size:12px;color:var(--muted)}
@@ -802,7 +822,34 @@ tbody td{padding:12px 16px;vertical-align:middle}
 </style>
 </head>
 <body>
-<!-- LOADER --><div id="loader"><div class="spin-ring"></div><div class="loader-brand">i<em>Alfonex</em></div><div class="loader-sub">Loading Admin Panel…</div></div>
+<!-- LOADER -->
+<div id="loader">
+  <div class="admin-preloader">
+    <svg class="Lcart-admin" role="img" aria-label="Loading" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="8">
+        <g class="cart__track-admin">
+          <polyline points="4,4 21,4 26,22 124,22 112,64 35,64 39,80 106,80"/>
+          <circle cx="43" cy="111" r="13"/>
+          <circle cx="102" cy="111" r="13"/>
+        </g>
+        <g class="cart__lines" stroke="currentColor">
+          <polyline class="cart__top" points="4,4 21,4 26,22 124,22 112,64 35,64 39,80 106,80" stroke-dasharray="338 338" stroke-dashoffset="-338"/>
+          <g class="cart__wheel1" transform="rotate(-90,43,111)">
+            <circle class="cart__wheel-stroke" cx="43" cy="111" r="13" stroke-dasharray="81.68 81.68" stroke-dashoffset="81.68"/>
+          </g>
+          <g class="cart__wheel2" transform="rotate(90,102,111)">
+            <circle class="cart__wheel-stroke" cx="102" cy="111" r="13" stroke-dasharray="81.68 81.68" stroke-dashoffset="81.68"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+    <div class="loader-brand" style="margin-top:10px">i<em>Alfonex</em></div>
+    <div class="admin-preloader__text">
+      <p class="admin-preloader__msg">Loading Admin Panel…</p>
+      <p class="admin-preloader__msg admin-preloader__msg--last">Almost there</p>
+    </div>
+  </div>
+</div>
 <!-- TOAST --><div id="toast"></div>
 
 <!-- ══ LOGIN ══ -->
@@ -929,10 +976,12 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <div class="table-card">
         <div class="filter-tabs" id="order-filter-tabs">
           <button class="filter-tab active" data-status="all" onclick="setOrderFilter('all')">All <span class="tab-count" id="tc-all">0</span></button>
-          <button class="filter-tab" data-status="Pending" onclick="setOrderFilter('Pending')"><i class="fa-solid fa-hourglass-half"></i> Pending <span class="tab-count" id="tc-pending">0</span></button>
-          <button class="filter-tab" data-status="Packed" onclick="setOrderFilter('Packed')"><i class="fa-solid fa-box"></i> Packed <span class="tab-count" id="tc-packed">0</span></button>
-          <button class="filter-tab" data-status="Shipped" onclick="setOrderFilter('Shipped')"><i class="fa-solid fa-truck"></i> Shipped <span class="tab-count" id="tc-shipped">0</span></button>
-          <button class="filter-tab" data-status="Delivered" onclick="setOrderFilter('Delivered')"><i class="fa-solid fa-circle-check"></i> Delivered <span class="tab-count" id="tc-delivered">0</span></button>
+          <button class="filter-tab" data-status="Pending"    onclick="setOrderFilter('Pending')"><i class="fa-solid fa-hourglass-half"></i> Pending <span class="tab-count" id="tc-pending">0</span></button>
+          <button class="filter-tab" data-status="Packed"     onclick="setOrderFilter('Packed')"><i class="fa-solid fa-box"></i> Packed <span class="tab-count" id="tc-packed">0</span></button>
+          <button class="filter-tab" data-status="Dispatched" onclick="setOrderFilter('Dispatched')"><i class="fa-solid fa-truck-fast"></i> Dispatched <span class="tab-count" id="tc-dispatched">0</span></button>
+          <button class="filter-tab" data-status="Shipped"    onclick="setOrderFilter('Shipped')"><i class="fa-solid fa-truck"></i> Shipped <span class="tab-count" id="tc-shipped">0</span></button>
+          <button class="filter-tab" data-status="In Transit" onclick="setOrderFilter('In Transit')"><i class="fa-solid fa-plane"></i> In Transit <span class="tab-count" id="tc-transit">0</span></button>
+          <button class="filter-tab" data-status="Delivered"  onclick="setOrderFilter('Delivered')"><i class="fa-solid fa-circle-check"></i> Delivered <span class="tab-count" id="tc-delivered">0</span></button>
         </div>
         <div class="table-topbar"><div class="table-topbar-title" id="order-table-label">All Orders</div><div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="order-search" placeholder="Customer / Order ID…" oninput="renderOrdersTable()"></div></div>
         <div class="table-wrap"><table>
@@ -2735,13 +2784,40 @@ function resetGallery() {
 /* ═══════════════════════════════════════════════
    ⑪ ORDER MANAGEMENT — CONSTANTS & BADGES
 ═══════════════════════════════════════════════ */
-const ORDER_STATUSES=['Pending','Packed','Shipped','Delivered'];
-const STATUS_ICONS={Pending:'fa-hourglass-half',Packed:'fa-box',Shipped:'fa-truck',Delivered:'fa-circle-check'};
-const STATUS_TS={Packed:'packed_at',Shipped:'shipped_at',Delivered:'delivered_at'};
+const ORDER_STATUSES=['Pending','Packed','Dispatched','Shipped','In Transit','Delivered'];
+const STATUS_ICONS={
+  Pending:'fa-hourglass-half',
+  Packed:'fa-box',
+  Dispatched:'fa-truck-fast',
+  Shipped:'fa-truck',
+  'In Transit':'fa-plane',
+  Delivered:'fa-circle-check'
+};
+const STATUS_COLORS={
+  Pending:'#f59e0b',
+  Packed:'#3b82f6',
+  Dispatched:'#8b5cf6',
+  Shipped:'#06b6d4',
+  'In Transit':'#6366f1',
+  Delivered:'#16a34a'
+};
+const STATUS_TS={
+  Packed:'packed_at',
+  Dispatched:'dispatched_at',
+  Shipped:'shipped_at',
+  'In Transit':'transit_at',
+  Delivered:'delivered_at'
+};
 
 function orderBadge(status){
-  const cls={Pending:'pending',Packed:'packed',Shipped:'shipped',Delivered:'delivered',Cancelled:'cancelled'};
-  return `<span class="badge-order ${cls[status]||''}"><i class="fa-solid ${STATUS_ICONS[status]||'fa-circle'}"></i> ${esc(status)}</span>`;
+  const cls={
+    Pending:'pending', Packed:'packed',
+    Dispatched:'shipped', Shipped:'shipped',
+    'In Transit':'shipped', Delivered:'delivered', Cancelled:'cancelled'
+  };
+  return `<span class="badge-order ${cls[status]||'pending'}">
+    <i class="fa-solid ${STATUS_ICONS[status]||'fa-circle'}"></i> ${esc(status)}
+  </span>`;
 }
 function payBadge(s){
   const cls={Paid:'paid',Partial:'partial',Unpaid:'unpaid'};
@@ -2759,10 +2835,12 @@ function setOrderFilter(s){
 function updateTabCounts(){
   const O=Object.values(APP.orders);
   document.getElementById('tc-all').textContent=O.length;
-  document.getElementById('tc-pending').textContent=O.filter(o=>o.status==='Pending').length;
-  document.getElementById('tc-packed').textContent=O.filter(o=>o.status==='Packed').length;
-  document.getElementById('tc-shipped').textContent=O.filter(o=>o.status==='Shipped').length;
-  document.getElementById('tc-delivered').textContent=O.filter(o=>o.status==='Delivered').length;
+  document.getElementById('tc-pending').textContent   = O.filter(o=>o.status==='Pending').length;
+  document.getElementById('tc-packed').textContent    = O.filter(o=>o.status==='Packed').length;
+  document.getElementById('tc-dispatched').textContent= O.filter(o=>o.status==='Dispatched').length;
+  document.getElementById('tc-shipped').textContent   = O.filter(o=>o.status==='Shipped').length;
+  document.getElementById('tc-transit').textContent   = O.filter(o=>o.status==='In Transit').length;
+  document.getElementById('tc-delivered').textContent = O.filter(o=>o.status==='Delivered').length;
 }
 
 /* ═══════════════════════════════════════════════
@@ -2959,15 +3037,18 @@ function renderOrderDetailBody(orderId){
   document.getElementById('detail-order-id-label').textContent=`Order ${shortId(orderId)}`;
 
   /* Status stepper */
-  const sIdx=ORDER_STATUSES.indexOf(o.status);
-  const stepper=ORDER_STATUSES.map((s,i)=>{
-    const done=i<sIdx, cur=i===sIdx;
-    const tsK=STATUS_TS[s];
-    const ts=i===0?fmtDT(o.createdAt):(tsK?fmtDT(o[tsK]):'');
-    return `<div class="step-item ${done?'done':''} ${cur?'current':''}">
-      <div class="step-circle">${done?'<i class="fa-solid fa-check"></i>':`<i class="fa-solid ${STATUS_ICONS[s]}"></i>`}</div>
-      <div class="step-label">${s}</div>
-      <div class="step-ts">${ts}</div>
+  const sIdx = ORDER_STATUSES.indexOf(o.status);
+  const stepper = ORDER_STATUSES.map((s,i) => {
+    const done = i < sIdx, cur = i === sIdx, upcoming = i > sIdx;
+    const tsK  = STATUS_TS[s];
+    const ts   = i===0 ? fmtDT(o.createdAt) : (tsK && o[tsK] ? fmtDT(o[tsK]) : upcoming ? 'Upcoming' : '');
+    const col  = STATUS_COLORS[s] || 'var(--green)';
+    return `<div class="step-item ${done?'done':''} ${cur?'current':''} ${upcoming?'upcoming':''}">
+      <div class="step-circle" style="${cur?`background:${col};color:#fff;box-shadow:0 0 0 4px ${col}30`:''}${done?`background:${col};color:#fff`:''}">
+        ${done ? '<i class="fa-solid fa-check"></i>' : `<i class="fa-solid ${STATUS_ICONS[s]}"></i>`}
+      </div>
+      <div class="step-label" style="${cur?`color:${col};font-weight:800`:''}${done?'color:var(--text)':''}${upcoming?'color:var(--muted)':''}">${s}</div>
+      <div class="step-ts" style="${cur?`color:${col}`:''}">${ts}</div>
     </div>`;
   }).join('');
 
