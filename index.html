@@ -34,7 +34,7 @@ input,textarea,select{font-family:var(--font-body)}
 .view{display:none}
 .view.active{display:block}
 #view-login.active{display:flex}
-#view-dashboard.active{display:flex}
+#view-dashboard.active{display:flex;align-items:flex-start}
 
 /* ── LOADER ── */
 #loader{position:fixed;inset:0;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:9999;transition:opacity 0.4s}
@@ -76,7 +76,7 @@ input,textarea,select{font-family:var(--font-body)}
 .login-error.show{display:block}
 
 /* ── SIDEBAR ── */
-#view-dashboard{min-height:100vh}
+#view-dashboard{min-height:100vh;overflow-x:hidden}
 #admin-sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:300;transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
 #admin-sidebar::-webkit-scrollbar{width:4px}
 #admin-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
@@ -101,7 +101,7 @@ input,textarea,select{font-family:var(--font-body)}
 .sb-logout:hover{background:rgba(229,57,53,.22);color:#fff}
 #sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:299;display:none;backdrop-filter:blur(2px)}
 #sb-overlay.show{display:block}
-#main-area{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh}
+#main-area{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
 #top-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 22px;height:60px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
 #ham-btn{display:none;background:none;border:none;color:var(--muted);font-size:18px;padding:6px 8px;border-radius:8px;transition:all .15s;align-items:center;justify-content:center}
 #ham-btn:hover{background:var(--green-light);color:var(--green)}
@@ -109,7 +109,7 @@ input,textarea,select{font-family:var(--font-body)}
 .header-page-title span{color:var(--green)}
 
 /* ── SECTIONS ── */
-.content-section{display:none;padding:26px 22px}
+.content-section{display:none;padding:22px 20px}
 .content-section.active{display:block}
 .sec-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
 .sec-title{font-family:var(--font-head);font-size:22px;font-weight:800}
@@ -431,8 +431,11 @@ tbody td{padding:12px 16px;vertical-align:middle}
   /* Sidebar */
   #admin-sidebar{transform:translateX(-260px);width:260px;z-index:500}
   #admin-sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.18)}
-  #main-area{margin-left:0}
+  #main-area{margin-left:0;min-height:0;width:100%;max-width:100vw;flex:1}
   #ham-btn{display:flex}
+  #view-dashboard{min-height:0;height:auto}
+  #view-dashboard.active{height:auto;align-items:stretch}
+  .content-section.active{min-height:calc(100vh - 52px)}
 
   /* Header */
   .admin-header{padding:0 14px}
@@ -570,6 +573,226 @@ tbody td{padding:12px 16px;vertical-align:middle}
   .stat-val{font-size:24px}
   .modal-footer{gap:6px}
 }
+
+/* ═══════ NEW FEATURE CSS ═══════ */
+/* Generic card grid */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:16px}
+.feat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:10px}
+.feat-card-title{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text)}
+.feat-card-sub{font-size:12px;color:var(--muted);line-height:1.5}
+.feat-card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.feat-card-top{display:flex;align-items:flex-start;gap:14px}
+.fci-blue{background:rgba(59,130,246,.12);color:#3b82f6}
+.fci-green{background:rgba(46,160,86,.12);color:var(--green)}
+.fci-amber{background:rgba(245,158,11,.12);color:#f59e0b}
+.fci-purple{background:rgba(139,92,246,.12);color:#8b5cf6}
+.fci-red{background:rgba(239,68,68,.12);color:#ef4444}
+.fci-teal{background:rgba(20,184,166,.12);color:#14b8a6}
+
+/* Dealer / Customer / Warehouse table cards */
+.nf-table thead th{background:var(--bg);padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap}
+.nf-table tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+.nf-table tbody tr:hover{background:var(--surface2)}
+.nf-table td{padding:10px 14px;font-size:13px;color:var(--text);vertical-align:middle}
+.nf-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.nb-green{background:rgba(46,160,86,.12);color:var(--green)}
+.nb-blue{background:rgba(59,130,246,.12);color:#3b82f6}
+.nb-amber{background:rgba(245,158,11,.12);color:#f59e0b}
+.nb-red{background:rgba(239,68,68,.12);color:#ef4444}
+.nb-purple{background:rgba(139,92,246,.12);color:#8b5cf6}
+
+/* Currency converter */
+.cc-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:440px}
+.cc-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cc-input{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);height:42px;padding:0 14px;font-size:14px;font-weight:700;color:var(--text);font-family:var(--font-head);outline:none;transition:border-color .15s}
+.cc-input:focus{border-color:var(--green)}
+.cc-select{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);height:42px;padding:0 10px;font-size:13px;color:var(--text);outline:none;cursor:pointer}
+.cc-arrow{font-size:20px;color:var(--muted)}
+.cc-result{font-family:var(--font-head);font-size:28px;font-weight:900;color:var(--green);margin-top:8px}
+.cc-rate-note{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* Barcode / label */
+.barcode-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:480px}
+.barcode-display{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center;margin:16px 0;min-height:90px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+.barcode-bars{font-family:var(--mono,monospace);font-size:36px;letter-spacing:-3px;color:#000;line-height:1;font-weight:900}
+.barcode-num{font-family:var(--mono,monospace);font-size:11px;letter-spacing:2px;color:#333;margin-top:4px}
+.scan-area{background:var(--surface2);border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:border-color .15s}
+.scan-area:hover{border-color:var(--green)}
+.scan-area-icon{font-size:40px;color:var(--muted);margin-bottom:12px}
+
+/* Marketing poster */
+.poster-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:560px}
+.poster-preview{border-radius:10px;overflow:hidden;min-height:200px;background:linear-gradient(135deg,#0f2027,#2c5364);padding:28px 24px;color:#fff;position:relative;margin-top:16px;margin-bottom:16px}
+.poster-preview h2{font-family:var(--font-head);font-size:22px;font-weight:800;margin-bottom:4px}
+.poster-preview p{font-size:13px;opacity:.75}
+.poster-price{font-family:var(--font-head);font-size:32px;font-weight:900;color:#4ade80;margin-top:12px}
+.poster-badge-chip{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:3px 12px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px}
+.poster-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Chat / comms */
+.chat-layout{display:flex;gap:16px;height:500px}
+.chat-sidebar{width:220px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow-y:auto;display:flex;flex-direction:column}
+.chat-sidebar-title{padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+.chat-channel{padding:9px 14px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-left:3px solid transparent;transition:all .12s}
+.chat-channel:hover{background:var(--bg);color:var(--text)}
+.chat-channel.active{color:var(--green);background:rgba(46,160,86,.08);border-left-color:var(--green);font-weight:700}
+.chat-channel-badge{float:right;background:var(--green);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px}
+.chat-main{flex:1;display:flex;flex-direction:column;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.chat-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.chat-msg{display:flex;gap:10px;align-items:flex-start}
+.chat-msg.me{flex-direction:row-reverse}
+.chat-avatar{width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.chat-bubble{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:8px 12px;max-width:70%;font-size:12px;line-height:1.5}
+.chat-msg.me .chat-bubble{background:rgba(46,160,86,.12);border-color:rgba(46,160,86,.2)}
+.chat-time{font-size:10px;color:var(--muted);margin-top:3px}
+.chat-input-row{padding:10px;border-top:1px solid var(--border);display:flex;gap:8px}
+.chat-input{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:20px;height:36px;padding:0 14px;font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+.chat-input:focus{border-color:var(--green)}
+
+/* Audit log */
+.audit-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.audit-row:last-child{border-bottom:none}
+.audit-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:2px}
+.ai-add{background:rgba(46,160,86,.12);color:var(--green)}
+.ai-edit{background:rgba(59,130,246,.12);color:#3b82f6}
+.ai-delete{background:rgba(239,68,68,.12);color:#ef4444}
+.ai-price{background:rgba(245,158,11,.12);color:#f59e0b}
+.ai-login{background:rgba(139,92,246,.12);color:#8b5cf6}
+.audit-body{flex:1}
+.audit-action{font-size:13px;font-weight:600;color:var(--text)}
+.audit-meta{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* Announcement banner */
+.announcement-card{background:linear-gradient(135deg,rgba(46,160,86,.1),rgba(46,160,86,.04));border:1.5px solid rgba(46,160,86,.2);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+.ann-icon{font-size:22px;flex-shrink:0;margin-top:1px}
+.ann-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.ann-body{font-size:12px;color:var(--muted);line-height:1.5}
+.ann-meta{font-size:10px;color:var(--muted);margin-top:6px}
+
+/* Task card */
+.task-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.task-item:last-child{border-bottom:none}
+.task-cb{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
+.task-cb.done{background:var(--green);border-color:var(--green);color:#fff}
+.task-label{flex:1;font-size:13px;color:var(--text)}
+.task-label.done{text-decoration:line-through;color:var(--muted)}
+.task-assignee{font-size:11px;color:var(--muted);background:var(--bg);border-radius:20px;padding:2px 8px;border:1px solid var(--border)}
+.task-priority{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
+.tp-high{background:rgba(239,68,68,.12);color:#ef4444}
+.tp-mid{background:rgba(245,158,11,.12);color:#f59e0b}
+.tp-low{background:rgba(46,160,86,.12);color:var(--green)}
+
+/* Warehouse stock badges */
+.wh-stock-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.wh-stock-row:last-child{border-bottom:none}
+.wh-name{flex:1;font-size:13px;font-weight:600;color:var(--text)}
+.wh-loc{font-size:11px;color:var(--muted)}
+.wh-qty{font-family:var(--font-head);font-size:18px;font-weight:900;color:var(--text);min-width:60px;text-align:right}
+
+/* Two-column section layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){.chat-layout{flex-direction:column;height:auto}}
+@media(max-width:700px){.chat-sidebar{width:100%;height:160px}}
+
+/* ── MOBILE RESPONSIVE FIXES ── */
+@media(max-width:768px){
+  /* Remove fixed max-widths that break mobile layout */
+  .poster-wrap,.barcode-wrap,.cc-box{max-width:100%;width:100%}
+
+  /* Poster preview compact */
+  .poster-preview{min-height:140px;padding:18px 14px}
+  .poster-preview h2{font-size:16px}
+  .poster-price{font-size:22px}
+  .poster-actions{flex-direction:column}
+  .poster-actions .btn-primary,
+  .poster-actions .btn-ghost{width:100%;justify-content:center}
+
+  /* Barcode display compact */
+  .barcode-display{min-height:70px}
+  .barcode-bars{font-size:22px;letter-spacing:-2px}
+
+  /* Currency converter compact */
+  .cc-row{flex-wrap:wrap}
+  .cc-input{min-width:0;flex:1 1 100%}
+  .cc-select{flex:1}
+  .cc-arrow{display:none}
+  .cc-result{font-size:22px}
+
+  /* Chat layout compact */
+  .chat-layout{height:auto;gap:10px}
+  .chat-sidebar{height:120px;min-height:0}
+  .chat-main{height:380px}
+  .chat-messages{max-height:260px}
+
+  /* Announcement card compact */
+  .announcement-card{flex-direction:column;gap:8px}
+  .ann-icon{font-size:18px}
+
+  /* Task items */
+  .task-item{flex-wrap:wrap;gap:6px}
+  .task-label{min-width:0;flex:1 1 100%;order:1}
+
+  /* Audit rows */
+  .audit-row{flex-wrap:wrap;gap:8px}
+
+  /* feat-grid single column on mobile */
+  .feat-grid{grid-template-columns:1fr}
+
+  /* Warehouse stock rows */
+  .wh-stock-row{flex-wrap:wrap;gap:6px}
+
+  /* Section headers */
+  .sec-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .sec-header-right{width:100%}
+  .sec-header-right .btn-primary{width:100%;justify-content:center}
+
+  /* nf-table mobile scroll */
+  .nf-table{font-size:11px}
+
+  /* stats row 2-col on mobile */
+  .stats-grid{grid-template-columns:1fr 1fr !important}
+
+  /* mf-row single col on very small */
+  .mf-row{grid-template-columns:1fr}
+
+  /* Top header compact */
+  #top-header{padding:0 12px;height:52px;gap:10px}
+  .search-box{display:none}
+
+  /* Reduce section padding further */
+  .content-section{padding:12px 10px !important}
+
+  /* scan area */
+  .scan-area{padding:24px 16px}
+  .scan-area-icon{font-size:28px}
+
+  /* table-topbar */
+  .table-topbar{flex-direction:column;align-items:flex-start;gap:8px}
+  .table-topbar input.search-input{width:100%}
+
+  /* Modal bottom sheet height */
+  .modal{max-height:95vh}
+
+  /* Bottom bar on feature cards */
+  .feat-card{padding:14px}
+  .feat-card-icon{width:38px;height:38px;font-size:17px}
+}
+
+@media(max-width:480px){
+  .two-col{grid-template-columns:1fr !important}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  #top-header{padding:0 10px;height:50px}
+  .content-section{padding:10px 8px !important}
+  .cc-box{padding:16px}
+  .barcode-wrap{padding:16px}
+  .poster-wrap{padding:14px}
+  .chat-main{height:320px}
+  .chat-messages{max-height:210px}
+  .ann-list .announcement-card{padding:12px 14px}
+}
+
 </style>
 </head>
 <body>
@@ -624,9 +847,25 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="products" onclick="showSection('products')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Products<span class="sb-badge" id="sb-prod-count">0</span></button>
       <button class="sb-link" data-section="orders" onclick="showSection('orders')"><span class="sb-ic"><i class="fa-solid fa-clipboard-list"></i></span>Orders<span class="sb-badge" id="sb-order-count">0</span></button>
       <button class="sb-link" data-section="banners" onclick="showSection('banners')"><span class="sb-ic"><i class="fa-solid fa-image"></i></span>Banners</button>
+      <!-- Business -->
+      <div class="sb-section-label">Business</div>
+      <button class="sb-link" data-section="dealers" onclick="showSection('dealers')"><span class="sb-ic"><i class="fa-solid fa-handshake"></i></span>Dealers</button>
+      <button class="sb-link" data-section="customers" onclick="showSection('customers')"><span class="sb-ic"><i class="fa-solid fa-users"></i></span>Customers</button>
+      <button class="sb-link" data-section="warehouse" onclick="showSection('warehouse')"><span class="sb-ic"><i class="fa-solid fa-warehouse"></i></span>Warehouses</button>
+      <button class="sb-link" data-section="international" onclick="showSection('international')"><span class="sb-ic"><i class="fa-solid fa-globe"></i></span>International</button>
+      <!-- Tools -->
+      <div class="sb-section-label">Tools</div>
+      <button class="sb-link" data-section="marketing" onclick="showSection('marketing')"><span class="sb-ic"><i class="fa-solid fa-bullhorn"></i></span>Marketing</button>
+      <button class="sb-link" data-section="labels" onclick="showSection('labels')"><span class="sb-ic"><i class="fa-solid fa-barcode"></i></span>Labels & Barcodes</button>
+      <button class="sb-link" data-section="invoices" onclick="showSection('invoices')"><span class="sb-ic"><i class="fa-solid fa-file-invoice"></i></span>Invoices</button>
+      <!-- Team -->
+      <div class="sb-section-label">Team</div>
+      <button class="sb-link" data-section="comms" onclick="showSection('comms')"><span class="sb-ic"><i class="fa-solid fa-comments"></i></span>Team Comms</button>
+      <!-- Admin -->
       <div id="sb-admin-nav" style="display:none">
         <div class="sb-section-label">Administration</div>
         <button class="sb-link" data-section="admins" onclick="showSection('admins')"><span class="sb-ic"><i class="fa-solid fa-users-gear"></i></span>Manage Admins</button>
+        <button class="sb-link" data-section="audit" onclick="showSection('audit')"><span class="sb-ic"><i class="fa-solid fa-scroll"></i></span>Audit Trail</button>
       </div>
     </nav>
     <div class="sb-bottom">
@@ -726,6 +965,499 @@ tbody td{padding:12px 16px;vertical-align:middle}
     </section>
   </div>
 </div>
+
+
+    <!-- ══════════════════════════════════════
+         1. DEALER MANAGEMENT
+    ══════════════════════════════════════ -->
+    <section id="section-dealers" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Dealer Management</div><div class="sec-sub">Manage your wholesale dealers and distribution partners</div></div>
+        <div class="sec-header-right">
+          <button class="btn-primary" onclick="openDealerModal()"><i class="fa-solid fa-plus"></i> Add Dealer</button>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-topbar">
+          <div class="table-topbar-title">All Dealers</div>
+          <input class="search-input" placeholder="Search dealers…" oninput="filterDealers(this.value)" style="max-width:240px">
+        </div>
+        <div class="table-wrap">
+          <table class="nf-table" style="width:100%;border-collapse:collapse">
+            <thead><tr>
+              <th>Dealer</th><th>Location</th><th>Contact</th><th>Type</th><th>Stock Value</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="dealer-tbody">
+              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🤝</div><p>No dealers yet. Add your first dealer.</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         2. MARKETING TOOLS
+    ══════════════════════════════════════ -->
+    <section id="section-marketing" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Marketing Tools</div><div class="sec-sub">Generate Alfonex-style stock posters for WhatsApp, Instagram and print</div></div>
+      </div>
+      <div class="two-col">
+        <!-- Controls -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="table-card" style="padding:18px">
+            <div class="mf-label" style="font-size:11px;margin-bottom:12px"><i class="fa-solid fa-sliders" style="color:var(--green)"></i> POSTER SETTINGS</div>
+            <div class="mf-group">
+              <label class="mf-label">Select Product *</label>
+              <select id="poster-product-sel" class="mf-input" onchange="updatePoster()">
+                <option value="">— choose product —</option>
+              </select>
+            </div>
+            <div class="mf-row">
+              <div class="mf-group">
+                <label class="mf-label">Price Label</label>
+                <input class="mf-input" id="poster-price-custom" placeholder="e.g. 4600AED" oninput="updatePoster()">
+              </div>
+              <div class="mf-group">
+                <label class="mf-label">Storage / Chip</label>
+                <input class="mf-input" id="poster-chip" placeholder="e.g. 256GB" oninput="updatePoster()">
+              </div>
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Description Line</label>
+              <textarea class="mf-textarea" id="poster-desc-inp" rows="2" placeholder="e.g. 256GB PHYSICAL SIM JUST ACTIVE 100BH 100CYCLE 9MONTH WARRANTY KOREA" oninput="updatePoster()" style="font-size:12px"></textarea>
+            </div>
+            <div class="mf-row">
+              <div class="mf-group">
+                <label class="mf-label">Contact Line 1</label>
+                <input class="mf-input" id="poster-contact1" value="alfonex_uae | www.alfonex.com" oninput="updatePoster()">
+              </div>
+              <div class="mf-group">
+                <label class="mf-label">Contact Line 2</label>
+                <input class="mf-input" id="poster-contact2" value="uae +971 555788068 | india +91 9947099055" oninput="updatePoster()">
+              </div>
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Custom Image URL (overrides product image)</label>
+              <input class="mf-input" id="poster-img-url" placeholder="https://…" oninput="updatePoster()">
+            </div>
+            <div class="poster-actions" style="margin-top:8px">
+              <button class="btn-primary" onclick="printPoster()"><i class="fa-solid fa-print"></i> Print / Save PDF</button>
+              <button class="btn-ghost" onclick="sharePosterWA()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Preview — Alfonex style (white, clean, like image) -->
+        <div>
+          <div class="mf-label" style="font-size:11px;margin-bottom:10px;text-align:center"><i class="fa-solid fa-eye" style="color:var(--green)"></i> LIVE PREVIEW</div>
+          <!-- A4-ratio preview card -->
+          <div id="poster-canvas" style="
+            background:#fff;
+            border:1px solid var(--border);
+            border-radius:12px;
+            overflow:hidden;
+            width:100%;
+            max-width:380px;
+            margin:0 auto;
+            box-shadow:0 8px 32px rgba(0,0,0,.12);
+            font-family:'Sora',sans-serif;
+            position:relative;
+          ">
+            <!-- Logo bar -->
+            <div style="text-align:center;padding:22px 20px 10px">
+              <img src="./assets/logo/light_nobg.png" alt="Alfonex"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
+                style="height:40px;object-fit:contain">
+              <div style="display:none;font-size:22px;font-weight:900;letter-spacing:-1px">
+                <span style="color:#D32F2F">A</span>LFONEX
+                <div style="font-size:9px;letter-spacing:2px;color:#888;font-weight:600;margin-top:2px">YOUR ELECTRONICS PARTNER</div>
+              </div>
+            </div>
+            <!-- Product image -->
+            <div style="padding:0 24px;text-align:center;min-height:180px;display:flex;align-items:center;justify-content:center;background:#fafafa;margin:0 0">
+              <img id="poster-product-img" src="" alt=""
+                style="max-width:100%;max-height:220px;object-fit:contain;display:none">
+              <div id="poster-img-placeholder" style="font-size:56px;color:#ddd">📱</div>
+            </div>
+            <!-- Description -->
+            <div style="padding:20px 24px 8px;text-align:center">
+              <p id="poster-desc-disp" style="font-size:12px;font-weight:600;color:#444;line-height:1.6;text-transform:uppercase;letter-spacing:.3px;margin:0">
+                Select a product to generate your poster
+              </p>
+            </div>
+            <!-- Price + Storage row -->
+            <div style="padding:14px 24px 18px;display:flex;align-items:center;justify-content:center;gap:12px">
+              <div id="poster-price-disp" style="background:#fff;border:2px solid #111;border-radius:10px;padding:10px 22px;font-size:26px;font-weight:900;color:#111;letter-spacing:-1px;min-width:120px;text-align:center">—</div>
+              <div id="poster-chip-disp" style="background:#fff;border:2px solid #ccc;border-radius:10px;padding:10px 18px;font-size:16px;font-weight:700;color:#555;display:none">—</div>
+            </div>
+            <!-- Footer contacts -->
+            <div style="background:#f5f5f5;border-top:1px solid #eee;padding:12px 20px;text-align:center">
+              <div id="poster-contact1-disp" style="font-size:11px;color:#555;font-weight:500">alfonex_uae | www.alfonex.com | uae +971 555788068 | india +91 9947099055</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         3. CUSTOMER PORTAL / INVOICES
+    ══════════════════════════════════════ -->
+    <section id="section-invoices" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Customer Invoices</div><div class="sec-sub">Generate and download invoices for customer orders</div></div>
+      </div>
+      <div class="two-col" style="margin-bottom:16px">
+        <div class="table-card" style="padding:20px">
+          <div class="sec-sub" style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-file-invoice" style="color:var(--green)"></i> Quick Invoice Generator</div>
+          <div class="mf-group">
+            <label class="mf-label">Select Order</label>
+            <select id="inv-order-sel" class="mf-input">
+              <option value="">— choose order —</option>
+            </select>
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Customer Name (override)</label>
+            <input class="mf-input" id="inv-customer" placeholder="Auto-filled from order">
+          </div>
+          <div class="mf-row">
+            <div class="mf-group">
+              <label class="mf-label">Invoice Date</label>
+              <input class="mf-input" type="date" id="inv-date">
+            </div>
+            <div class="mf-group">
+              <label class="mf-label">Currency</label>
+              <select class="mf-input" id="inv-currency">
+                <option value="USD">$ USD</option>
+                <option value="AED">AED</option>
+                <option value="INR">₹ INR</option>
+              </select>
+            </div>
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Notes</label>
+            <textarea class="mf-textarea" id="inv-notes" placeholder="Payment terms, thank you message…" rows="2"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+            <button class="btn-primary" onclick="generateInvoicePDF()"><i class="fa-solid fa-file-pdf"></i> Download Invoice PDF</button>
+            <button class="btn-ghost" onclick="previewInvoice()"><i class="fa-solid fa-eye"></i> Preview</button>
+          </div>
+        </div>
+        <div class="table-card" style="padding:0;overflow:hidden">
+          <div class="table-topbar"><div class="table-topbar-title">Invoice Preview</div></div>
+          <div id="invoice-preview-area" style="padding:20px;font-size:12px;line-height:1.7;color:var(--muted);text-align:center;min-height:240px;display:flex;align-items:center;justify-content:center">
+            <div><div style="font-size:36px;margin-bottom:10px">🧾</div>Select an order and click Preview</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         4. MULTI-WAREHOUSE SYSTEM
+    ══════════════════════════════════════ -->
+    <section id="section-warehouse" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Multi-Warehouse System</div><div class="sec-sub">Track stock across Dubai and India warehouses</div></div>
+        <div class="sec-header-right">
+          <button class="btn-primary" onclick="openTransferModal()"><i class="fa-solid fa-right-left"></i> Transfer Stock</button>
+        </div>
+      </div>
+      <div class="two-col">
+        <!-- Dubai Warehouse -->
+        <div class="table-card" style="padding:0;overflow:hidden">
+          <div class="table-topbar" style="background:linear-gradient(90deg,rgba(59,130,246,.1),transparent)">
+            <div class="table-topbar-title"><i class="fa-solid fa-building" style="color:#3b82f6"></i> Dubai Warehouse <span class="nf-badge nb-blue" style="margin-left:8px">🇦🇪 UAE</span></div>
+          </div>
+          <div style="padding:16px">
+            <div style="display:flex;gap:16px;margin-bottom:16px">
+              <div style="flex:1;background:var(--bg);border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:900;color:var(--text)" id="dxb-total">0</div>
+                <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total Items</div>
+              </div>
+              <div style="flex:1;background:var(--bg);border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:900;color:var(--green)" id="dxb-value">AED 0</div>
+                <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Stock Value</div>
+              </div>
+            </div>
+            <div id="dxb-stock-list"></div>
+            <button class="btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="addWarehouseStock('dubai')"><i class="fa-solid fa-plus"></i> Add Stock Entry</button>
+          </div>
+        </div>
+        <!-- India Warehouse -->
+        <div class="table-card" style="padding:0;overflow:hidden">
+          <div class="table-topbar" style="background:linear-gradient(90deg,rgba(245,158,11,.08),transparent)">
+            <div class="table-topbar-title"><i class="fa-solid fa-building" style="color:#f59e0b"></i> India Warehouse <span class="nf-badge nb-amber" style="margin-left:8px">🇮🇳 India</span></div>
+          </div>
+          <div style="padding:16px">
+            <div style="display:flex;gap:16px;margin-bottom:16px">
+              <div style="flex:1;background:var(--bg);border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:900;color:var(--text)" id="ind-total">0</div>
+                <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total Items</div>
+              </div>
+              <div style="flex:1;background:var(--bg);border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:22px;font-weight:900;color:var(--green)" id="ind-value">₹0</div>
+                <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Stock Value</div>
+              </div>
+            </div>
+            <div id="ind-stock-list"></div>
+            <button class="btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="addWarehouseStock('india')"><i class="fa-solid fa-plus"></i> Add Stock Entry</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         5. LABELS & BARCODE SYSTEM
+    ══════════════════════════════════════ -->
+    <section id="section-labels" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Labels & Barcode System</div><div class="sec-sub">Generate barcodes and scan devices to view details</div></div>
+      </div>
+      <div class="two-col">
+        <!-- Generate -->
+        <div class="barcode-wrap">
+          <div class="sec-sub" style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-barcode" style="color:var(--green)"></i> Generate Barcode / Label</div>
+          <div class="mf-group">
+            <label class="mf-label">Select Product</label>
+            <select id="bc-product-sel" class="mf-input" onchange="generateBarcode()">
+              <option value="">— choose product —</option>
+            </select>
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Custom Text (IMEI / Serial)</label>
+            <input class="mf-input" id="bc-custom" placeholder="e.g. IMEI: 123456789012345" oninput="generateBarcode()">
+          </div>
+          <div class="barcode-display" id="barcode-display">
+            <div style="font-size:32px;color:var(--muted)"><i class="fa-solid fa-barcode"></i></div>
+            <div style="font-size:11px;color:var(--muted)">Select a product to generate</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-primary" onclick="printBarcode()"><i class="fa-solid fa-print"></i> Print Label</button>
+            <button class="btn-ghost" onclick="downloadBarcode()"><i class="fa-solid fa-download"></i> Download</button>
+          </div>
+        </div>
+        <!-- Scan -->
+        <div>
+          <div class="barcode-wrap" style="margin-bottom:16px">
+            <div class="sec-sub" style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-camera" style="color:var(--green)"></i> Scan Device to View Details</div>
+            <div class="scan-area" onclick="startScan()" id="scan-area">
+              <div class="scan-area-icon"><i class="fa-solid fa-camera"></i></div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">Tap to Scan</div>
+              <div style="font-size:12px;color:var(--muted)">Or enter product ID / IMEI manually</div>
+            </div>
+            <div class="mf-group" style="margin-top:12px">
+              <label class="mf-label">Manual Lookup</label>
+              <div style="display:flex;gap:8px">
+                <input class="mf-input" id="scan-manual" placeholder="Product title or IMEI…">
+                <button class="btn-primary btn-sm" onclick="doManualScan()"><i class="fa-solid fa-magnifying-glass"></i></button>
+              </div>
+            </div>
+          </div>
+          <!-- Scan result -->
+          <div class="table-card" id="scan-result" style="padding:16px;display:none">
+            <div style="font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Scan Result</div>
+            <div id="scan-result-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         6. INTERNATIONAL BUSINESS MODULE
+    ══════════════════════════════════════ -->
+    <section id="section-international" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">International Business</div><div class="sec-sub">UAE & India stock overview and live currency conversion</div></div>
+      </div>
+      <div class="feat-grid" style="margin-bottom:20px">
+        <div class="feat-card">
+          <div class="feat-card-top">
+            <div class="feat-card-icon fci-blue">🇦🇪</div>
+            <div>
+              <div class="feat-card-title">UAE Stock</div>
+              <div class="feat-card-sub">Live stock count for UAE (Dubai/Sharjah) operations</div>
+            </div>
+          </div>
+          <div style="font-size:28px;font-weight:900;color:var(--text)" id="intl-uae-count">—</div>
+          <div style="font-size:12px;color:var(--muted)" id="intl-uae-val">AED value: calculating…</div>
+          <button class="btn-ghost btn-sm" onclick="showSection('warehouse')">View Warehouse →</button>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-top">
+            <div class="feat-card-icon fci-amber">🇮🇳</div>
+            <div>
+              <div class="feat-card-title">India Stock</div>
+              <div class="feat-card-sub">Live stock count for India operations</div>
+            </div>
+          </div>
+          <div style="font-size:28px;font-weight:900;color:var(--text)" id="intl-ind-count">—</div>
+          <div style="font-size:12px;color:var(--muted)" id="intl-ind-val">₹ value: calculating…</div>
+          <button class="btn-ghost btn-sm" onclick="showSection('warehouse')">View Warehouse →</button>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-top">
+            <div class="feat-card-icon fci-green"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
+            <div>
+              <div class="feat-card-title">Total Products</div>
+              <div class="feat-card-sub">Combined international catalogue</div>
+            </div>
+          </div>
+          <div style="font-size:28px;font-weight:900;color:var(--text)" id="intl-prod-count">—</div>
+          <div style="font-size:12px;color:var(--muted)">Across all markets</div>
+        </div>
+      </div>
+      <!-- Currency Converter -->
+      <div class="sec-sub" style="font-weight:700;margin-bottom:12px"><i class="fa-solid fa-coins" style="color:var(--green)"></i> Live Currency Converter</div>
+      <div class="cc-box">
+        <div class="cc-row">
+          <input class="cc-input" type="number" id="cc-amount" value="100" oninput="convertCurrency()" min="0">
+          <select class="cc-select" id="cc-from" onchange="convertCurrency()">
+            <option value="USD">USD $</option>
+            <option value="AED">AED</option>
+            <option value="INR">INR ₹</option>
+            <option value="GBP">GBP £</option>
+            <option value="EUR">EUR €</option>
+          </select>
+          <span class="cc-arrow">⇄</span>
+          <select class="cc-select" id="cc-to" onchange="convertCurrency()">
+            <option value="AED" selected>AED</option>
+            <option value="USD">USD $</option>
+            <option value="INR">INR ₹</option>
+            <option value="GBP">GBP £</option>
+            <option value="EUR">EUR €</option>
+          </select>
+        </div>
+        <div class="cc-result" id="cc-result">—</div>
+        <div class="cc-rate-note" id="cc-rate-note">Enter an amount to convert</div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn-ghost btn-sm" onclick="setCC(1,'USD','AED')">1 USD → AED</button>
+          <button class="btn-ghost btn-sm" onclick="setCC(1,'USD','INR')">1 USD → INR</button>
+          <button class="btn-ghost btn-sm" onclick="setCC(1,'AED','INR')">1 AED → INR</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         7. TEAM COMMUNICATION
+    ══════════════════════════════════════ -->
+    <section id="section-comms" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Team Communication</div><div class="sec-sub">Announcements, task assignments, and internal chat</div></div>
+      </div>
+      <!-- Announcement banner -->
+      <div id="ann-list" style="margin-bottom:20px"></div>
+      <div class="two-col" style="margin-bottom:20px">
+        <!-- Post Announcement -->
+        <div class="table-card" style="padding:20px">
+          <div class="sec-sub" style="font-weight:700;margin-bottom:12px"><i class="fa-solid fa-bullhorn" style="color:var(--green)"></i> Post Staff Announcement</div>
+          <div class="mf-group">
+            <label class="mf-label">Title</label>
+            <input class="mf-input" id="ann-title-inp" placeholder="e.g. New iPhone 17 stock arrived">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label">Message</label>
+            <textarea class="mf-textarea" id="ann-body-inp" placeholder="Write your announcement…" rows="3"></textarea>
+          </div>
+          <button class="btn-primary btn-sm" onclick="postAnnouncement()"><i class="fa-solid fa-paper-plane"></i> Post</button>
+        </div>
+        <!-- Task Assignment -->
+        <div class="table-card" style="padding:20px">
+          <div class="sec-sub" style="font-weight:700;margin-bottom:12px"><i class="fa-solid fa-list-check" style="color:var(--green)"></i> Task Assignment</div>
+          <div id="task-list" style="margin-bottom:12px"></div>
+          <div style="display:flex;gap:8px">
+            <input class="mf-input" id="task-inp" placeholder="New task…" style="flex:1" onkeydown="if(event.key==='Enter')addTask()">
+            <select class="mf-input" id="task-priority" style="width:90px">
+              <option value="high">🔴 High</option>
+              <option value="mid" selected>🟡 Mid</option>
+              <option value="low">🟢 Low</option>
+            </select>
+            <button class="btn-primary btn-sm" onclick="addTask()"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+      </div>
+      <!-- Internal Chat -->
+      <div class="sec-sub" style="font-weight:700;margin-bottom:12px"><i class="fa-solid fa-comments" style="color:var(--green)"></i> Internal Team Chat</div>
+      <div class="chat-layout">
+        <div class="chat-sidebar">
+          <div class="chat-sidebar-title">Channels</div>
+          <div class="chat-channel active" onclick="switchChannel('general',this)"># general</div>
+          <div class="chat-channel" onclick="switchChannel('sales',this)"># sales</div>
+          <div class="chat-channel" onclick="switchChannel('stock',this)"># stock-updates <span class="chat-channel-badge" id="badge-stock">2</span></div>
+          <div class="chat-channel" onclick="switchChannel('support',this)"># support</div>
+          <div class="chat-channel" onclick="switchChannel('dubai',this)"># dubai-team</div>
+          <div class="chat-channel" onclick="switchChannel('india',this)"># india-team</div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-header"><i class="fa-solid fa-hashtag" style="color:var(--green);font-size:12px"></i> <span id="chat-channel-name">general</span></div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chat-input" placeholder="Message #general…" onkeydown="if(event.key==='Enter')sendChatMsg()">
+            <button class="btn-primary btn-sm" onclick="sendChatMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         8. CUSTOMER MANAGEMENT
+    ══════════════════════════════════════ -->
+    <section id="section-customers" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Customer Management</div><div class="sec-sub">View and manage all customers who have placed orders</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-topbar">
+          <div class="table-topbar-title">Customer List</div>
+          <input class="search-input" placeholder="Search customers…" oninput="filterCustomers(this.value)" style="max-width:240px">
+        </div>
+        <div class="table-wrap">
+          <table class="nf-table" style="width:100%;border-collapse:collapse">
+            <thead><tr>
+              <th>Customer</th><th>Email / Phone</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="customer-tbody">
+              <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>Customer data is derived from orders. Place orders to see customers.</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         9. AUDIT TRAIL
+    ══════════════════════════════════════ -->
+    <section id="section-audit" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Audit Trail</div><div class="sec-sub">Complete log of all admin actions with timestamps</div></div>
+        <div class="sec-header-right">
+          <button class="btn-ghost btn-sm" onclick="clearAuditLog()"><i class="fa-solid fa-trash"></i> Clear Log</button>
+          <button class="btn-primary btn-sm" onclick="exportAuditLog()"><i class="fa-solid fa-download"></i> Export CSV</button>
+        </div>
+      </div>
+      <div class="two-col">
+        <!-- Log -->
+        <div class="table-card" style="padding:20px">
+          <div class="sec-sub" style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-clock-rotate-left" style="color:var(--green)"></i> Activity Log</div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <button class="btn-ghost btn-sm" onclick="filterAudit('all')" id="af-all" style="background:var(--green);color:#fff;border-color:var(--green)">All</button>
+            <button class="btn-ghost btn-sm" onclick="filterAudit('ADD')" id="af-add">Stock Added</button>
+            <button class="btn-ghost btn-sm" onclick="filterAudit('PRICE')" id="af-price">Price Changed</button>
+            <button class="btn-ghost btn-sm" onclick="filterAudit('DELETE')" id="af-delete">Deleted</button>
+            <button class="btn-ghost btn-sm" onclick="filterAudit('LOGIN')" id="af-login">Logins</button>
+          </div>
+          <div id="audit-log-list" style="max-height:500px;overflow-y:auto">
+            <div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No audit events yet</div>
+          </div>
+        </div>
+        <!-- Announcement Log -->
+        <div class="table-card" style="padding:20px">
+          <div class="sec-sub" style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-megaphone" style="color:var(--green)"></i> Admin Announcements Archive</div>
+          <div id="audit-ann-list">
+            <div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No announcements yet</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
 <!-- ══ MODAL: ADD/EDIT BANNER ══ -->
 <div id="modal-banner" class="modal-backdrop">
@@ -1151,9 +1883,29 @@ function showSection(name){
   document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
   document.querySelectorAll('.sb-link').forEach(l=>l.classList.toggle('active',l.dataset.section===name));
-  const T={overview:'Overview',products:'Products',orders:'Orders',banners:'Banner Manager',admins:'Admin Management'};
+  const T={
+    overview:'Overview', products:'Products', orders:'Orders',
+    banners:'Banner Manager', admins:'Admin Management',
+    dealers:'Dealer Management', customers:'Customer Management',
+    warehouse:'Multi-Warehouse System', international:'International Business',
+    marketing:'Marketing Tools', labels:'Labels & Barcodes',
+    invoices:'Customer Invoices', comms:'Team Communication',
+    audit:'Audit Trail'
+  };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
+  /* ── Section-specific init (safe: functions defined later in same script) ── */
+  setTimeout(() => {
+    if (name==='marketing')     { populatePosterProducts(); updatePoster(); }
+    if (name==='labels')        { populateBarcodeProducts(); }
+    if (name==='invoices')      { populateInvoiceOrders(); }
+    if (name==='audit')         { renderAuditLog(); }
+    if (name==='customers')     { renderCustomerTable(); }
+    if (name==='international') { attachWarehouseListener(); attachDealerListener(); convertCurrency(); renderIntlStats(); }
+    if (name==='warehouse')     { attachWarehouseListener(); }
+    if (name==='dealers')       { attachDealerListener(); }
+    if (name==='comms')         { attachAnnouncementsListener(); renderTasks(); renderAnnouncements(); loadChatMessages(_chatChannel); }
+  }, 0);
 }
 function togglePw(id,btn){
   const inp=document.getElementById(id), ic=btn.querySelector('i'), h=inp.type==='password';
@@ -2510,6 +3262,977 @@ async function saveAdmin(){
 document.querySelectorAll('.modal-backdrop').forEach(b=>{
   b.addEventListener('click',function(e){ if(e.target===this)this.classList.remove('open'); });
 });
+
+
+/* ══════════════════════════════════════════════════════════
+   NEW FEATURE JS — 9 modules integrated into existing admin
+══════════════════════════════════════════════════════════ */
+
+/* ─── AUDIT TRAIL ENGINE ───────────────────────────────────
+   Every meaningful admin action calls auditLog(). Stored in
+   localStorage AND optionally synced to Firebase.
+─────────────────────────────────────────────────────────── */
+let _auditEvents = JSON.parse(localStorage.getItem('ia_audit') || '[]');
+let _auditFilter = 'all';
+
+const AUDIT_ICONS = {
+  ADD:    { cls:'ai-add',    icon:'fa-solid fa-plus'          },
+  EDIT:   { cls:'ai-edit',   icon:'fa-solid fa-pen'           },
+  DELETE: { cls:'ai-delete', icon:'fa-solid fa-trash'         },
+  PRICE:  { cls:'ai-price',  icon:'fa-solid fa-tag'           },
+  LOGIN:  { cls:'ai-login',  icon:'fa-solid fa-right-to-bracket' },
+  STOCK:  { cls:'ai-add',    icon:'fa-solid fa-boxes-stacked' },
+  CHAT:   { cls:'ai-edit',   icon:'fa-solid fa-comment'       },
+  TASK:   { cls:'ai-edit',   icon:'fa-solid fa-list-check'    },
+  BANNER: { cls:'ai-edit',   icon:'fa-solid fa-image'         },
+};
+
+function auditLog(type, description, extra = {}) {
+  const who  = APP?.user?.email || 'Unknown';
+  const ev   = { type, description, who, ts: Date.now(), ...extra };
+  _auditEvents.unshift(ev);
+  if (_auditEvents.length > 500) _auditEvents = _auditEvents.slice(0, 500);
+  localStorage.setItem('ia_audit', JSON.stringify(_auditEvents));
+  /* async push to Firebase */
+  try { db.ref('audit_trail').push(ev); } catch(e){}
+  renderAuditLog();
+}
+
+function renderAuditLog() {
+  const el = document.getElementById('audit-log-list');
+  const ann = document.getElementById('audit-ann-list');
+  if (!el) return;
+  const list = _auditFilter === 'all'
+    ? _auditEvents
+    : _auditEvents.filter(e => e.type === _auditFilter);
+  if (!list.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No events for this filter</div>';
+  } else {
+    el.innerHTML = list.map(e => {
+      const ic = AUDIT_ICONS[e.type] || AUDIT_ICONS['EDIT'];
+      return `<div class="audit-row">
+        <div class="audit-icon ${ic.cls}"><i class="${ic.icon}"></i></div>
+        <div class="audit-body">
+          <div class="audit-action">${esc(e.description)}</div>
+          <div class="audit-meta"><i class="fa-solid fa-user" style="width:12px"></i> ${esc(e.who)} &nbsp;·&nbsp; <i class="fa-regular fa-clock" style="width:12px"></i> ${fmtDT(e.ts)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  /* announcements archive in audit panel */
+  const anns = _auditEvents.filter(e => e.type === 'ANN');
+  if (ann) {
+    ann.innerHTML = anns.length
+      ? anns.map(e => `<div class="announcement-card" style="margin-bottom:10px">
+          <div class="ann-icon">📣</div>
+          <div><div class="ann-title">${esc(e.annTitle||'Announcement')}</div>
+          <div class="ann-body">${esc(e.description)}</div>
+          <div class="ann-meta">By ${esc(e.who)} — ${fmtDT(e.ts)}</div></div>
+        </div>`).join('')
+      : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No announcements yet</div>';
+  }
+}
+
+function filterAudit(type) {
+  _auditFilter = type;
+  document.querySelectorAll('[id^="af-"]').forEach(b => {
+    b.style.background = ''; b.style.color = ''; b.style.borderColor = '';
+  });
+  const active = document.getElementById('af-' + type);
+  if (active) { active.style.background='var(--green)'; active.style.color='#fff'; active.style.borderColor='var(--green)'; }
+  renderAuditLog();
+}
+
+function clearAuditLog() {
+  if (!confirm('Clear all local audit logs? Firebase records are kept.')) return;
+  _auditEvents = []; localStorage.setItem('ia_audit', '[]'); renderAuditLog();
+}
+
+function exportAuditLog() {
+  const rows = [['Type','Description','Who','Date/Time']];
+  _auditEvents.forEach(e => rows.push([e.type, e.description, e.who, fmtDT(e.ts)]));
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' }));
+  a.download = 'audit_trail.csv'; a.click();
+}
+
+/* Hook existing product save to log audit */
+const _origSaveProduct = typeof saveProduct !== 'undefined' ? saveProduct : null;
+
+/* ─── DEALER MANAGEMENT ──────────────────────────────────── */
+let _dealers = {};
+let _dealerListenerAttached = false;
+
+function attachDealerListener() {
+  if (_dealerListenerAttached) return;
+  _dealerListenerAttached = true;
+  db.ref('dealers').on('value', snap => {
+    _dealers = snap.val() || {};
+    renderDealerTable();
+    renderIntlStats();
+  });
+}
+
+function renderDealerTable(filter = '') {
+  const tbody = document.getElementById('dealer-tbody');
+  if (!tbody) return;
+  const entries = Object.entries(_dealers)
+    .filter(([,d]) => !filter || (d.name||'').toLowerCase().includes(filter) || (d.location||'').toLowerCase().includes(filter));
+  if (!entries.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🤝</div><p>No dealers found.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = entries.map(([id, d]) => `<tr>
+    <td><div style="font-weight:700">${esc(d.name||'—')}</div><div style="font-size:11px;color:var(--muted)">${esc(d.company||'')}</div></td>
+    <td><i class="fa-solid fa-location-dot" style="color:var(--muted);font-size:11px"></i> ${esc(d.location||'—')}</td>
+    <td><div>${esc(d.phone||'—')}</div><div style="font-size:11px;color:var(--muted)">${esc(d.email||'')}</div></td>
+    <td><span class="nf-badge ${d.type==='wholesale'?'nb-blue':d.type==='retail'?'nb-green':'nb-amber'}">${esc(d.type||'partner')}</span></td>
+    <td style="font-weight:700">${d.currency||'AED'} ${Number(d.stockValue||0).toLocaleString()}</td>
+    <td><span class="nf-badge ${d.active?'nb-green':'nb-amber'}">${d.active?'Active':'Inactive'}</span></td>
+    <td><div style="display:flex;gap:6px">
+      <button class="btn-edit btn-sm" onclick="editDealer('${id}')"><i class="fa-solid fa-pen"></i></button>
+      <button class="btn-danger btn-sm" onclick="deleteDealer('${id}','${esc(d.name||'')}')"><i class="fa-solid fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterDealers(q) { renderDealerTable(q.toLowerCase()); }
+
+function openDealerModal(id) {
+  const d = id ? (_dealers[id]||{}) : {};
+  const html = `<div id="modal-dealer" class="modal-backdrop open">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-hicon"><i class="fa-solid fa-handshake"></i></div>
+        <div class="modal-title">${id?'Edit':'Add'} Dealer</div>
+        <button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="dl-id" value="${id||''}">
+        <div class="mf-row">
+          <div class="mf-group"><label class="mf-label">Dealer Name *</label><input class="mf-input" id="dl-name" value="${esc(d.name||'')}" placeholder="Full name"></div>
+          <div class="mf-group"><label class="mf-label">Company</label><input class="mf-input" id="dl-company" value="${esc(d.company||'')}" placeholder="Company name"></div>
+        </div>
+        <div class="mf-row">
+          <div class="mf-group"><label class="mf-label">Phone</label><input class="mf-input" id="dl-phone" value="${esc(d.phone||'')}" placeholder="+971 50 000 0000"></div>
+          <div class="mf-group"><label class="mf-label">Email</label><input class="mf-input" id="dl-email" value="${esc(d.email||'')}" placeholder="dealer@example.com"></div>
+        </div>
+        <div class="mf-row">
+          <div class="mf-group"><label class="mf-label">Location / City *</label><input class="mf-input" id="dl-location" value="${esc(d.location||'')}" placeholder="Dubai, UAE"></div>
+          <div class="mf-group"><label class="mf-label">Type</label>
+            <select class="mf-input" id="dl-type">
+              <option value="wholesale" ${d.type==='wholesale'?'selected':''}>Wholesale</option>
+              <option value="retail" ${d.type==='retail'?'selected':''}>Retail</option>
+              <option value="partner" ${d.type==='partner'?'selected':''}>Partner</option>
+            </select>
+          </div>
+        </div>
+        <div class="mf-row">
+          <div class="mf-group"><label class="mf-label">Stock Value</label><input class="mf-input" type="number" id="dl-value" value="${d.stockValue||0}" min="0"></div>
+          <div class="mf-group"><label class="mf-label">Currency</label>
+            <select class="mf-input" id="dl-currency">
+              <option value="AED" ${d.currency==='AED'?'selected':''}>AED</option>
+              <option value="USD" ${d.currency==='USD'?'selected':''}>USD</option>
+              <option value="INR" ${d.currency==='INR'?'selected':''}>INR</option>
+            </select>
+          </div>
+        </div>
+        <div class="mf-group"><label class="mf-label">Notes / More Details</label>
+          <textarea class="mf-textarea" id="dl-notes" placeholder="Additional details, contract info, address…">${esc(d.notes||'')}</textarea>
+        </div>
+        <div class="mf-group" style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:12px;font-weight:600;color:var(--text)">Active Dealer</label>
+          <input type="checkbox" id="dl-active" ${d.active!==false?'checked':''} style="width:16px;height:16px;accent-color:var(--green)">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="this.closest('.modal-backdrop').remove()">Cancel</button>
+        <button class="btn-primary" onclick="saveDealer()"><i class="fa-solid fa-floppy-disk"></i> Save Dealer</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function editDealer(id) { openDealerModal(id); }
+
+async function saveDealer() {
+  const id   = document.getElementById('dl-id')?.value;
+  const name = document.getElementById('dl-name')?.value.trim();
+  if (!name) { showToast('Dealer name required','error'); return; }
+  const payload = {
+    name, company: document.getElementById('dl-company').value.trim(),
+    phone: document.getElementById('dl-phone').value.trim(),
+    email: document.getElementById('dl-email').value.trim(),
+    location: document.getElementById('dl-location').value.trim(),
+    type: document.getElementById('dl-type').value,
+    stockValue: parseFloat(document.getElementById('dl-value').value)||0,
+    currency: document.getElementById('dl-currency').value,
+    notes: document.getElementById('dl-notes').value.trim(),
+    active: document.getElementById('dl-active').checked,
+    updatedAt: Date.now()
+  };
+  try {
+    if (id) { await db.ref('dealers/'+id).update(payload); auditLog('EDIT', `Updated dealer: ${name}`); }
+    else { payload.createdAt = Date.now(); await db.ref('dealers').push(payload); auditLog('ADD', `Added new dealer: ${name}`); }
+    document.getElementById('modal-dealer').remove();
+    showToast('Dealer saved!','success');
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+async function deleteDealer(id, name) {
+  if (!confirm(`Delete dealer "${name}"?`)) return;
+  await db.ref('dealers/'+id).remove();
+  auditLog('DELETE', `Deleted dealer: ${name}`);
+  showToast('Dealer deleted','success');
+}
+
+/* ─── CUSTOMER MANAGEMENT ────────────────────────────────── */
+function buildCustomerList() {
+  const orders = Object.values(APP.orders||{});
+  const map = {};
+  orders.forEach(o => {
+    const email = o.email || o.customerEmail || 'unknown';
+    if (!map[email]) map[email] = { name: o.customerName||o.name||'—', email, phone: o.phone||'—', orders:0, spent:0, lastTs:0 };
+    map[email].orders++;
+    map[email].spent += Number(o.total||0);
+    if ((o.createdAt||0) > map[email].lastTs) map[email].lastTs = o.createdAt||0;
+  });
+  return Object.values(map);
+}
+
+function renderCustomerTable(filter = '') {
+  const tbody = document.getElementById('customer-tbody');
+  if (!tbody) return;
+  const list = buildCustomerList().filter(c =>
+    !filter || c.name.toLowerCase().includes(filter) || c.email.toLowerCase().includes(filter));
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>No customer data yet.</p></div></td></tr>`;
+    return;
+  }
+  list.sort((a,b)=>b.spent-a.spent);
+  tbody.innerHTML = list.map(c => `<tr>
+    <td><div style="font-weight:700">${esc(c.name)}</div></td>
+    <td><div>${esc(c.email)}</div><div style="font-size:11px;color:var(--muted)">${esc(c.phone)}</div></td>
+    <td style="font-weight:700;text-align:center">${c.orders}</td>
+    <td style="font-weight:700;color:var(--green)">$${c.spent.toFixed(2)}</td>
+    <td style="font-size:12px;color:var(--muted)">${fmtDate(c.lastTs)}</td>
+    <td><button class="btn-ghost btn-sm" onclick="showSection('orders')"><i class="fa-solid fa-eye"></i> Orders</button></td>
+  </tr>`).join('');
+}
+
+function filterCustomers(q) { renderCustomerTable(q.toLowerCase()); }
+
+/* ─── WAREHOUSE SYSTEM ───────────────────────────────────── */
+let _warehouseListenerAttached = false;
+let _warehouseStock = { dubai: {}, india: {} };
+
+function attachWarehouseListener() {
+  if (_warehouseListenerAttached) return;
+  _warehouseListenerAttached = true;
+  db.ref('warehouse').on('value', snap => {
+    const d = snap.val() || {};
+    _warehouseStock.dubai = d.dubai || {};
+    _warehouseStock.india = d.india || {};
+    renderWarehouse();
+    renderIntlStats();
+  });
+}
+
+function renderWarehouse() {
+  renderWhList('dubai', 'dxb-stock-list', 'dxb-total', 'dxb-value', 'AED');
+  renderWhList('india', 'ind-stock-list', 'ind-total', 'ind-value',  '₹');
+}
+
+function renderWhList(wh, listId, totalId, valId, sym) {
+  const items = Object.entries(_warehouseStock[wh] || {});
+  const total = items.reduce((s,[,i])=>s+(Number(i.qty)||0),0);
+  const value = items.reduce((s,[,i])=>s+(Number(i.qty)||0)*(Number(i.unitPrice)||0),0);
+  const el = document.getElementById(listId);
+  const tot = document.getElementById(totalId);
+  const val = document.getElementById(valId);
+  if (tot) tot.textContent = total;
+  if (val) val.textContent = sym + value.toLocaleString();
+  if (!el) return;
+  el.innerHTML = items.length ? items.map(([id,i]) => `
+    <div class="wh-stock-row">
+      <div><div class="wh-name">${esc(i.product||'—')}</div><div class="wh-loc">${esc(i.sku||'')}</div></div>
+      <div class="wh-qty">${Number(i.qty||0)}</div>
+      <div style="display:flex;gap:4px;margin-left:8px">
+        <button class="act-btn" onclick="editWhStock('${wh}','${id}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="act-btn danger" onclick="deleteWhStock('${wh}','${id}')"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`).join('')
+  : '<div style="font-size:12px;color:var(--muted);padding:12px 0;text-align:center">No stock entries yet</div>';
+}
+
+function addWarehouseStock(wh) {
+  const html = `<div id="modal-wh" class="modal-backdrop open">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-hicon"><i class="fa-solid fa-warehouse"></i></div>
+        <div class="modal-title">Add Stock — ${wh==='dubai'?'🇦🇪 Dubai':'🇮🇳 India'} Warehouse</div>
+        <button class="modal-close" onclick="this.closest('.modal-backdrop').remove()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="wh-name" value="${wh}">
+        <div class="mf-row">
+          <div class="mf-group"><label class="mf-label">Product Name *</label><input class="mf-input" id="wh-product" placeholder="e.g. iPhone 17 Pro Max 256GB"></div>
+          <div class="mf-group"><label class="mf-label">SKU / Model Code</label><input class="mf-input" id="wh-sku" placeholder="e.g. IP17PM-256-BLK"></div>
+        </div>
+        <div class="mf-row">
+          <div class="mf-group"><label class="mf-label">Quantity *</label><input class="mf-input" type="number" id="wh-qty" value="1" min="1"></div>
+          <div class="mf-group"><label class="mf-label">Unit Price (${wh==='dubai'?'AED':'₹'})</label><input class="mf-input" type="number" id="wh-price" value="0" min="0"></div>
+        </div>
+        <div class="mf-group"><label class="mf-label">Location in Warehouse</label><input class="mf-input" id="wh-loc" placeholder="e.g. Shelf A-3, Box 12"></div>
+        <div class="mf-group"><label class="mf-label">Notes</label><input class="mf-input" id="wh-notes" placeholder="Condition, batch, etc."></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="this.closest('.modal-backdrop').remove()">Cancel</button>
+        <button class="btn-primary" onclick="saveWhStock()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function saveWhStock() {
+  const wh = document.getElementById('wh-name').value;
+  const product = document.getElementById('wh-product').value.trim();
+  if (!product) { showToast('Product name required','error'); return; }
+  const payload = {
+    product, sku: document.getElementById('wh-sku').value.trim(),
+    qty: parseInt(document.getElementById('wh-qty').value)||1,
+    unitPrice: parseFloat(document.getElementById('wh-price').value)||0,
+    location: document.getElementById('wh-loc').value.trim(),
+    notes: document.getElementById('wh-notes').value.trim(),
+    addedBy: APP?.user?.email||'admin', addedAt: Date.now()
+  };
+  await db.ref(`warehouse/${wh}`).push(payload);
+  auditLog('STOCK', `Added ${payload.qty}x ${product} to ${wh} warehouse`);
+  document.getElementById('modal-wh').remove();
+  showToast('Stock entry saved!','success');
+}
+
+function editWhStock(wh, id) { showToast('Edit coming soon','info'); }
+async function deleteWhStock(wh, id) {
+  if (!confirm('Remove this stock entry?')) return;
+  await db.ref(`warehouse/${wh}/${id}`).remove();
+  auditLog('DELETE', `Removed stock entry from ${wh} warehouse`);
+}
+
+function openTransferModal() {
+  showToast('Stock transfer between warehouses — coming soon','info');
+}
+
+/* ─── INTERNATIONAL STATS ────────────────────────────────── */
+function renderIntlStats() {
+  const dxb = Object.values(_warehouseStock.dubai||{});
+  const ind  = Object.values(_warehouseStock.india||{});
+  const dxbQty = dxb.reduce((s,i)=>s+(Number(i.qty)||0),0);
+  const indQty = ind.reduce((s,i)=>s+(Number(i.qty)||0),0);
+  const dxbVal = dxb.reduce((s,i)=>s+(Number(i.qty)||0)*(Number(i.unitPrice)||0),0);
+  const indVal = ind.reduce((s,i)=>s+(Number(i.qty)||0)*(Number(i.unitPrice)||0),0);
+  const el = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  el('intl-uae-count', dxbQty + ' items');
+  el('intl-uae-val',   'AED ' + dxbVal.toLocaleString());
+  el('intl-ind-count', indQty + ' items');
+  el('intl-ind-val',   '₹ ' + indVal.toLocaleString());
+  el('intl-prod-count', Object.keys(APP.products||{}).length + ' products');
+}
+
+/* ─── CURRENCY CONVERTER ─────────────────────────────────── */
+/* Static mid-market rates. In production, replace with a live FX API. */
+const FX = { USD:1, AED:3.674, INR:83.5, GBP:0.793, EUR:0.924 };
+
+function convertCurrency() {
+  const amt  = parseFloat(document.getElementById('cc-amount')?.value)||0;
+  const from = document.getElementById('cc-from')?.value;
+  const to   = document.getElementById('cc-to')?.value;
+  if (!from||!to) return;
+  const rate   = FX[to] / FX[from];
+  const result = (amt * rate).toFixed(2);
+  const syms   = { USD:'$', AED:'AED ', INR:'₹', GBP:'£', EUR:'€' };
+  const el = document.getElementById('cc-result');
+  const rn = document.getElementById('cc-rate-note');
+  if (el) el.textContent = syms[to] + Number(result).toLocaleString('en', {minimumFractionDigits:2});
+  if (rn) rn.textContent = `1 ${from} = ${(FX[to]/FX[from]).toFixed(4)} ${to} · Static rates, updated periodically`;
+}
+
+function setCC(amt, from, to) {
+  document.getElementById('cc-amount').value = amt;
+  document.getElementById('cc-from').value   = from;
+  document.getElementById('cc-to').value     = to;
+  convertCurrency();
+}
+
+/* ─── MARKETING — STOCK POSTER ───────────────────────────── */
+function populatePosterProducts() {
+  const sel = document.getElementById('poster-product-sel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— choose product —</option>' +
+    Object.entries(APP.products||{}).map(([id,p])=>`<option value="${id}">${esc(p.title||id)}</option>`).join('');
+}
+
+function updatePoster() {
+  const id          = document.getElementById('poster-product-sel')?.value;
+  const p           = id ? (APP.products[id]||{}) : {};
+  const descInp     = document.getElementById('poster-desc-inp')?.value;
+  const priceInp    = document.getElementById('poster-price-custom')?.value;
+  const chipInp     = document.getElementById('poster-chip')?.value;
+  const imgOverride = document.getElementById('poster-img-url')?.value?.trim();
+  const c1          = document.getElementById('poster-contact1')?.value||'';
+  const c2          = document.getElementById('poster-contact2')?.value||'';
+
+  /* Auto-fill from product on first selection */
+  if (id && p.title) {
+    const descEl  = document.getElementById('poster-desc-inp');
+    const priceEl = document.getElementById('poster-price-custom');
+    const chipEl  = document.getElementById('poster-chip');
+    if (descEl  && !descEl.value.trim())  descEl.value  = p.description||p.title||'';
+    if (priceEl && !priceEl.value.trim()) priceEl.value = p.priceAED ? p.priceAED+'AED' : p.priceINR ? '₹'+p.priceINR : p.price ? '$'+p.price : '';
+  }
+
+  /* Product image */
+  const imgUrl = imgOverride || p.imageUrl || (Array.isArray(p.imageUrls)?p.imageUrls[0]:'') || '';
+  const productImg     = document.getElementById('poster-product-img');
+  const imgPlaceholder = document.getElementById('poster-img-placeholder');
+  if (productImg && imgPlaceholder) {
+    if (imgUrl) {
+      productImg.src = imgUrl; productImg.style.display = 'block';
+      imgPlaceholder.style.display = 'none';
+    } else {
+      productImg.style.display = 'none'; imgPlaceholder.style.display = 'block';
+    }
+  }
+
+  /* Description */
+  const desc = descInp || p.description || p.title || 'Select a product to generate your poster';
+  const descEl = document.getElementById('poster-desc-disp');
+  if (descEl) descEl.textContent = desc;
+
+  /* Price */
+  const price = priceInp || (p.priceAED ? p.priceAED+'AED' : p.priceINR ? '₹'+Number(p.priceINR).toLocaleString() : p.price ? '$'+Number(p.price).toFixed(2) : '—');
+  const priceEl = document.getElementById('poster-price-disp');
+  if (priceEl) priceEl.textContent = price;
+
+  /* Storage chip */
+  const chip   = chipInp || '';
+  const chipEl = document.getElementById('poster-chip-disp');
+  if (chipEl) { chipEl.textContent = chip; chipEl.style.display = chip ? '' : 'none'; }
+
+  /* Contact footer */
+  const c1El = document.getElementById('poster-contact1-disp');
+  if (c1El) c1El.textContent = [c1, c2].filter(Boolean).join(' | ');
+}
+
+function printPoster() {
+  const canvas = document.getElementById('poster-canvas');
+  if (!canvas) { showToast('Poster not ready','error'); return; }
+  const win = window.open('', '_blank', 'width=620,height=900');
+  win.document.write(`<!DOCTYPE html><html><head><title>Alfonex Poster</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{background:#fff;font-family:'Sora',sans-serif;display:flex;align-items:flex-start;justify-content:center;padding:20px}
+  @media print{body{padding:0;display:block}@page{size:A4 portrait;margin:8mm}}</style>
+  </head><body>
+  ${canvas.outerHTML}
+  <script>
+  const el=document.querySelector('#poster-canvas');
+  if(el){el.style.maxWidth='100%';el.style.width='100%';el.style.margin='0 auto';el.style.boxShadow='none';el.style.borderRadius='0';}
+  window.onload=function(){setTimeout(function(){window.print();},400);};
+  <\/script></body></html>`);
+  win.document.close();
+  auditLog('EDIT', 'Printed marketing poster for: ' + (document.getElementById('poster-product-sel')?.options[document.getElementById('poster-product-sel')?.selectedIndex]?.text||''));
+}
+
+function sharePosterWA() {
+  const id    = document.getElementById('poster-product-sel')?.value;
+  const p     = id ? (APP.products[id]||{}) : {};
+  const price = document.getElementById('poster-price-custom')?.value || document.getElementById('poster-price-disp')?.textContent || '';
+  const desc  = document.getElementById('poster-desc-inp')?.value || p.description || '';
+  const c1    = document.getElementById('poster-contact1')?.value||'';
+  const c2    = document.getElementById('poster-contact2')?.value||'';
+  const txt   = encodeURIComponent([
+    '🍎 *'+(p.title||'Check this product')+'*',
+    '',
+    desc,
+    '',
+    '💰 *'+price+'*',
+    '',
+    '📞 '+c1,
+    c2,
+    '',
+    '_iAlfonex – Premium Apple Devices_'
+  ].join('\n'));
+  window.open('https://wa.me/?text='+txt, '_blank');
+}
+
+/* ─── LABELS & BARCODES ──────────────────────────────────── */
+function populateBarcodeProducts() {
+  const sel = document.getElementById('bc-product-sel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— choose product —</option>' +
+    Object.entries(APP.products||{}).map(([id,p])=>`<option value="${id}">${esc(p.title||id)}</option>`).join('');
+}
+
+function generateBarcode() {
+  const id  = document.getElementById('bc-product-sel')?.value;
+  const cus = document.getElementById('bc-custom')?.value.trim();
+  const p   = id ? (APP.products[id]||{}) : {};
+  const txt = cus || p.title || id || '—';
+  const el  = document.getElementById('barcode-display');
+  if (!el) return;
+  /* Visual ASCII barcode representation */
+  const bars = generateBarsVisual(txt);
+  el.innerHTML = `
+    <div class="barcode-bars">${bars}</div>
+    <div class="barcode-num">${txt.slice(0,30)}</div>
+    ${p.title ? `<div style="font-size:10px;color:#666;margin-top:4px">${esc(p.title)}</div>` : ''}`;
+}
+
+function generateBarsVisual(str) {
+  /* Deterministic pseudo-barcode bars from string hash */
+  let hash = 0;
+  for (let i=0;i<str.length;i++) hash = ((hash<<5)-hash)+str.charCodeAt(i);
+  let bars = '';
+  for (let i=0;i<28;i++) {
+    const w = (((hash>>i)&3)+1);
+    bars += (i%2===0 ? '█' : ' ').repeat(w);
+  }
+  return bars;
+}
+
+function printBarcode() {
+  const el = document.getElementById('barcode-display');
+  if (!el) return;
+  const win = window.open('','_blank','width=400,height=300');
+  win.document.write(`<html><body style="text-align:center;font-family:monospace;padding:20px">${el.innerHTML}<script>window.print();<\/script></body></html>`);
+  win.document.close();
+}
+
+function downloadBarcode() { showToast('Save the barcode using Print → Save as PDF','info'); printBarcode(); }
+
+function startScan() { showToast('Camera scan requires a barcode scanning library. Use manual lookup below.','info'); }
+
+function doManualScan() {
+  const q = (document.getElementById('scan-manual')?.value||'').toLowerCase().trim();
+  const found = Object.entries(APP.products||{}).find(([,p])=>
+    (p.title||'').toLowerCase().includes(q) || (p.imei||'').includes(q));
+  const res = document.getElementById('scan-result');
+  const body= document.getElementById('scan-result-body');
+  if (!found) {
+    showToast('No product found for: '+q,'error'); return;
+  }
+  const [id, p] = found;
+  res.style.display = 'block';
+  body.innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+      ${p.imageUrl?`<img src="${esc(p.imageUrl)}" style="width:60px;height:60px;object-fit:contain;border-radius:8px;background:var(--bg)">` : '<div style="width:60px;height:60px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px">📦</div>'}
+      <div>
+        <div style="font-weight:800;font-size:15px">${esc(p.title||'—')}</div>
+        <div style="font-size:11px;color:var(--muted)">ID: ${id}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+      <div><span style="color:var(--muted)">Price:</span> <strong>$${Number(p.price||0).toFixed(2)}</strong></div>
+      <div><span style="color:var(--muted)">Stock:</span> <strong>${p.stock??'—'}</strong></div>
+      <div><span style="color:var(--muted)">Category:</span> <strong>${esc(p.category||'—')}</strong></div>
+      <div><span style="color:var(--muted)">Status:</span> <strong>${p.isHidden?'Hidden':p.isComingSoon?'Coming Soon':'Active'}</strong></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn-primary btn-sm" onclick="openProductModal('${id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+      <button class="btn-ghost btn-sm" onclick="document.getElementById('bc-product-sel').value='${id}';generateBarcode();showSection('labels')"><i class="fa-solid fa-barcode"></i> Generate Barcode</button>
+    </div>`;
+}
+
+/* ─── INVOICES ───────────────────────────────────────────── */
+function populateInvoiceOrders() {
+  const sel = document.getElementById('inv-order-sel');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— choose order —</option>' +
+    Object.entries(APP.orders||{}).sort(([,a],[,b])=>(b.createdAt||0)-(a.createdAt||0))
+      .map(([id,o])=>`<option value="${id}">${shortId(id)} — ${esc(o.customerName||o.name||'Unknown')} — $${Number(o.total||0).toFixed(2)}</option>`).join('');
+  /* Set default date */
+  const dateEl = document.getElementById('inv-date');
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0,10);
+}
+
+function previewInvoice() {
+  const id = document.getElementById('inv-order-sel')?.value;
+  if (!id) { showToast('Select an order first','error'); return; }
+  const o = APP.orders[id] || {};
+  const cur = document.getElementById('inv-currency')?.value || 'USD';
+  const sym = {USD:'$',AED:'AED ',INR:'₹'}[cur]||'$';
+  const notes = document.getElementById('inv-notes')?.value||'';
+  const area = document.getElementById('invoice-preview-area');
+  if (!area) return;
+  const items = (o.items||[]).map(it=>`
+    <tr><td style="padding:5px 0">${esc(it.title||'Item')}</td>
+        <td style="text-align:center">${it.qty||1}</td>
+        <td style="text-align:right">${sym}${Number(it.unitPrice||0).toFixed(2)}</td>
+        <td style="text-align:right;font-weight:700">${sym}${Number(it.lineTotal||it.unitPrice*it.qty||0).toFixed(2)}</td></tr>`).join('');
+  area.innerHTML = `
+    <div style="padding:20px;font-size:12px;color:var(--text);text-align:left;line-height:1.6;border:1px solid var(--border);border-radius:8px;margin:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div><div style="font-family:var(--font-head);font-size:20px;font-weight:900;color:var(--green)">iAlfonex</div>
+          <div style="font-size:10px;color:var(--muted)">Premium Apple Devices</div></div>
+        <div style="text-align:right"><div style="font-size:16px;font-weight:800">INVOICE</div>
+          <div style="color:var(--muted)">${shortId(id)}</div>
+          <div style="color:var(--muted)">${document.getElementById('inv-date')?.value||fmtDate(Date.now())}</div></div>
+      </div>
+      <div style="margin-bottom:12px"><strong>Bill To:</strong><br>${esc(o.customerName||o.name||'Customer')}<br>${esc(o.email||'')}<br>${esc(o.phone||'')}</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
+        <thead><tr style="border-bottom:2px solid var(--border)"><th style="padding:5px 0;text-align:left">Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody>${items||'<tr><td colspan="4" style="color:var(--muted);padding:8px 0">No items</td></tr>'}</tbody>
+      </table>
+      <div style="text-align:right;border-top:1px solid var(--border);padding-top:8px">
+        <strong style="font-size:15px">Total: ${sym}${Number(o.total||0).toFixed(2)}</strong>
+      </div>
+      ${notes?`<div style="margin-top:12px;font-size:11px;color:var(--muted);font-style:italic">${esc(notes)}</div>`:''}
+    </div>`;
+}
+
+function generateInvoicePDF() {
+  const id  = document.getElementById('inv-order-sel')?.value;
+  if (!id) { showToast('Select an order first','error'); return; }
+  const o   = APP.orders[id] || {};
+  const cur = document.getElementById('inv-currency')?.value || 'USD';
+  const sym = {USD:'$',AED:'AED ',INR:'₹'}[cur]||'$';
+  const notes   = document.getElementById('inv-notes')?.value||'';
+  const custName= document.getElementById('inv-customer')?.value || o.customerName||o.name||'Customer';
+  const invDate = document.getElementById('inv-date')?.value || new Date().toISOString().slice(0,10);
+  const items   = (o.items||[]).map(it=>`
+    <tr>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0">${esc(it.title||'Item')}${it.variantLabel?`<br><span style="font-size:10px;color:#888">${esc(it.variantLabel)}</span>`:''}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:center;color:#555">${it.qty||1}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:right;color:#555">${sym}${Number(it.unitPrice||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;color:#111">${sym}${Number(it.lineTotal||((it.unitPrice||0)*(it.qty||1))).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+    </tr>`).join('') || `<tr><td colspan="4" style="padding:14px;color:#999;text-align:center">No items</td></tr>`;
+
+  const shipping = Number(o.shipping||o.shippingCost||0);
+  const subtotal = Number(o.total||0) - shipping;
+
+  const win = window.open('','_blank','width=820,height=1100');
+  win.document.write(`<!DOCTYPE html><html><head><title>Invoice ${shortId(id)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Sora',sans-serif;background:#fff;color:#111;font-size:13px;padding:0}
+    @media print{@page{size:A4;margin:0}body{padding:0}}
+    .page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;position:relative;overflow:hidden}
+    /* Green header band */
+    .inv-header{background:linear-gradient(135deg,#1a7a42 0%,#2EA056 60%,#34c46a 100%);padding:32px 40px 28px;color:#fff;position:relative;overflow:hidden}
+    .inv-header::after{content:'';position:absolute;right:-40px;top:-40px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.07)}
+    .inv-header::before{content:'';position:absolute;right:60px;bottom:-60px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.05)}
+    .inv-logo{font-size:28px;font-weight:900;letter-spacing:-1px;color:#fff;margin-bottom:4px}
+    .inv-logo span{color:rgba(255,255,255,.6);font-size:10px;font-weight:600;letter-spacing:2px;display:block;text-transform:uppercase;margin-top:2px}
+    .inv-header-row{display:flex;justify-content:space-between;align-items:flex-start}
+    .inv-num{text-align:right}
+    .inv-num .label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:.7;margin-bottom:4px}
+    .inv-num .value{font-size:22px;font-weight:900;letter-spacing:-1px}
+    .inv-num .date{font-size:12px;opacity:.75;margin-top:4px}
+    /* Status ribbon */
+    .inv-status-bar{background:#f0faf4;border-bottom:2px solid #2EA056;padding:10px 40px;display:flex;gap:24px;font-size:11px;font-weight:700;color:#1a7a42}
+    .inv-status-bar span{display:flex;align-items:center;gap:6px}
+    /* Body */
+    .inv-body{padding:28px 40px}
+    .inv-section-label{font-size:9px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#2EA056;margin-bottom:8px;border-bottom:1px solid #e0f2e9;padding-bottom:5px}
+    .inv-to-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+    .inv-to-box{background:#f8fffe;border:1px solid #d4edda;border-radius:10px;padding:14px 16px}
+    .inv-to-name{font-size:15px;font-weight:800;color:#111;margin-bottom:4px}
+    .inv-to-detail{font-size:11px;color:#555;line-height:1.7}
+    /* Table */
+    .inv-table{width:100%;border-collapse:collapse;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid #e8f5e9}
+    .inv-table thead{background:linear-gradient(90deg,#2EA056,#34c46a)}
+    .inv-table thead th{padding:11px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#fff;white-space:nowrap}
+    .inv-table thead th:last-child,.inv-table thead th:nth-child(3),.inv-table thead th:nth-child(2){text-align:right}
+    .inv-table tbody tr:nth-child(even){background:#f8fffe}
+    .inv-table tfoot{background:#f0faf4;border-top:2px solid #2EA056}
+    .inv-table tfoot td{padding:10px 14px;font-size:12px;font-weight:700}
+    /* Totals */
+    .inv-totals{display:flex;justify-content:flex-end;margin-bottom:20px}
+    .inv-totals-box{background:#f8fffe;border:1px solid #d4edda;border-radius:10px;padding:14px 20px;min-width:220px}
+    .inv-total-row{display:flex;justify-content:space-between;gap:24px;font-size:12px;padding:4px 0;border-bottom:1px solid #e8f5e9}
+    .inv-total-row:last-child{border-bottom:none;padding-top:8px;font-size:15px;font-weight:900;color:#2EA056}
+    /* Notes */
+    .inv-notes{background:#fffbf0;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:11px;color:#92400e;line-height:1.6;margin-bottom:20px}
+    /* Footer */
+    .inv-footer{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(90deg,#111,#222);color:rgba(255,255,255,.7);padding:14px 40px;display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:500}
+    .inv-footer strong{color:#fff}
+    /* Payment badge */
+    .pay-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .pay-paid{background:#dcfce7;color:#15803d}
+    .pay-unpaid{background:#fee2e2;color:#b91c1c}
+    .pay-partial{background:#fef3c7;color:#92400e}
+  </style>
+  </head><body>
+  <div class="page">
+    <!-- Header -->
+    <div class="inv-header">
+      <div class="inv-header-row">
+        <div>
+          <div class="inv-logo">iAlfonex<span>Your Electronics Partner</span></div>
+        </div>
+        <div class="inv-num">
+          <div class="label">Invoice</div>
+          <div class="value">#${shortId(id)}</div>
+          <div class="date">${invDate}</div>
+        </div>
+      </div>
+    </div>
+    <!-- Status bar -->
+    <div class="inv-status-bar">
+      <span>📦 ${esc(o.status||'Pending')}</span>
+      <span>💳 ${esc(o.payMethod||'COD')}</span>
+      <span>🌍 ${cur}</span>
+      ${o.amountPaid>0?`<span class="pay-badge pay-paid">Paid ${sym}${Number(o.amountPaid||0).toFixed(2)}</span>`:`<span class="pay-badge pay-unpaid">Unpaid</span>`}
+    </div>
+    <!-- Body -->
+    <div class="inv-body">
+      <div class="inv-to-grid">
+        <!-- Bill To -->
+        <div class="inv-to-box">
+          <div class="inv-section-label">Bill To</div>
+          <div class="inv-to-name">${esc(custName)}</div>
+          <div class="inv-to-detail">
+            ${o.email?`📧 ${esc(o.email)}<br>`:''}
+            ${o.phone?`📞 ${esc(o.phone)}<br>`:''}
+            ${o.address?`📍 ${esc(o.address)}<br>`:''}
+            ${o.city?`${esc(o.city)}, `:''}${o.country||''}
+          </div>
+        </div>
+        <!-- From -->
+        <div class="inv-to-box">
+          <div class="inv-section-label">From</div>
+          <div class="inv-to-name">iAlfonex</div>
+          <div class="inv-to-detail">
+            📧 info@alfonex.com<br>
+            📞 +971 555788068<br>
+            🌐 www.alfonex.com<br>
+            📍 Dubai, UAE & India
+          </div>
+        </div>
+      </div>
+      <!-- Items table -->
+      <div class="inv-section-label">Order Items</div>
+      <table class="inv-table">
+        <thead><tr>
+          <th>Product</th><th style="text-align:center">Qty</th>
+          <th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th>
+        </tr></thead>
+        <tbody>${items}</tbody>
+      </table>
+      <!-- Totals -->
+      <div class="inv-totals">
+        <div class="inv-totals-box">
+          <div class="inv-section-label" style="margin-bottom:10px">Summary</div>
+          ${shipping?`<div class="inv-total-row"><span>Subtotal</span><span>${sym}${subtotal.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>
+          <div class="inv-total-row"><span>Shipping</span><span>${sym}${shipping.toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>`:''}
+          <div class="inv-total-row"><span>TOTAL</span><span>${sym}${Number(o.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</span></div>
+        </div>
+      </div>
+      ${notes?`<div class="inv-notes">📝 ${esc(notes)}</div>`:''}
+    </div>
+    <!-- Footer -->
+    <div class="inv-footer">
+      <div>© 2026 <strong>iAlfonex</strong> — Premium Apple Devices</div>
+      <div>Generated ${new Date().toLocaleString()}</div>
+    </div>
+  </div>
+  <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script>
+  </body></html>`);
+  win.document.close();
+  auditLog('EDIT', `Generated invoice PDF for order ${id}`);
+}
+
+/* ─── TEAM COMMUNICATION ─────────────────────────────────── */
+let _chatChannel = 'general';
+let _chatMessages = {};
+let _tasks = JSON.parse(localStorage.getItem('ia_tasks')||'[]');
+let _announcements = [];
+
+/* Announcements */
+let _announcementsListenerAttached = false;
+
+function attachAnnouncementsListener() {
+  if (_announcementsListenerAttached) return;
+  _announcementsListenerAttached = true;
+  db.ref('announcements').orderByChild('ts').limitToLast(20).on('value', snap => {
+    _announcements = [];
+    snap.forEach(c => _announcements.unshift({ id:c.key, ...c.val() }));
+    renderAnnouncements();
+  });
+}
+
+function renderAnnouncements() {
+  const el = document.getElementById('ann-list');
+  if (!el) return;
+  el.innerHTML = _announcements.slice(0,3).map(a => `
+    <div class="announcement-card">
+      <div class="ann-icon">📣</div>
+      <div style="flex:1">
+        <div class="ann-title">${esc(a.title)}</div>
+        <div class="ann-body">${esc(a.body)}</div>
+        <div class="ann-meta">Posted by ${esc(a.by)} — ${fmtDT(a.ts)}</div>
+      </div>
+      <button class="act-btn danger" onclick="deleteAnnouncement('${a.id}')" title="Delete"><i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('') || '';
+}
+
+async function postAnnouncement() {
+  const title = document.getElementById('ann-title-inp')?.value.trim();
+  const body  = document.getElementById('ann-body-inp')?.value.trim();
+  if (!title||!body) { showToast('Title and message required','error'); return; }
+  const payload = { title, body, by: APP?.user?.email||'Admin', ts: Date.now() };
+  await db.ref('announcements').push(payload);
+  auditLog('ANN', body, { annTitle: title });
+  document.getElementById('ann-title-inp').value = '';
+  document.getElementById('ann-body-inp').value  = '';
+  showToast('Announcement posted!','success');
+}
+
+async function deleteAnnouncement(id) {
+  await db.ref('announcements/'+id).remove();
+  showToast('Announcement removed','success');
+}
+
+/* Tasks */
+function renderTasks() {
+  const el = document.getElementById('task-list');
+  if (!el) return;
+  el.innerHTML = _tasks.length
+    ? _tasks.map((t,i) => `
+      <div class="task-item">
+        <div class="task-cb ${t.done?'done':''}" onclick="toggleTask(${i})">
+          ${t.done?'<i class="fa-solid fa-check" style="font-size:10px"></i>':''}
+        </div>
+        <div class="task-label ${t.done?'done':''}">${esc(t.label)}</div>
+        <span class="task-priority tp-${t.priority||'mid'}">${t.priority||'mid'}</span>
+        <button class="act-btn danger" onclick="deleteTask(${i})" style="width:22px;height:22px;font-size:10px"><i class="fa-solid fa-xmark"></i></button>
+      </div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">No tasks yet</div>';
+}
+
+function addTask() {
+  const inp = document.getElementById('task-inp');
+  const pri = document.getElementById('task-priority')?.value||'mid';
+  const label = inp?.value.trim();
+  if (!label) return;
+  _tasks.push({ label, priority:pri, done:false, addedAt:Date.now() });
+  localStorage.setItem('ia_tasks', JSON.stringify(_tasks));
+  inp.value='';
+  renderTasks();
+  auditLog('TASK', `Task added: ${label}`);
+}
+
+function toggleTask(i) {
+  _tasks[i].done = !_tasks[i].done;
+  localStorage.setItem('ia_tasks', JSON.stringify(_tasks));
+  renderTasks();
+}
+
+function deleteTask(i) {
+  const label = _tasks[i].label;
+  _tasks.splice(i,1);
+  localStorage.setItem('ia_tasks', JSON.stringify(_tasks));
+  renderTasks();
+}
+
+/* Chat */
+function switchChannel(ch, btn) {
+  _chatChannel = ch;
+  document.querySelectorAll('.chat-channel').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const nameEl = document.getElementById('chat-channel-name');
+  const inputEl = document.getElementById('chat-input');
+  if (nameEl) nameEl.textContent = ch;
+  if (inputEl) inputEl.placeholder = `Message #${ch}…`;
+  /* Remove unread badge for this channel */
+  const badge = document.getElementById('badge-'+ch);
+  if (badge) badge.remove();
+  loadChatMessages(ch);
+}
+
+let _chatRef = null;
+function loadChatMessages(ch) {
+  /* Detach previous listener before attaching a new one */
+  if (_chatRef) { _chatRef.off('value'); _chatRef = null; }
+  _chatRef = db.ref(`chat/${ch}`).limitToLast(40);
+  _chatRef.on('value', snap => {
+    const msgs = [];
+    snap.forEach(c => msgs.push({ id:c.key, ...c.val() }));
+    renderChat(msgs);
+  });
+}
+
+function renderChat(msgs) {
+  const el = document.getElementById('chat-messages');
+  if (!el) return;
+  const myEmail = APP?.user?.email||'admin';
+  el.innerHTML = msgs.map(m => {
+    const isMe = m.by === myEmail;
+    return `<div class="chat-msg ${isMe?'me':''}">
+      <div class="chat-avatar">${(m.by||'?')[0].toUpperCase()}</div>
+      <div>
+        <div class="chat-bubble">${esc(m.text)}</div>
+        <div class="chat-time">${isMe?'You':esc(m.by)} · ${fmtDT(m.ts)}</div>
+      </div>
+    </div>`;
+  }).join('') || '<div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No messages in this channel yet</div>';
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendChatMsg() {
+  const inp = document.getElementById('chat-input');
+  const text = inp?.value.trim();
+  if (!text) return;
+  await db.ref(`chat/${_chatChannel}`).push({
+    text, by: APP?.user?.email||'admin',
+    name: APP?.user?.displayName||'Admin',
+    ts: Date.now()
+  });
+  inp.value='';
+}
+
+/* ─── HOOK INTO EXISTING LISTENERS FOR AUDIT ─────────────── */
+/* Patch: when products Firebase updates, also log if createdAt matches "now" (new add) */
+const _origProdRef = db.ref('products');
+
+/* ─── SECTION INIT handled inside showSection() above ────── */
+
+/* ─── INIT ───────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  renderTasks();
+  renderAuditLog();
+  convertCurrency();
+});
+
+/* Also patch existing saveProduct to log audit */
+document.addEventListener('DOMContentLoaded', () => {
+  /* Observe Firebase products for audit logging */
+  db.ref('products').on('child_added', snap => {
+    const p = snap.val();
+    if (p && p.createdAt && (Date.now()-p.createdAt) < 5000) {
+      auditLog('STOCK', `Added product: ${p.title||snap.key}`, { productId:snap.key });
+    }
+  });
+  db.ref('products').on('child_removed', snap => {
+    auditLog('DELETE', `Deleted product: ${(snap.val()||{}).title||snap.key}`);
+  });
+  db.ref('products').on('child_changed', snap => {
+    const p = snap.val();
+    if (p && p.updatedAt && (Date.now()-p.updatedAt) < 5000) {
+      auditLog('EDIT', `Updated product: ${p.title||snap.key}`, { productId:snap.key });
+    }
+  });
+});
+
+/* Log admin login */
+firebase.auth().onAuthStateChanged(user => {
+  if (user) auditLog('LOGIN', `Admin signed in: ${user.email}`);
+});
+
 </script>
 </body>
 </html>
