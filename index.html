@@ -1431,33 +1431,59 @@ tbody td{padding:12px 16px;vertical-align:middle}
     ══════════════════════════════════════ -->
     <section id="section-audit" class="content-section">
       <div class="sec-header">
-        <div><div class="sec-title">Audit Trail</div><div class="sec-sub">Complete log of all admin actions with timestamps</div></div>
+        <div>
+          <div class="sec-title">Audit Trail</div>
+          <div class="sec-sub">Complete log of every admin action — who, what, when, details</div>
+        </div>
         <div class="sec-header-right">
-          <button class="btn-ghost btn-sm" onclick="clearAuditLog()"><i class="fa-solid fa-trash"></i> Clear Log</button>
+          <button class="btn-ghost btn-sm" onclick="clearAuditLog()"><i class="fa-solid fa-trash"></i> Clear Local</button>
           <button class="btn-primary btn-sm" onclick="exportAuditLog()"><i class="fa-solid fa-download"></i> Export CSV</button>
         </div>
       </div>
-      <div class="two-col">
-        <!-- Log -->
-        <div class="table-card" style="padding:20px">
-          <div class="sec-sub" style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-clock-rotate-left" style="color:var(--green)"></i> Activity Log</div>
-          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-            <button class="btn-ghost btn-sm" onclick="filterAudit('all')" id="af-all" style="background:var(--green);color:#fff;border-color:var(--green)">All</button>
-            <button class="btn-ghost btn-sm" onclick="filterAudit('ADD')" id="af-add">Stock Added</button>
-            <button class="btn-ghost btn-sm" onclick="filterAudit('PRICE')" id="af-price">Price Changed</button>
-            <button class="btn-ghost btn-sm" onclick="filterAudit('DELETE')" id="af-delete">Deleted</button>
-            <button class="btn-ghost btn-sm" onclick="filterAudit('LOGIN')" id="af-login">Logins</button>
-          </div>
-          <div id="audit-log-list" style="max-height:500px;overflow-y:auto">
-            <div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No audit events yet</div>
-          </div>
+
+      <!-- Filter chips -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Filter:</span>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('all')"    id="af-all"    style="background:var(--green);color:#fff;border-color:var(--green)"><i class="fa-solid fa-list"></i> All</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('ADD')"    id="af-add"   ><i class="fa-solid fa-plus"             style="color:var(--green)"></i> Added</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('EDIT')"   id="af-edit"  ><i class="fa-solid fa-pen"              style="color:#3b82f6"></i> Edited</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('DELETE')" id="af-delete"><i class="fa-solid fa-trash"            style="color:var(--red)"></i> Deleted</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('PRICE')"  id="af-price" ><i class="fa-solid fa-tag"              style="color:#f59e0b"></i> Payments</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('STOCK')"  id="af-stock" ><i class="fa-solid fa-boxes-stacked"    style="color:var(--green)"></i> Stock</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('LOGIN')"  id="af-login" ><i class="fa-solid fa-right-to-bracket" style="color:#8b5cf6"></i> Logins</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('ANN')"    id="af-ann"   ><i class="fa-solid fa-bullhorn"         style="color:#f59e0b"></i> Announcements</button>
+      </div>
+
+      <!-- Audit table -->
+      <div class="table-card" style="padding:0;overflow:hidden">
+        <div class="table-topbar" style="justify-content:space-between">
+          <div class="table-topbar-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--green)"></i> Activity Log <span id="audit-count" style="font-size:11px;font-weight:500;color:var(--muted)"></span></div>
+          <input class="search-input" id="audit-search" placeholder="Search logs…" oninput="renderAuditLog()" style="max-width:200px">
         </div>
-        <!-- Announcement Log -->
-        <div class="table-card" style="padding:20px">
-          <div class="sec-sub" style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-megaphone" style="color:var(--green)"></i> Admin Announcements Archive</div>
-          <div id="audit-ann-list">
-            <div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No announcements yet</div>
-          </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:var(--bg)">
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap">Type</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Action</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Details</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap">Admin</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap">Date / Time</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Category</th>
+              </tr>
+            </thead>
+            <tbody id="audit-log-list">
+              <tr><td colspan="6" style="padding:30px;text-align:center;color:var(--muted)">Loading audit trail…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Announcements archive -->
+      <div class="table-card" style="padding:20px;margin-top:16px">
+        <div class="sec-sub" style="font-weight:700;margin-bottom:14px"><i class="fa-solid fa-megaphone" style="color:var(--green)"></i> Admin Announcements Archive</div>
+        <div id="audit-ann-list">
+          <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">No announcements yet</div>
         </div>
       </div>
     </section>
@@ -1949,7 +1975,10 @@ async function doLogin(){
   }finally{ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Sign In'; }
 }
 ['login-email','login-pass'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();}));
-async function doLogout(){ try{ await auth.signOut(); }catch(e){ showToast(e.message,'error'); } }
+async function doLogout(){
+  auditLog('LOGIN', `Admin signed out: ${APP.user?.email||'—'}`, {category:'Auth'});
+  try{ await auth.signOut(); }catch(e){ showToast(e.message,'error'); }
+}
 
 /* ═══════════════════════════════════════════════
    ⑥ AUTH STATE OBSERVER & ROLE GATE
@@ -2224,8 +2253,23 @@ async function saveProduct(){
     if(priceINR!==null)payload.priceINR=priceINR; else payload.priceINR=null;
     const variants = readVariantsFromEditor();
     if (variants) payload.variants = variants; else payload.variants = null;
-    if(editId){ await db.ref(`products/${editId}`).update(payload); showToast('Product updated!','success'); }
-    else{ payload.createdAt=Date.now(); await db.ref('products').push(payload); showToast('Product added!','success'); }
+    if(editId){
+      const old = APP.products[editId]||{};
+      await db.ref(`products/${editId}`).update(payload);
+      showToast('Product updated!','success');
+      /* Detailed change log */
+      const changes = [];
+      if(old.title !== title) changes.push(`Title: "${old.title}" → "${title}"`);
+      if(old.price !== price) changes.push(`Price: $${old.price} → $${price}`);
+      if(old.stock !== stock) changes.push(`Stock: ${old.stock} → ${stock}`);
+      if(old.isHidden !== (payload.isHidden||null)) changes.push(`Hidden: ${!!old.isHidden} → ${!!payload.isHidden}`);
+      auditLog('EDIT', `Updated product: ${title}`, { detail: changes.join(' | ')||'Minor update', productId:editId, category:'Products' });
+    } else {
+      payload.createdAt=Date.now();
+      const ref = await db.ref('products').push(payload);
+      showToast('Product added!','success');
+      auditLog('ADD', `Added new product: ${title}`, { detail:`Price $${price} | Stock: ${stock} | Category: ${category||'—'}`, productId:ref.key, category:'Products' });
+    }
     closeProductModal();
   }catch(err){showToast('Save failed: '+err.message,'error');}
   finally{resetBtn(btn,'<i class="fa-solid fa-floppy-disk"></i> Save Product');}
@@ -2535,10 +2579,12 @@ async function saveBanner() {
     if (id) {
       await db.ref('banners/'+id).update(payload);
       showToast('Banner updated!','success');
+      auditLog('EDIT',`Updated banner: ${payload.title}`,{detail:`Action: ${payload.actionType} | Active: ${payload.active}`,category:'Banners'});
     } else {
       payload.createdAt = Date.now();
       await db.ref('banners').push(payload);
       showToast('Banner added!','success');
+      auditLog('ADD',`Added banner: ${payload.title}`,{detail:`Action: ${payload.actionType} | Active: ${payload.active}`,category:'Banners'});
     }
     closeBannerModal();
   } catch(e) {
@@ -2874,9 +2920,9 @@ async function saveOrder(){
     if(editId){
       await db.ref(`orders/${editId}`).update(orderData);
       showToast('Order updated!','success');
+      auditLog('EDIT', `Updated order ${shortId(editId)} for ${custName}`, { detail:`Total: $${total.toFixed(2)} | Items: ${items.length}`, orderId:editId, category:'Orders' });
     }else{
       orderData.createdAt=Date.now(); orderData.createdBy=APP.user.uid;
-      /* Atomic multi-path write: create order + decrement each product's stock */
       const newRef=db.ref('orders').push();
       const updates={};
       updates[`orders/${newRef.key}`]=orderData;
@@ -2886,6 +2932,7 @@ async function saveOrder(){
       });
       await db.ref().update(updates);
       showToast('Order created!','success');
+      auditLog('ADD', `Created order for ${custName}`, { detail:`Total: $${total.toFixed(2)} | Items: ${items.map(i=>i.title).join(', ')}`, orderId:newRef.key, category:'Orders' });
     }
     closeCreateOrderModal();
   }catch(err){showToast('Save failed: '+err.message,'error');}
@@ -3035,6 +3082,7 @@ async function advanceOrderStatus(){
     if(tsField) update[tsField]=Date.now();
     await db.ref(`orders/${id}`).update(update);
     showToast(`Marked as ${nextStatus}!`,'success');
+    auditLog('EDIT', `Order ${shortId(id)} status: ${o.status} → ${nextStatus}`, { detail:`Customer: ${o.customerName||'—'} | Total: $${o.total||0}`, orderId:id, category:'Orders' });
     // Update button for the NEXT step immediately (don't wait for listener)
     const afterIdx=curIdx+2;
     if(afterIdx<ORDER_STATUSES.length){
@@ -3063,6 +3111,7 @@ async function savePaymentInfo(orderId){
   try{
     await db.ref(`orders/${orderId}`).update({paymentStatus:status,amountPaid:parseFloat(amt.toFixed(2)),updatedAt:Date.now()});
     showToast('Payment info saved.','success');
+    auditLog('PRICE',`Payment updated: Order ${shortId(orderId)}`,{detail:`Amount: $${amt.toFixed(2)} | Status: ${status} | Customer: ${o.customerName||'—'}`,orderId:orderId,category:'Orders'});
   }catch(err){showToast('Save failed: '+err.message,'error');}
 }
 
@@ -3197,10 +3246,26 @@ async function executeDelete(){
   const btn=document.getElementById('btn-confirm-del');
   btn.disabled=true; btn.innerHTML='<div class="spin-ring" style="width:14px;height:14px;border-width:2px"></div>';
   try{
-    if(type==='product')await db.ref(`products/${id}`).remove();
-    if(type==='order')  await db.ref(`orders/${id}`).remove();
-    if(type==='admin')  await db.ref(`admins/${id}`).remove();
-    if(type==='banner') await db.ref(`banners/${id}`).remove();
+    if(type==='product'){
+      const p=APP.products[id]||{};
+      await db.ref(`products/${id}`).remove();
+      auditLog('DELETE',`Deleted product: ${p.title||id}`,{detail:`Price $${p.price||0} | Stock: ${p.stock||0} | Category: ${p.category||'—'}`,productId:id,category:'Products'});
+    }
+    if(type==='order'){
+      const o=APP.orders[id]||{};
+      await db.ref(`orders/${id}`).remove();
+      auditLog('DELETE',`Deleted order ${shortId(id)}`,{detail:`Customer: ${o.customerName||'—'} | Total: $${o.total||0} | Status: ${o.status||'—'}`,orderId:id,category:'Orders'});
+    }
+    if(type==='admin'){
+      const a=APP.admins[id]||{};
+      await db.ref(`admins/${id}`).remove();
+      auditLog('DELETE',`Removed admin: ${a.email||a.name||id}`,{detail:`Role: ${a.role||'—'}`,category:'Admins'});
+    }
+    if(type==='banner'){
+      const b=APP.banners[id]||{};
+      await db.ref(`banners/${id}`).remove();
+      auditLog('DELETE',`Deleted banner: ${b.title||id}`,{detail:`Action: ${b.actionType||'—'}`,category:'Banners'});
+    }
     showToast(`${type.charAt(0).toUpperCase()+type.slice(1)} deleted.`,'success');
     closeDeleteModal();
   }catch(err){showToast('Delete failed: '+err.message,'error');}
@@ -3279,7 +3344,17 @@ document.querySelectorAll('.modal-backdrop').forEach(b=>{
    localStorage AND optionally synced to Firebase.
 ─────────────────────────────────────────────────────────── */
 let _auditEvents = JSON.parse(localStorage.getItem('ia_audit') || '[]');
+let _fbAuditEvents = [];   /* loaded from Firebase — all admins' actions */
 let _auditFilter = 'all';
+
+/* Load all audit events from Firebase so we see ALL admins' actions with correct emails */
+db.ref('audit_trail').orderByChild('ts').limitToLast(200).on('value', snap => {
+  _fbAuditEvents = [];
+  snap.forEach(c => _fbAuditEvents.push(c.val()));
+  _fbAuditEvents.sort((a,b) => b.ts - a.ts);
+  /* Re-render if audit section is active */
+  if (document.getElementById('section-audit')?.classList.contains('active')) renderAuditLog();
+});
 
 const AUDIT_ICONS = {
   ADD:    { cls:'ai-add',    icon:'fa-solid fa-plus'          },
@@ -3304,38 +3379,101 @@ function auditLog(type, description, extra = {}) {
   renderAuditLog();
 }
 
+const TYPE_META = {
+  ADD:    { label:'Added',       color:'#16a34a', bg:'#f0fdf4', icon:'fa-plus' },
+  EDIT:   { label:'Edited',      color:'#2563eb', bg:'#eff6ff', icon:'fa-pen' },
+  DELETE: { label:'Deleted',     color:'#dc2626', bg:'#fff1f2', icon:'fa-trash' },
+  PRICE:  { label:'Payment',     color:'#d97706', bg:'#fffbeb', icon:'fa-tag' },
+  STOCK:  { label:'Stock',       color:'#16a34a', bg:'#f0fdf4', icon:'fa-boxes-stacked' },
+  LOGIN:  { label:'Login',       color:'#7c3aed', bg:'#f5f3ff', icon:'fa-right-to-bracket' },
+  ANN:    { label:'Announce',    color:'#d97706', bg:'#fffbeb', icon:'fa-bullhorn' },
+  TASK:   { label:'Task',        color:'#2563eb', bg:'#eff6ff', icon:'fa-list-check' },
+  BANNER: { label:'Banner',      color:'#0891b2', bg:'#ecfeff', icon:'fa-image' },
+};
+
 function renderAuditLog() {
   const el = document.getElementById('audit-log-list');
   const ann = document.getElementById('audit-ann-list');
+  const countEl = document.getElementById('audit-count');
+  const searchQ = (document.getElementById('audit-search')?.value||'').toLowerCase().trim();
   if (!el) return;
-  const list = _auditFilter === 'all'
-    ? _auditEvents
-    : _auditEvents.filter(e => e.type === _auditFilter);
+
+  /* Merge Firebase + local, deduplicate */
+  const combined = [..._auditEvents, ..._fbAuditEvents];
+  const seen = new Set();
+  const merged = combined
+    .filter(e => { const k = e.ts+'|'+e.description; if(seen.has(k)) return false; seen.add(k); return true; })
+    .sort((a,b) => b.ts - a.ts)
+    .slice(0, 500);
+
+  /* Filter by type */
+  let list = _auditFilter === 'all' ? merged : merged.filter(e => e.type === _auditFilter);
+
+  /* Filter by search */
+  if (searchQ) {
+    list = list.filter(e =>
+      (e.description||'').toLowerCase().includes(searchQ) ||
+      (e.who||'').toLowerCase().includes(searchQ) ||
+      (e.detail||'').toLowerCase().includes(searchQ) ||
+      (e.category||'').toLowerCase().includes(searchQ)
+    );
+  }
+
+  if (countEl) countEl.textContent = `(${list.length} events)`;
+
   if (!list.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No events for this filter</div>';
+    el.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--muted)">No events found</td></tr>`;
   } else {
-    el.innerHTML = list.map(e => {
-      const ic = AUDIT_ICONS[e.type] || AUDIT_ICONS['EDIT'];
-      return `<div class="audit-row">
-        <div class="audit-icon ${ic.cls}"><i class="${ic.icon}"></i></div>
-        <div class="audit-body">
-          <div class="audit-action">${esc(e.description)}</div>
-          <div class="audit-meta"><i class="fa-solid fa-user" style="width:12px"></i> ${esc(e.who)} &nbsp;·&nbsp; <i class="fa-regular fa-clock" style="width:12px"></i> ${fmtDT(e.ts)}</div>
-        </div>
-      </div>`;
+    el.innerHTML = list.map((e,i) => {
+      const m = TYPE_META[e.type] || TYPE_META['EDIT'];
+      const rowBg = i%2===0 ? '' : 'background:var(--surface2)';
+      /* Format date */
+      const dt = e.ts ? new Date(e.ts) : null;
+      const dateStr = dt ? dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+      const timeStr = dt ? dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
+      /* Admin email — split at @ for display */
+      const who = e.who||'Unknown';
+      const whoShort = who.length>28 ? who.slice(0,28)+'…' : who;
+      return `<tr style="${rowBg};border-bottom:1px solid var(--border)">
+        <td style="padding:10px 14px;white-space:nowrap">
+          <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:${m.bg};color:${m.color}">
+            <i class="fa-solid ${m.icon}" style="font-size:9px"></i> ${m.label}
+          </span>
+        </td>
+        <td style="padding:10px 14px;font-weight:600;font-size:12px;color:var(--text)">${esc(e.description||'—')}</td>
+        <td style="padding:10px 14px;font-size:11px;color:var(--muted);max-width:200px">${esc(e.detail||e.extra||'—')}</td>
+        <td style="padding:10px 14px;font-size:11px;white-space:nowrap">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${(who[0]||'?').toUpperCase()}</div>
+            <div>
+              <div style="font-weight:700;color:var(--text)">${esc(whoShort)}</div>
+            </div>
+          </div>
+        </td>
+        <td style="padding:10px 14px;font-size:11px;white-space:nowrap;color:var(--text)">
+          <div style="font-weight:600">${dateStr}</div>
+          <div style="color:var(--muted)">${timeStr}</div>
+        </td>
+        <td style="padding:10px 14px">
+          <span style="font-size:10px;font-weight:600;color:var(--muted)">${esc(e.category||'System')}</span>
+        </td>
+      </tr>`;
     }).join('');
   }
-  /* announcements archive in audit panel */
-  const anns = _auditEvents.filter(e => e.type === 'ANN');
+
+  /* Announcements archive */
+  const anns = merged.filter(e => e.type === 'ANN');
   if (ann) {
     ann.innerHTML = anns.length
       ? anns.map(e => `<div class="announcement-card" style="margin-bottom:10px">
           <div class="ann-icon">📣</div>
-          <div><div class="ann-title">${esc(e.annTitle||'Announcement')}</div>
-          <div class="ann-body">${esc(e.description)}</div>
-          <div class="ann-meta">By ${esc(e.who)} — ${fmtDT(e.ts)}</div></div>
+          <div style="flex:1">
+            <div class="ann-title">${esc(e.annTitle||'Announcement')}</div>
+            <div class="ann-body">${esc(e.description)}</div>
+            <div class="ann-meta">By <strong>${esc(e.who||'Unknown')}</strong> — ${fmtDT(e.ts)}</div>
+          </div>
         </div>`).join('')
-      : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:30px">No announcements yet</div>';
+      : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">No announcements yet</div>';
   }
 }
 
@@ -4214,25 +4352,8 @@ window.addEventListener('DOMContentLoaded', () => {
   convertCurrency();
 });
 
-/* Also patch existing saveProduct to log audit */
-document.addEventListener('DOMContentLoaded', () => {
-  /* Observe Firebase products for audit logging */
-  db.ref('products').on('child_added', snap => {
-    const p = snap.val();
-    if (p && p.createdAt && (Date.now()-p.createdAt) < 5000) {
-      auditLog('STOCK', `Added product: ${p.title||snap.key}`, { productId:snap.key });
-    }
-  });
-  db.ref('products').on('child_removed', snap => {
-    auditLog('DELETE', `Deleted product: ${(snap.val()||{}).title||snap.key}`);
-  });
-  db.ref('products').on('child_changed', snap => {
-    const p = snap.val();
-    if (p && p.updatedAt && (Date.now()-p.updatedAt) < 5000) {
-      auditLog('EDIT', `Updated product: ${p.title||snap.key}`, { productId:snap.key });
-    }
-  });
-});
+/* Product audit is logged directly in saveProduct/deleteProduct functions.
+   No Firebase listeners needed — those cause false logs on every page load. */
 
 /* Log admin login */
 firebase.auth().onAuthStateChanged(user => {
