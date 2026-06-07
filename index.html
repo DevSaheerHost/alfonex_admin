@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
   <title>iAlfonex – Admin Panel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +18,7 @@
 <style>
 /* ── DESIGN TOKENS ── */
 :root {
+  color-scheme: light only;
   --green:#2EA056; --green-light:#EAFBF1; --green-dark:#1d7a40; --green-mid:#d4f0e2;
   --red:#e53935; --amber:#f59e0b; --blue:#3b82f6; --purple:#8b5cf6;
   --sidebar-bg:#0c1a10; --sidebar-w:248px;
@@ -26,15 +28,15 @@
   --radius:12px; --radius-sm:8px; --shadow-sm:0 1px 3px rgba(0,0,0,0.08);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth;color-scheme:light}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;color-scheme:light}
 button{font-family:var(--font-body);cursor:pointer}
 a{text-decoration:none;color:inherit}
 input,textarea,select{font-family:var(--font-body)}
 .view{display:none}
 .view.active{display:block}
 #view-login.active{display:flex}
-#view-dashboard.active{display:flex;align-items:flex-start}
+
 
 /* ── LOADER ── */
 #loader{position:fixed;inset:0;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:9999;transition:opacity 0.4s}
@@ -76,8 +78,8 @@ input,textarea,select{font-family:var(--font-body)}
 .login-error.show{display:block}
 
 /* ── SIDEBAR ── */
-#view-dashboard{min-height:100vh;overflow-x:hidden}
-#admin-sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:300;transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+
+#admin-sidebar{width:248px;max-width:248px;min-width:248px;background:var(--sidebar-bg);min-height:100vh;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:300;transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
 #admin-sidebar::-webkit-scrollbar{width:4px}
 #admin-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 .sb-logo-zone{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
@@ -100,8 +102,14 @@ input,textarea,select{font-family:var(--font-body)}
 .sb-logout{display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:rgba(229,57,53,.10);border:1px solid rgba(229,57,53,.18);border-radius:var(--radius-sm);color:#fc8181;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
 .sb-logout:hover{background:rgba(229,57,53,.22);color:#fff}
 #sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:299;display:none;backdrop-filter:blur(2px)}
+/* ── MAIN LAYOUT ── */
+#view-dashboard        { display:none }
+#view-dashboard.active { display:block }
+#main-area             { margin-left:248px; min-width:0 }
+@media(max-width:480px){ #main-area { margin-left:0 } }
+
 #sb-overlay.show{display:block}
-#main-area{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden}
+
 #top-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 22px;height:60px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
 #ham-btn{display:none;background:none;border:none;color:var(--muted);font-size:18px;padding:6px 8px;border-radius:8px;transition:all .15s;align-items:center;justify-content:center}
 #ham-btn:hover{background:var(--green-light);color:var(--green)}
@@ -109,7 +117,7 @@ input,textarea,select{font-family:var(--font-body)}
 .header-page-title span{color:var(--green)}
 
 /* ── SECTIONS ── */
-.content-section{display:none;padding:22px 20px}
+.content-section{display:none;padding:22px 20px;box-sizing:border-box;background:var(--bg)}
 .content-section.active{display:block}
 .sec-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
 .sec-title{font-family:var(--font-head);font-size:22px;font-weight:800}
@@ -129,7 +137,7 @@ input,textarea,select{font-family:var(--font-body)}
 .btn-sm{padding:6px 12px !important;font-size:12px !important}
 
 /* ── STATS ── */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:14px;margin-bottom:26px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:14px;margin-bottom:26px;width:100%;box-sizing:border-box}
 .stat-card{background:var(--surface);border-radius:var(--radius);padding:18px 16px;box-shadow:var(--shadow-sm);border:1px solid var(--border);animation:fadeUp .35s ease both}
 .stat-card:nth-child(2){animation-delay:.05s}.stat-card:nth-child(3){animation-delay:.10s}
 .stat-card:nth-child(4){animation-delay:.15s}.stat-card:nth-child(5){animation-delay:.20s}
@@ -147,7 +155,7 @@ input,textarea,select{font-family:var(--font-body)}
 .welcome-text p{font-size:13px;opacity:.82;margin-top:4px}
 
 /* ── TABLE CARD ── */
-.table-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--border);overflow:hidden}
+.table-card{background:var(--surface);border-radius:var(--radius);box-shadow:0 2px 8px rgba(0,0,0,0.1);border:1px solid #D1D5DB;overflow:hidden;width:100%;box-sizing:border-box;min-height:10px}
 .table-topbar{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .table-topbar-title{font-family:var(--font-head);font-size:14px;font-weight:700;flex:1}
 .search-box{position:relative;display:flex;align-items:center}
@@ -192,7 +200,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .modal-backdrop.open{display:flex}
 .modal{background:var(--surface);border-radius:18px;width:100%;max-width:540px;max-height:94vh;overflow-y:auto;box-shadow:0 20px 64px rgba(0,0,0,.22);animation:modalIn .24s ease both;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
 @keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:768px){
+@media(max-width:480px){
   @keyframes modalIn{from{opacity:0;transform:translateY(60px)}to{opacity:1;transform:translateY(0)}}
 }
 @keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
@@ -424,18 +432,16 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .items-table tr:first-child td{border-top:none}
 
 /* ── RESPONSIVE ── */
-/* ══ RESPONSIVE — TABLET (≤768px) ══════════════════ */
-@media(max-width:768px){
-  :root{--sidebar-w:0px}
-
-  /* Sidebar */
+/* ══ RESPONSIVE — MOBILE (≤480px) ══════════════════ */
+@media(max-width:480px){
+  /* Sidebar — hidden off-screen, slides in when .open */
   #admin-sidebar{transform:translateX(-260px);width:260px;z-index:500}
   #admin-sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.18)}
-  #main-area{margin-left:0;min-height:0;width:100%;max-width:100vw;flex:1}
+
+  /* Show hamburger button */
   #ham-btn{display:flex}
-  #view-dashboard{min-height:0;height:auto}
-  #view-dashboard.active{height:auto;align-items:stretch}
-  .content-section.active{min-height:calc(100vh - 52px)}
+
+  .content-section.active{display:block}
 
   /* Header */
   .admin-header{padding:0 14px}
@@ -576,7 +582,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
 
 /* ═══════ NEW FEATURE CSS ═══════ */
 /* Generic card grid */
-.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:16px}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px;width:100%;box-sizing:border-box}
 .feat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:10px}
 .feat-card-title{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text)}
 .feat-card-sub{font-size:12px;color:var(--muted);line-height:1.5}
@@ -691,13 +697,13 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .wh-qty{font-family:var(--font-head);font-size:18px;font-weight:900;color:var(--text);min-width:60px;text-align:right}
 
 /* Two-column section layout */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;box-sizing:border-box;min-height:10px}
 @media(max-width:700px){.two-col{grid-template-columns:1fr}}
 @media(max-width:700px){.chat-layout{flex-direction:column;height:auto}}
 @media(max-width:700px){.chat-sidebar{width:100%;height:160px}}
 
 /* ── MOBILE RESPONSIVE FIXES ── */
-@media(max-width:768px){
+@media(max-width:480px){
   /* Remove fixed max-widths that break mobile layout */
   .poster-wrap,.barcode-wrap,.cc-box{max-width:100%;width:100%}
 
@@ -963,9 +969,6 @@ tbody td{padding:12px 16px;vertical-align:middle}
         </table></div>
       </div>
     </section>
-  </div>
-</div>
-
 
     <!-- ══════════════════════════════════════
          1. DEALER MANAGEMENT
@@ -1458,6 +1461,9 @@ tbody td{padding:12px 16px;vertical-align:middle}
         </div>
       </div>
     </section>
+
+  </div><!-- end #main-area -->
+</div><!-- end #view-dashboard -->
 
 <!-- ══ MODAL: ADD/EDIT BANNER ══ -->
 <div id="modal-banner" class="modal-backdrop">
