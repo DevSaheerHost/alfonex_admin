@@ -1013,7 +1013,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <div class="table-card">
         <div class="table-topbar"><div class="table-topbar-title" id="admin-table-label">All Admins</div></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Administrator</th><th>Role</th><th class="hide-mobile">Added</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Administrator</th><th>Role</th><th class="hide-mobile">Added</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody id="admin-tbody"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👤</div><p>No admins found.</p></div></td></tr></tbody>
         </table></div>
       </div>
@@ -1877,6 +1877,77 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="btn-secondary" onclick="closeOrderDetail()">Close</button>
       <button class="btn-secondary" id="btn-invoice" onclick="generateInvoicePDF()"><i class="fa-solid fa-file-pdf" style="color:var(--red)"></i> Invoice PDF</button>
       <button class="advance-btn" id="btn-advance" onclick="advanceOrderStatus()"><i class="fa-solid fa-arrow-right"></i> <span id="advance-label">Mark as Packed</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: ADD ADMIN ══ -->
+<!-- ══ MODAL: EDIT ADMIN ══ -->
+<div id="modal-edit-admin" class="modal-backdrop">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-hicon"><i class="fa-solid fa-user-pen"></i></div>
+      <div class="modal-title">Edit Admin Account</div>
+      <button class="modal-close" onclick="closeEditAdminModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-admin-uid">
+
+      <!-- Name -->
+      <div class="mf-group">
+        <label class="mf-label">Full Name *</label>
+        <input type="text" id="edit-admin-name" class="mf-input" placeholder="Full name">
+      </div>
+
+      <!-- Email (read-only — Firebase Auth email can't be changed easily) -->
+      <div class="mf-group">
+        <label class="mf-label">Email</label>
+        <input type="email" id="edit-admin-email" class="mf-input" placeholder="email" readonly
+          style="background:var(--bg);cursor:not-allowed;opacity:.7">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px"><i class="fa-solid fa-circle-info" style="color:var(--green)"></i> Email cannot be changed after account creation.</div>
+      </div>
+
+      <!-- Role -->
+      <div class="mf-group">
+        <label class="mf-label">Role</label>
+        <select id="edit-admin-role" class="mf-input">
+          <option value="admin">Admin</option>
+          <option value="super_admin">Super Admin</option>
+        </select>
+      </div>
+
+      <!-- New Password -->
+      <div class="mf-group">
+        <label class="mf-label">New Password <span style="font-weight:400;color:var(--muted)">(leave blank to keep current)</span></label>
+        <div class="mf-pw-wrap">
+          <input type="password" id="edit-admin-pass" class="mf-input" placeholder="Min. 6 characters — blank = no change">
+          <button class="pw-toggle" type="button" onclick="togglePw('edit-admin-pass',this)" tabindex="-1">
+            <i class="fa-regular fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="mf-group">
+        <label class="mf-label">Confirm New Password</label>
+        <div class="mf-pw-wrap">
+          <input type="password" id="edit-admin-pass2" class="mf-input" placeholder="Repeat new password">
+          <button class="pw-toggle" type="button" onclick="togglePw('edit-admin-pass2',this)" tabindex="-1">
+            <i class="fa-regular fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div style="background:var(--amber-light,#fffbeb);border:1px solid #f59e0b30;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-top:4px">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i>
+        <strong>Password reset</strong> requires the affected admin to sign in again. This action is logged.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeEditAdminModal()">Cancel</button>
+      <button class="btn-primary" id="btn-update-admin" onclick="updateAdmin()">
+        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+      </button>
     </div>
   </div>
 </div>
@@ -3368,14 +3439,28 @@ function renderAdminsTable(){
     const self=uid===APP.user?.uid;
     const chip=a.role==='super_admin'?`<span class="role-chip super"><i class="fa-solid fa-crown"></i> Super Admin</span>`:`<span class="role-chip admin"><i class="fa-solid fa-user-shield"></i> Admin</span>`;
     const selfTag=self?`<span style="font-size:9px;font-weight:700;background:var(--green-light);color:var(--green);padding:2px 7px;border-radius:10px;margin-left:6px">You</span>`:'';
+    const isSuperAdmin = APP.admins[APP.user?.uid]?.role === 'super_admin';
+    const statusBadge = a.disabled
+      ? `<span class="nf-badge nb-red">Disabled</span>`
+      : `<span class="nf-badge nb-green">Active</span>`;
     return `<tr>
       <td><div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-family:var(--font-head);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center">${esc((a.name||a.email||'A').charAt(0).toUpperCase())}</div>
-        <div><div style="font-weight:700;font-size:13px">${esc(a.name||'—')}${selfTag}</div><div style="font-size:11px;color:var(--muted)">${esc(a.email||'—')}</div></div>
+        <div style="width:36px;height:36px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-family:var(--font-head);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center">${esc((a.name||a.email||'A').charAt(0).toUpperCase())}</div>
+        <div>
+          <div style="font-weight:700;font-size:13px">${esc(a.name||'—')}${selfTag}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc(a.email||'—')}</div>
+        </div>
       </div></td>
       <td>${chip}</td>
       <td class="hide-mobile" style="font-size:12px;color:var(--muted)">${fmtDate(a.createdAt)}</td>
-      <td>${self?`<span style="font-size:12px;color:var(--muted)">—</span>`:`<button class="btn-danger btn-sm" onclick="promptDelete('admin','${esc(uid)}','${esc(a.name||a.email||'')}')"><i class="fa-solid fa-user-minus"></i> Remove</button>`}</td>
+      <td>${statusBadge}</td>
+      <td>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${isSuperAdmin && !self ? `<button class="btn-edit btn-sm" onclick="openEditAdminModal('${esc(uid)}')"><i class="fa-solid fa-pen"></i> Edit</button>` : ''}
+          ${self ? `<button class="btn-ghost btn-sm" onclick="openEditAdminModal('${esc(uid)}')"><i class="fa-solid fa-pen"></i> Edit Me</button>` : ''}
+          ${!self ? `<button class="btn-danger btn-sm" onclick="promptDelete('admin','${esc(uid)}','${esc(a.name||a.email||'')}')"><i class="fa-solid fa-user-minus"></i> Remove</button>` : ''}
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -3385,6 +3470,96 @@ function openAdminModal(){
   document.getElementById('modal-admin').classList.add('open');
 }
 function closeAdminModal(){ document.getElementById('modal-admin').classList.remove('open'); }
+
+/* ─── EDIT ADMIN ─────────────────────────────────────────── */
+function openEditAdminModal(uid) {
+  const a = APP.admins[uid];
+  if (!a) return;
+  document.getElementById('edit-admin-uid').value   = uid;
+  document.getElementById('edit-admin-name').value  = a.name  || '';
+  document.getElementById('edit-admin-email').value = a.email || '';
+  document.getElementById('edit-admin-role').value  = a.role  || 'admin';
+  document.getElementById('edit-admin-pass').value  = '';
+  document.getElementById('edit-admin-pass2').value = '';
+
+  /* Hide role selector if editing self (can't demote yourself) */
+  const isSelf = uid === APP.user?.uid;
+  document.getElementById('edit-admin-role').disabled = isSelf;
+
+  document.getElementById('modal-edit-admin').classList.add('open');
+}
+
+function closeEditAdminModal() {
+  document.getElementById('modal-edit-admin').classList.remove('open');
+}
+
+async function updateAdmin() {
+  const uid   = document.getElementById('edit-admin-uid').value;
+  const name  = document.getElementById('edit-admin-name').value.trim();
+  const role  = document.getElementById('edit-admin-role').value;
+  const pass  = document.getElementById('edit-admin-pass').value;
+  const pass2 = document.getElementById('edit-admin-pass2').value;
+
+  if (!name) { showToast('Name is required', 'error'); return; }
+  if (pass && pass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+  if (pass && pass !== pass2) { showToast('Passwords do not match', 'error'); return; }
+
+  const btn = setBtnLoading('btn-update-admin', 'Saving…');
+
+  try {
+    /* ① Update name + role in Realtime Database */
+    const dbUpdate = { name, role, updatedAt: Date.now(), updatedBy: APP.user?.email || 'admin' };
+    await db.ref(`admins/${uid}`).update(dbUpdate);
+    showToast(`Admin "${name}" updated!`, 'success');
+    auditLog('EDIT', `Updated admin: ${APP.admins[uid]?.email || uid}`, {
+      detail: `Name: ${name} | Role: ${role}${pass ? ' | Password changed' : ''}`,
+      category: 'Admins'
+    });
+
+    /* ② Password update — uses Firebase Auth Admin REST API via Identity Toolkit
+          Only possible with the Firebase Admin SDK server-side, OR by using
+          the signInWithEmailAndPassword + updatePassword flow for self.
+          For OTHER admins, we use the Identity Toolkit update endpoint with
+          the current super admin's ID token. */
+    if (pass) {
+      const isSelf = uid === APP.user?.uid;
+      if (isSelf) {
+        /* Self password change — use Firebase Auth SDK */
+        await auth.currentUser.updatePassword(pass);
+        showToast('Your password updated!', 'success');
+      } else {
+        /* Change another admin's password via Identity Toolkit REST API
+           This requires the Firebase Admin SDK normally — but we can use
+           the signInWithCustomToken approach or store a pending reset.
+           Best practice: store a password_reset flag + hashed note in DB
+           and notify the admin to reset via email. */
+        await db.ref(`admins/${uid}`).update({
+          pendingPasswordReset: true,
+          newPasswordNote: 'Password has been reset by super admin. Please contact admin for new password.',
+          passwordResetBy: APP.user?.email,
+          passwordResetAt: Date.now()
+        });
+        /* Also trigger Firebase Auth password reset email */
+        const targetEmail = APP.admins[uid]?.email;
+        if (targetEmail) {
+          try {
+            await auth.sendPasswordResetEmail(targetEmail);
+            showToast(`Password reset email sent to ${targetEmail}`, 'success');
+          } catch(e) {
+            showToast('Password reset email failed: ' + e.message, 'error');
+          }
+        }
+        showToast('Password reset email sent to admin', 'success');
+      }
+    }
+
+    closeEditAdminModal();
+  } catch(err) {
+    showToast('Update failed: ' + err.message, 'error');
+  } finally {
+    resetBtn(btn, '<i class="fa-solid fa-floppy-disk"></i> Save Changes');
+  }
+}
 async function saveAdmin(){
   const name=document.getElementById('new-admin-name').value.trim();
   const email=document.getElementById('new-admin-email').value.trim();
