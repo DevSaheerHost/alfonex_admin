@@ -1646,13 +1646,14 @@ tbody td{padding:12px 16px;vertical-align:middle}
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Device</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Note</th>
                 <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Price</th>
+                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Advance</th>
                 <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Status</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Date</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Actions</th>
               </tr>
             </thead>
             <tbody id="reserv-tbody">
-              <tr><td colspan="7" style="padding:30px;text-align:center;color:var(--muted)">No reservations yet</td></tr>
+              <tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No reservations yet</td></tr>
             </tbody>
           </table>
         </div>
@@ -5015,7 +5016,7 @@ function renderReservations() {
   if (countEl) countEl.textContent = `(${list.length} reservations)`;
 
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--muted)">No reservations found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No reservations found</td></tr>';
     return;
   }
 
@@ -5059,6 +5060,12 @@ function renderReservations() {
       </td>
       <td style="padding:10px 14px;font-size:11px;color:var(--muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.note||'—')}</td>
       <td style="padding:10px 14px;text-align:right;font-weight:700;font-size:13px">${r.price ? sym+Number(r.price).toLocaleString() : '—'}</td>
+      <td style="padding:10px 14px;text-align:right">
+        ${r.advance > 0
+          ? `<div style="font-weight:800;color:var(--green);font-size:13px">${sym}${Number(r.advance).toLocaleString()}</div>
+             <div style="font-size:10px;color:var(--muted)">paid</div>`
+          : `<span style="font-size:12px;color:var(--muted)">—</span>`}
+      </td>
       <td style="padding:10px 14px;text-align:center">
         <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:${st.bg};color:${st.color}">
           <i class="fa-solid ${st.icon}" style="font-size:9px"></i> ${st.label}
@@ -5112,10 +5119,10 @@ async function deleteReservation(id) {
 function exportReservations() {
   const all = Object.values(_reservations);
   if (!all.length) { showToast('No data to export', 'error'); return; }
-  const rows = [['Customer','Phone','Device','Variant','Price','Currency','Note','Status','Date']];
+  const rows = [['Customer','Phone','Device','Variant','Price','Advance','Currency','Note','Status','Date']];
   all.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(r => {
     const dt = r.createdAt ? new Date(r.createdAt).toLocaleString() : '';
-    rows.push([r.customerName||'',r.customerPhone||'',r.productTitle||'',r.variantLabel||'',r.price||0,r.currency||'',r.note||'',r.status||'',dt]);
+    rows.push([r.customerName||'',r.customerPhone||'',r.productTitle||'',r.variantLabel||'',r.price||0,r.advance||0,r.currency||'',r.note||'',r.status||'',dt]);
   });
   const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
   const a = document.createElement('a');
