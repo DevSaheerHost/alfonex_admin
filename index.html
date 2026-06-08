@@ -2576,6 +2576,10 @@ auth.onAuthStateChanged(async user=>{
       switchView('view-dashboard');
       attachProductsListener(); attachOrdersListener();
       if(sa) attachAdminsListener();
+      /* Start presence heartbeat + listener for ALL admins */
+      initPresence(user);
+      listenPresence();
+      auditLog('LOGIN', `Admin signed in: ${user.email}`);
     }catch(err){ showToast('Permission check failed: '+err.message,'error'); await auth.signOut(); switchView('view-login'); }
   }else{ APP.user=null; APP.role=null; switchView('view-login'); }
   hideLoader();
@@ -3896,6 +3900,7 @@ function closeDeleteModal(){ document.getElementById('modal-delete').classList.r
 ═══════════════════════════════════════════════ */
 function renderAdminsTable(){
   const tbody=document.getElementById('admin-tbody');
+  if(!tbody) return;   /* table not in DOM (e.g. non-super-admin) */
   const E=Object.entries(APP.admins);
   document.getElementById('admin-table-label').textContent=`All Admins (${E.length})`;
   if(!E.length){tbody.innerHTML=`<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👤</div><p>No admins found.</p></div></td></tr>`;return;}
@@ -3909,11 +3914,24 @@ function renderAdminsTable(){
       : `<span class="nf-badge nb-green">Active</span>`;
 
     /* ── Presence ── */
-    const pres = _presence[uid] || {};
+    /* Try UID match first; if not found, fall back to matching by email
+       (handles case where admins/ key differs from Auth UID) */
+    let pres = _presence[uid] || null;
+    if (!pres && a.email) {
+      /* Search presence entries for matching email */
+      for (const pUid in _presence) {
+        if (_presence[pUid]?.email && _presence[pUid].email.toLowerCase() === a.email.toLowerCase()) {
+          pres = _presence[pUid];
+          break;
+        }
+      }
+    }
+    pres = pres || {};
     const presHtml = buildPresenceHtml(uid, pres, self);
 
     /* ── Avatar with online dot ── */
-    const dotClass = self ? 'online' : (pres.online ? 'online' : 'offline');
+    const _onlineNow = self || (pres.lastSeen && (Date.now() - Number(pres.lastSeen)) <= ONLINE_THRESHOLD_MS);
+    const dotClass = _onlineNow ? 'online' : 'offline';
     const avatarHtml = `<div style="position:relative;width:36px;height:36px;flex-shrink:0">
       <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-family:var(--font-head);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center">${esc((a.name||a.email||'A').charAt(0).toUpperCase())}</div>
       <span style="position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;border:2px solid var(--surface);background:${dotClass==='online'?'#22c55e':'#d1d5db'}${dotClass==='online'?';box-shadow:0 0 0 2px rgba(34,197,94,.3)':''}"></span>
@@ -5443,642 +5461,92 @@ function exportPriceList() {
   showToast('Price list exported!','success');
 }
 
-/* ── Combined auth state handler: audit + presence ── */
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    auditLog('LOGIN', `Admin signed in: ${user.email}`);
-    initPresence(user);
-    listenPresence();
-  } else {
-    if (_presenceHeartbeat) { clearInterval(_presenceHeartbeat); _presenceHeartbeat = null; }
-    _presenceRef = null;
-  }
-});
 /* ══════════════════════════════════════════════
-   ADMIN PRESENCE SYSTEM
-   Uses Firebase Realtime Database + onDisconnect()
-   Firebase SERVER timestamp for lastSeen — accurate regardless of client clock.
-   Node: presence/{uid} → { online:bool, lastSeen:serverTimestamp, name:string }
+   ADMIN PRESENCE — PURE HEARTBEAT APPROACH
+   No onDisconnect(). No trust in Firebase disconnect.
+   Every active admin writes lastSeen every 20 seconds.
+   Viewer reads lastSeen — if > 60s ago → OFFLINE.
+   Simple. Reliable. Works on all mobile browsers.
+   Node: presence/{uid}/lastSeen (epoch ms, client time)
 ══════════════════════════════════════════════ */
 let _presence = {};
 let _presenceRef = null;
 let _presenceHeartbeat = null;
+const ONLINE_THRESHOLD_MS = 60000; /* 60 seconds — if lastSeen older than this → offline */
 
 function initPresence(user) {
   _presenceRef = db.ref('presence/' + user.uid);
 
-  /* Use Firebase server timestamp so lastSeen is always accurate */
-  const SV = firebase.database.ServerValue.TIMESTAMP;
+  /* Write immediately on login */
+  _writePresence(user);
 
-  /* Register onDisconnect FIRST — before setting online.
-     This ensures the cleanup always runs even if the set() below fails. */
-  _presenceRef.onDisconnect().update({
-    online:   false,
-    lastSeen: SV
-  });
-
-  /* Now mark online */
-  _presenceRef.set({
-    online:   true,
-    lastSeen: SV,
-    name:     user.displayName || user.email || 'Admin',
-    email:    user.email || ''
-  });
-
-  /* Heartbeat: update lastSeen every 25s so "online" stays fresh.
-     If heartbeat stops (crash/kill), onDisconnect handles it. */
+  /* Heartbeat: write every 20 seconds while tab is visible */
   if (_presenceHeartbeat) clearInterval(_presenceHeartbeat);
   _presenceHeartbeat = setInterval(() => {
-    if (!_presenceRef) return;
-    if (document.visibilityState !== 'hidden') {
-      /* Re-register onDisconnect every heartbeat — it can expire server-side */
-      _presenceRef.onDisconnect().update({ online: false, lastSeen: SV });
-      _presenceRef.update({ online: true, lastSeen: SV });
-    }
-  }, 25000);
+    if (document.visibilityState !== 'hidden') _writePresence(user);
+  }, 20000);
 
-  /* beforeunload: best-effort synchronous write on intentional close */
-  window.addEventListener('beforeunload', () => {
-    /* navigator.sendBeacon is more reliable than async writes on unload */
-    _presenceRef.update({ online: false, lastSeen: SV });
-  });
-
-  /* visibilitychange: only mark away after 2 minutes hidden, not immediately.
-     This avoids marking offline when switching tabs briefly. */
-  let _hiddenTimer = null;
+  /* On tab becoming visible again after being hidden — write immediately */
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      _hiddenTimer = setTimeout(() => {
-        _presenceRef.update({ online: false, lastSeen: SV });
-      }, 120000); /* 2 minutes */
-    } else {
-      /* Back to visible — cancel the timer and re-mark online */
-      if (_hiddenTimer) { clearTimeout(_hiddenTimer); _hiddenTimer = null; }
-      _presenceRef.update({ online: true, lastSeen: SV });
-    }
+    if (document.visibilityState === 'visible') _writePresence(user);
   });
+}
+
+function _writePresence(user) {
+  if (!_presenceRef) return;
+  _presenceRef.set({
+    lastSeen: Date.now(),   /* client epoch ms — good enough for 60s threshold */
+    name:  user.displayName || user.email || 'Admin',
+    email: user.email || ''
+  }).catch(() => {}); /* silent if offline */
 }
 
 /* Listen to ALL admins' presence in real-time */
 function listenPresence() {
   db.ref('presence').on('value', snap => {
     _presence = snap.val() || {};
-    /* Always re-render admin table when presence changes — 
-       don't gate on section being active, as presence loads async */
+    console.log('[Presence] loaded', Object.keys(_presence).length, 'entries:', _presence);
+    console.log('[Presence] admin UIDs:', Object.keys(APP.admins||{}));
     renderAdminsTable();
+  }, err => {
+    console.error('[Presence] read failed:', err.message);
   });
 }
 
-/* Build the presence cell HTML */
+/* Build presence cell */
 function buildPresenceHtml(uid, pres, isSelf) {
-  /* Always show self as online */
   if (isSelf) {
     return `<div class="presence-dot"><span class="dot online"></span><span style="color:#22c55e;font-weight:700">Online now</span></div>`;
   }
-  /* No presence data recorded yet */
   if (!pres || !pres.lastSeen) {
     return `<div class="presence-dot"><span class="dot offline"></span><span style="color:var(--muted)">Never seen</span></div>`;
   }
-
-  /* Use server-clock-aware diff:
-     Firebase ServerValue.TIMESTAMP = server ms epoch.
-     Client Date.now() may differ. We trust the online flag primarily,
-     and use lastSeen only for the "X ago" display, not for online/offline decision.
-     Grace window: if lastSeen is within last 90 seconds, trust online flag. */
   const msSince = Date.now() - Number(pres.lastSeen);
-  /* If client clock is ahead of server, msSince can be negative — treat as "just now" */
-  const isRecent  = msSince < 90000;  /* within 90 seconds */
-  const isOnline  = pres.online === true && (isRecent || msSince < 0);
-
-  if (isOnline) {
+  if (msSince <= ONLINE_THRESHOLD_MS) {
     return `<div class="presence-dot"><span class="dot online"></span><span style="color:#22c55e;font-weight:700">Online now</span></div>`;
   }
-  /* Offline — show last seen time */
-  const displayTs = Number(pres.lastSeen);
-  return `<div class="presence-dot"><span class="dot offline"></span><span style="color:var(--muted)">${timeAgo(displayTs)}</span></div>`;
+  return `<div class="presence-dot"><span class="dot offline"></span><span style="color:var(--muted)">${timeAgo(Number(pres.lastSeen))}</span></div>`;
 }
 
-/* Human-readable relative time */
 function timeAgo(ts) {
   if (!ts) return 'Unknown';
   const diff = Math.floor((Date.now() - ts) / 1000);
   if (diff < 10)    return 'Just now';
   if (diff < 60)    return diff + 's ago';
-  if (diff < 3600)  return Math.floor(diff / 60) + ' min ago';
+  if (diff < 3600)  return Math.floor(diff/60) + ' min ago';
   if (diff < 86400) {
-    const h = Math.floor(diff / 3600);
-    const m = Math.floor((diff % 3600) / 60);
-    return h + 'h ' + (m ? m + 'm ' : '') + 'ago';
+    const h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60);
+    return h + 'h ' + (m ? m+'m ' : '') + 'ago';
   }
   const d = new Date(ts);
   return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' ' +
          d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
 
-/* Auto-refresh the time labels every 20s for "X min ago" accuracy */
+/* Refresh time labels every 20s */
 setInterval(() => {
   if (Object.keys(_presence).length > 0) renderAdminsTable();
 }, 20000);
-
-/* ══════════════════════════════════════════════
-   DEVICE RESERVATIONS
-══════════════════════════════════════════════ */
-let _reservations  = {};
-let _reservFilter  = 'all';
-
-const RESERV_STATUS = {
-  pending:   { label:'Pending',   color:'#f59e0b', bg:'#fffbeb', icon:'fa-hourglass-half' },
-  contacted: { label:'Contacted', color:'#3b82f6', bg:'#eff6ff', icon:'fa-phone' },
-  completed: { label:'Completed', color:'#16a34a', bg:'#f0fdf4', icon:'fa-circle-check' },
-  cancelled: { label:'Cancelled', color:'#ef4444', bg:'#fff1f2', icon:'fa-xmark' },
-};
-
-/* Real-time Firebase listener */
-db.ref('reservations').orderByChild('createdAt').on('value', snap => {
-  _reservations = snap.val() || {};
-  /* Update sidebar badge */
-  const pendingCount = Object.values(_reservations).filter(r => r.status === 'pending').length;
-  const badge = document.getElementById('sb-reserv-count');
-  if (badge) {
-    badge.textContent = pendingCount;
-    badge.style.display = pendingCount ? 'inline-flex' : 'none';
-  }
-  if (document.getElementById('section-reservations')?.classList.contains('active')) {
-    renderReservations();
-  }
-});
-
-function filterReservations(status) {
-  _reservFilter = status;
-  ['all','pending','contacted','completed','cancelled'].forEach(s => {
-    const b = document.getElementById('rsf-'+s); if (!b) return;
-    b.style.background  = s === status ? 'var(--green)' : '';
-    b.style.color       = s === status ? '#fff' : '';
-    b.style.borderColor = s === status ? 'var(--green)' : '';
-  });
-  renderReservations();
-}
-
-function renderReservations() {
-  const tbody  = document.getElementById('reserv-tbody'); if (!tbody) return;
-  const search = (document.getElementById('rs-search')?.value || '').toLowerCase();
-  const all    = Object.entries(_reservations).sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
-
-  /* Stats */
-  const setStat = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-  setStat('rs-total',     all.length);
-  setStat('rs-pending',   all.filter(([,r])=>r.status==='pending').length);
-  setStat('rs-contacted', all.filter(([,r])=>r.status==='contacted').length);
-  setStat('rs-completed', all.filter(([,r])=>r.status==='completed').length);
-
-  let list = all;
-  if (_reservFilter !== 'all') list = list.filter(([,r]) => r.status === _reservFilter);
-  if (search) list = list.filter(([,r]) =>
-    (r.customerName||'').toLowerCase().includes(search) ||
-    (r.customerPhone||'').includes(search) ||
-    (r.productTitle||'').toLowerCase().includes(search)
-  );
-
-  const countEl = document.getElementById('rs-count-label');
-  if (countEl) countEl.textContent = `(${list.length} reservations)`;
-
-  if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No reservations found</td></tr>';
-    return;
-  }
-
-  const SYMS = { USD:'$', AED:'AED ', INR:'₹' };
-
-  tbody.innerHTML = list.map(([id, r], i) => {
-    const st   = RESERV_STATUS[r.status] || RESERV_STATUS.pending;
-    const sym  = SYMS[(r.currency||'INR').toUpperCase()] || '';
-    const dt   = r.createdAt ? new Date(r.createdAt) : null;
-    const dateStr = dt ? dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    const timeStr = dt ? dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '';
-    const initials = (r.customerName||'?').charAt(0).toUpperCase();
-    const rowBg = i%2===0 ? '' : 'background:var(--surface2)';
-
-    /* Product image or emoji */
-    const prodImg = r.productImage
-      ? `<img src="${esc(r.productImage)}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;background:var(--bg);padding:2px">`
-      : '<span style="font-size:24px">📱</span>';
-
-    return `<tr style="${rowBg};border-bottom:1px solid var(--border)">
-      <td style="padding:10px 14px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${initials}</div>
-          <div>
-            <div style="font-weight:700;font-size:13px">${esc(r.customerName||'—')}</div>
-            <a href="https://wa.me/${(r.customerPhone||'').replace(/\D/g,'')}" target="_blank"
-              style="font-size:11px;color:#25D366;font-weight:600;text-decoration:none">
-              <i class="fa-brands fa-whatsapp"></i> ${esc(r.customerPhone||'—')}
-            </a>
-          </div>
-        </div>
-      </td>
-      <td style="padding:10px 14px">
-        <div style="display:flex;align-items:center;gap:8px">
-          ${prodImg}
-          <div>
-            <div style="font-weight:700;font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.productTitle||'—')}</div>
-            <div style="font-size:10px;color:var(--muted)">${esc(r.variantLabel||'')}</div>
-          </div>
-        </div>
-      </td>
-      <td style="padding:10px 14px;font-size:11px;color:var(--muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.note||'—')}</td>
-      <td style="padding:10px 14px;text-align:right;font-weight:700;font-size:13px">${r.price ? sym+Number(r.price).toLocaleString() : '—'}</td>
-      <td style="padding:10px 14px;text-align:right">
-        ${r.advance > 0
-          ? `<div style="font-weight:800;color:var(--green);font-size:13px">${sym}${Number(r.advance).toLocaleString()}</div>
-             <div style="font-size:10px;color:var(--muted)">paid</div>`
-          : `<span style="font-size:12px;color:var(--muted)">—</span>`}
-      </td>
-      <td style="padding:10px 14px;text-align:center">
-        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:${st.bg};color:${st.color}">
-          <i class="fa-solid ${st.icon}" style="font-size:9px"></i> ${st.label}
-        </span>
-      </td>
-      <td style="padding:10px 14px;white-space:nowrap">
-        <div style="font-size:12px;font-weight:600">${dateStr}</div>
-        <div style="font-size:11px;color:var(--muted)">${timeStr}</div>
-      </td>
-      <td style="padding:10px 14px">
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          <select class="mf-input" onchange="updateReservationStatus('${id}',this.value)"
-            style="height:28px;font-size:11px;padding:0 6px;width:auto;border-radius:6px">
-            <option value="pending"   ${r.status==='pending'  ?'selected':''}>⏳ Pending</option>
-            <option value="contacted" ${r.status==='contacted'?'selected':''}>📞 Contacted</option>
-            <option value="completed" ${r.status==='completed'?'selected':''}>✅ Completed</option>
-            <option value="cancelled" ${r.status==='cancelled'?'selected':''}>❌ Cancelled</option>
-          </select>
-          <a href="https://wa.me/${(r.customerPhone||'').replace(/\D/g,'')}" target="_blank"
-            class="btn-ghost btn-sm" style="color:#25D366;border-color:#25D366;text-decoration:none"
-            title="WhatsApp ${esc(r.customerName||'')}">
-            <i class="fa-brands fa-whatsapp"></i>
-          </a>
-          <button class="act-btn danger" onclick="deleteReservation('${id}')" title="Delete">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-async function updateReservationStatus(id, status) {
-  const r = _reservations[id];
-  if (!r) return;
-  await db.ref('reservations/'+id).update({ status, updatedAt: Date.now(), updatedBy: APP.user?.email||'admin' });
-  showToast('Status updated to ' + status, 'success');
-  auditLog('EDIT', `Reservation status: ${r.customerName} → ${status}`, {
-    detail: `Device: ${r.productTitle} | Phone: ${r.customerPhone}`,
-    category: 'Reservations'
-  });
-}
-
-async function deleteReservation(id) {
-  const r = _reservations[id];
-  if (!r || !confirm(`Delete reservation for ${r.customerName}?`)) return;
-  await db.ref('reservations/'+id).remove();
-  showToast('Reservation deleted', 'success');
-}
-
-function exportReservations() {
-  const all = Object.values(_reservations);
-  if (!all.length) { showToast('No data to export', 'error'); return; }
-  const rows = [['Customer','Phone','Device','Variant','Price','Advance','Currency','Note','Status','Date']];
-  all.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(r => {
-    const dt = r.createdAt ? new Date(r.createdAt).toLocaleString() : '';
-    rows.push([r.customerName||'',r.customerPhone||'',r.productTitle||'',r.variantLabel||'',r.price||0,r.advance||0,r.currency||'',r.note||'',r.status||'',dt]);
-  });
-  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download = 'reservations_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  showToast('Exported!', 'success');
-}
-
-
-/* ══════════════════════════════════════════════════════
-   MEETING SCHEDULER
-══════════════════════════════════════════════════════ */
-let _meetings    = {};
-let _meetFilter  = 'upcoming';
-
-const MEET_TYPE_META = {
-  internal: { icon:'🏢', label:'Internal',  color:'#3b82f6' },
-  client:   { icon:'🤝', label:'Client',    color:'#16a34a' },
-  dealer:   { icon:'🔗', label:'Dealer',    color:'#f59e0b' },
-  video:    { icon:'📹', label:'Video Call', color:'#8b5cf6' },
-  phone:    { icon:'📞', label:'Phone Call', color:'#06b6d4' },
-};
-const PRIO_META = {
-  high:   { icon:'🔴', color:'#ef4444' },
-  normal: { icon:'🔵', color:'#3b82f6' },
-  low:    { icon:'🟢', color:'#16a34a' },
-};
-
-db.ref('meetings').orderByChild('dateTime').on('value', snap => {
-  _meetings = snap.val() || {};
-  if (document.getElementById('section-meetings')?.classList.contains('active')) renderMeetings();
-});
-
-function openMeetingModal(id) {
-  const m = id ? (_meetings[id]||{}) : {};
-  document.getElementById('modal-meeting-title').textContent = id ? 'Edit Meeting' : 'Schedule Meeting';
-  document.getElementById('edit-meeting-id').value   = id || '';
-  document.getElementById('meet-title').value        = m.title || '';
-  document.getElementById('meet-date').value         = m.date  || new Date().toISOString().slice(0,10);
-  document.getElementById('meet-time').value         = m.time  || '10:00';
-  document.getElementById('meet-duration').value     = m.duration || '30';
-  document.getElementById('meet-type').value         = m.type  || 'internal';
-  document.getElementById('meet-participants').value = m.participants || '';
-  document.getElementById('meet-location').value     = m.location || '';
-  document.getElementById('meet-agenda').value       = m.agenda || '';
-  document.getElementById('meet-reminder').value     = m.reminder || '15';
-  document.getElementById('meet-priority').value     = m.priority || 'normal';
-  document.getElementById('modal-meeting').classList.add('open');
-}
-function closeMeetingModal() { document.getElementById('modal-meeting').classList.remove('open'); }
-
-async function saveMeeting() {
-  const id    = document.getElementById('edit-meeting-id').value;
-  const title = document.getElementById('meet-title').value.trim();
-  const date  = document.getElementById('meet-date').value;
-  const time  = document.getElementById('meet-time').value;
-  if (!title) { showToast('Title required','error'); return; }
-  if (!date)  { showToast('Date required','error');  return; }
-
-  const btn = setBtnLoading('btn-save-meeting','Saving...');
-  const payload = {
-    title, date, time,
-    dateTime:     date+'T'+time,
-    duration:     parseInt(document.getElementById('meet-duration').value)||30,
-    type:         document.getElementById('meet-type').value,
-    participants: document.getElementById('meet-participants').value.trim(),
-    location:     document.getElementById('meet-location').value.trim(),
-    agenda:       document.getElementById('meet-agenda').value.trim(),
-    reminder:     parseInt(document.getElementById('meet-reminder').value)||0,
-    priority:     document.getElementById('meet-priority').value,
-    createdBy:    APP.user?.email||'admin',
-    updatedAt:    Date.now(),
-  };
-  try {
-    if (id) {
-      await db.ref('meetings/'+id).update(payload);
-      showToast('Meeting updated!','success');
-      auditLog('EDIT',`Updated meeting: ${title}`,{detail:date+' '+time,category:'Meetings'});
-    } else {
-      payload.createdAt = Date.now();
-      await db.ref('meetings').push(payload);
-      showToast('Meeting scheduled!','success');
-      auditLog('ADD',`Scheduled: ${title}`,{detail:date+' '+time+' | '+payload.participants,category:'Meetings'});
-    }
-    closeMeetingModal();
-  } catch(e) { showToast('Error: '+e.message,'error'); }
-  finally { resetBtn(btn,'<i class="fa-solid fa-calendar-plus"></i> Save Meeting'); }
-}
-
-async function deleteMeeting(id) {
-  const m = _meetings[id];
-  if (!m || !confirm('Delete meeting: "'+m.title+'"?')) return;
-  await db.ref('meetings/'+id).remove();
-  auditLog('DELETE','Deleted meeting: '+m.title,{detail:m.date+' '+m.time,category:'Meetings'});
-  showToast('Meeting deleted','success');
-}
-
-function filterMeetings(type) {
-  _meetFilter = type;
-  ['upcoming','past','all'].forEach(t => {
-    const b = document.getElementById('mf-'+t); if(!b) return;
-    b.style.background  = t===type?'var(--green)':'';
-    b.style.color       = t===type?'#fff':'';
-    b.style.borderColor = t===type?'var(--green)':'';
-  });
-  renderMeetings();
-}
-
-function renderMeetings() {
-  const todayStr = new Date().toISOString().slice(0,10);
-  const entries  = Object.entries(_meetings).sort((a,b)=>(a[1].dateTime||'').localeCompare(b[1].dateTime||''));
-
-  const setStat = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-  setStat('meet-stat-upcoming', entries.filter(([,m])=>m.date>=todayStr).length);
-  setStat('meet-stat-today',    entries.filter(([,m])=>m.date===todayStr).length);
-  setStat('meet-stat-past',     entries.filter(([,m])=>m.date<todayStr).length);
-  setStat('meet-stat-total',    entries.length);
-
-  let filtered;
-  if (_meetFilter==='upcoming')     filtered = entries.filter(([,m])=>m.date>=todayStr);
-  else if (_meetFilter==='past')    filtered = entries.filter(([,m])=>m.date<todayStr).reverse();
-  else filtered = entries;
-
-  const listEl = document.getElementById('meetings-list');
-  if (!listEl) return;
-  if (!filtered.length) {
-    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><i class="fa-solid fa-calendar-xmark" style="font-size:28px;margin-bottom:10px;display:block"></i>No '+_meetFilter+' meetings</div>';
-  } else {
-    listEl.innerHTML = filtered.map(([id,m])=>_meetingCard(id,m,todayStr)).join('');
-  }
-
-  const todayEl = document.getElementById('meetings-today');
-  const todayList = entries.filter(([,m])=>m.date===todayStr);
-  if (todayEl) {
-    todayEl.innerHTML = todayList.length
-      ? todayList.map(([,m])=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="font-size:18px">${MEET_TYPE_META[m.type]?.icon||'📅'}</div>
-          <div style="flex:1">
-            <div style="font-weight:700;font-size:13px">${esc(m.title)}</div>
-            <div style="font-size:11px;color:var(--muted)">${m.time} · ${m.duration}min · ${esc(m.location||'—')}</div>
-          </div>
-        </div>`).join('')
-      : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">No meetings today</div>';
-  }
-}
-
-function _meetingCard(id, m, todayStr) {
-  const meta   = MEET_TYPE_META[m.type] || {icon:'📅',label:'Meeting',color:'#3b82f6'};
-  const prio   = PRIO_META[m.priority]  || PRIO_META.normal;
-  const isPast = m.date < todayStr;
-  const isToday= m.date === todayStr;
-  const dt     = new Date((m.date||'')+'T'+(m.time||'00:00'));
-  const dateStr= dt.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-  const todayBadge = isToday
-    ? '<span style="background:#fef3c7;color:#d97706;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px">TODAY</span>' : '';
-
-  return '<div style="display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);'+(isPast?'opacity:.55':'')+'">'
-    +'<div style="width:42px;height:42px;border-radius:12px;background:'+meta.color+'15;border:1.5px solid '+meta.color+'30;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+meta.icon+'</div>'
-    +'<div style="flex:1;min-width:0">'
-      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">'
-        +'<div style="font-weight:700;font-size:13px">'+esc(m.title)+'</div>'
-        +todayBadge
-        +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:'+prio.color+'20;color:'+prio.color+'">'+prio.icon+' '+(m.priority||'normal')+'</span>'
-      +'</div>'
-      +'<div style="font-size:11px;color:var(--muted)">'
-        +'<i class="fa-regular fa-clock" style="width:12px"></i> '+dateStr+' · '+m.time+' ('+m.duration+'min)'
-        +(m.location ? ' &nbsp;·&nbsp; <i class="fa-solid fa-location-dot" style="width:12px"></i> '+esc(m.location) : '')
-        +(m.participants ? ' &nbsp;·&nbsp; <i class="fa-solid fa-users" style="width:12px"></i> '+esc(m.participants) : '')
-      +'</div>'
-      +(m.agenda ? '<div style="font-size:11px;color:var(--muted);margin-top:4px;font-style:italic">'+esc(m.agenda.slice(0,90))+(m.agenda.length>90?'...':'')+'</div>' : '')
-    +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">'
-      +'<button class="btn-edit btn-sm" onclick="openMeetingModal(\'' + id + '\')"><i class="fa-solid fa-pen"></i></button>'
-      +'<button class="act-btn danger"  onclick="deleteMeeting(\'' + id + '\')"><i class="fa-solid fa-trash"></i></button>'
-    +'</div>'
-  +'</div>';
-}
-
-/* ══════════════════════════════════════════════════════
-   PRICE CHANGE HISTORY
-══════════════════════════════════════════════════════ */
-let _priceHistory = [];
-
-db.ref('price_history').orderByChild('ts').limitToLast(500).on('value', snap => {
-  _priceHistory = [];
-  snap.forEach(c => _priceHistory.push({id:c.key,...c.val()}));
-  _priceHistory.reverse();
-  _buildPriceHistoryFilter();
-  if (document.getElementById('section-pricehistory')?.classList.contains('active')) renderPriceHistory();
-});
-
-async function logPriceChange(productId, title, oldPrice, newPrice, oldAED, newAED, oldINR, newINR) {
-  const entry = {
-    productId, productTitle:title,
-    oldPrice:Number(oldPrice||0), newPrice:Number(newPrice||0),
-    oldAED:Number(oldAED||0),   newAED:Number(newAED||0),
-    oldINR:Number(oldINR||0),   newINR:Number(newINR||0),
-    changedBy: APP.user?.email||'admin',
-    ts: Date.now(),
-  };
-  await db.ref('price_history').push(entry);
-  auditLog('PRICE', 'Price changed: '+title, {
-    detail:'AED '+(oldAED||oldPrice)+' → AED '+(newAED||newPrice),
-    productId, category:'Products'
-  });
-}
-
-function _buildPriceHistoryFilter() {
-  const sel = document.getElementById('ph-filter'); if(!sel) return;
-  const prods = [...new Set(_priceHistory.map(e=>e.productTitle).filter(Boolean))].sort();
-  sel.innerHTML = '<option value="all">All Products</option>'
-    + prods.map(t=>'<option value="'+esc(t)+'">'+esc(t)+'</option>').join('');
-}
-
-function renderPriceHistory() {
-  const tbody    = document.getElementById('ph-tbody'); if(!tbody) return;
-  const search   = (document.getElementById('ph-search')?.value||'').toLowerCase();
-  const filter   = document.getElementById('ph-filter')?.value||'all';
-  const todayStr = new Date().toDateString();
-
-  let list = _priceHistory;
-  if (filter !== 'all') list = list.filter(e=>e.productTitle===filter);
-  if (search) list = list.filter(e=>(e.productTitle||'').toLowerCase().includes(search)||(e.changedBy||'').toLowerCase().includes(search));
-
-  /* Stats */
-  const setStat = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
-  setStat('ph-total-changes', _priceHistory.length);
-  setStat('ph-increases',     _priceHistory.filter(e=>Number(e.newAED||e.newPrice||0)>Number(e.oldAED||e.oldPrice||0)).length);
-  setStat('ph-decreases',     _priceHistory.filter(e=>Number(e.newAED||e.newPrice||0)<Number(e.oldAED||e.oldPrice||0)).length);
-  setStat('ph-today',         _priceHistory.filter(e=>e.ts&&new Date(e.ts).toDateString()===todayStr).length);
-
-  if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No price changes found</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = list.map((e,i) => {
-    const oldP = Number(e.oldAED||e.oldPrice||0);
-    const newP = Number(e.newAED||e.newPrice||0);
-    const diff = newP - oldP;
-    const pct  = oldP>0 ? ((diff/oldP)*100).toFixed(1) : null;
-    const up   = diff>0, same = diff===0;
-    const col  = same?'#6b7280':up?'#ef4444':'#16a34a';
-    const ico  = same?'fa-equals':up?'fa-arrow-up':'fa-arrow-down';
-    const pctBadge = same
-      ? '<span style="font-size:10px;color:var(--muted)">No change</span>'
-      : '<span style="background:'+(up?'#fee2e2':'#dcfce7')+';color:'+col+';font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px"><i class="fa-solid '+ico+'" style="font-size:9px"></i> '+Math.abs(pct)+'%</span>';
-    const dt      = e.ts ? new Date(e.ts) : null;
-    const dateStr = dt ? dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    const timeStr = dt ? dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '';
-    const who     = e.changedBy||'Unknown';
-    const oldINR  = Number(e.oldINR||0), newINR = Number(e.newINR||0);
-    const rowBg   = i%2===0?'':'background:var(--surface2)';
-    return '<tr style="'+rowBg+';border-bottom:1px solid var(--border)">'
-      +'<td style="padding:10px 14px">'
-        +'<div style="font-weight:700;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(e.productTitle||'—')+'</div>'
-        +'<div style="font-size:10px;color:var(--muted)">'+esc(e.productId?.slice(-8)||'')+'</div>'
-      +'</td>'
-      +'<td style="padding:10px 14px;text-align:right">'
-        +'<div style="font-weight:700">AED '+oldP.toLocaleString()+'</div>'
-        +(oldINR?'<div style="font-size:10px;color:var(--muted)">₹'+oldINR.toLocaleString()+'</div>':'')
-      +'</td>'
-      +'<td style="padding:10px 14px;text-align:center"><i class="fa-solid '+ico+'" style="color:'+col+';font-size:14px"></i></td>'
-      +'<td style="padding:10px 14px;text-align:right">'
-        +'<div style="font-weight:800;color:'+(up?'#ef4444':same?'var(--text)':'#16a34a')+'">AED '+newP.toLocaleString()+'</div>'
-        +(newINR?'<div style="font-size:10px;color:var(--muted)">₹'+newINR.toLocaleString()+'</div>':'')
-      +'</td>'
-      +'<td style="padding:10px 14px;text-align:center">'+pctBadge+'</td>'
-      +'<td style="padding:10px 14px">'
-        +'<div style="display:flex;align-items:center;gap:7px">'
-          +'<div style="width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">'+who.charAt(0).toUpperCase()+'</div>'
-          +'<div style="font-size:11px;font-weight:600">'+esc(who.split('@')[0])+'</div>'
-        +'</div>'
-      +'</td>'
-      +'<td style="padding:10px 14px;white-space:nowrap"><div style="font-size:12px;font-weight:600">'+dateStr+'</div><div style="font-size:11px;color:var(--muted)">'+timeStr+'</div></td>'
-      +'<td style="padding:10px 14px;font-size:11px;color:var(--muted)">AED'+(oldINR||newINR?'/INR':'')+'</td>'
-    +'</tr>';
-  }).join('');
-}
-
-async function clearPriceHistory() {
-  if (!confirm('Clear all price history? This cannot be undone.')) return;
-  await db.ref('price_history').remove();
-  showToast('Price history cleared','success');
-}
-
-function exportPriceHistory() {
-  if (!_priceHistory.length) { showToast('No data to export','error'); return; }
-  const rows = [['Product','Old AED','New AED','Change%','Old INR','New INR','Changed By','Date','Time']];
-  _priceHistory.forEach(e => {
-    const oldP = Number(e.oldAED||e.oldPrice||0);
-    const newP = Number(e.newAED||e.newPrice||0);
-    const pct  = oldP>0 ? (((newP-oldP)/oldP)*100).toFixed(1)+'%' : '—';
-    const dt   = e.ts ? new Date(e.ts) : null;
-    rows.push([e.productTitle||'',oldP,newP,pct,e.oldINR||0,e.newINR||0,e.changedBy||'',
-      dt?dt.toLocaleDateString('en-GB'):'', dt?dt.toLocaleTimeString():'']);
-  });
-  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download = 'price_history_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  showToast('Exported!','success');
-}
-
-/* ── Hook into saveProduct to auto-log price changes on edit ── */
-const _origSaveProdPH = saveProduct;
-saveProduct = async function() {
-  const editId = document.getElementById('edit-prod-id')?.value;
-  const oldProd = editId ? JSON.parse(JSON.stringify(APP.products[editId]||{})) : null;
-  await _origSaveProdPH.apply(this, arguments);
-  if (!editId || !oldProd) return;
-  /* Wait a tick for APP.products to update from Firebase listener */
-  setTimeout(async () => {
-    const newProd = APP.products[editId]||{};
-    const oldAED = Number(oldProd.price||oldProd.priceAED||0);
-    const newAED = Number(newProd.price||newProd.priceAED||0);
-    const oldINR = Number(oldProd.priceINR||0);
-    const newINR = Number(newProd.priceINR||0);
-    if (oldAED !== newAED || oldINR !== newINR) {
-      await logPriceChange(editId, newProd.title||oldProd.title||editId,
-        oldProd.price||oldProd.priceAED||0, newProd.price||newProd.priceAED||0,
-        oldProd.priceAED||oldProd.price||0, newProd.priceAED||newProd.price||0,
-        oldINR, newINR);
-    }
-  }, 1500);
-};
 
 </script>
 </body>
