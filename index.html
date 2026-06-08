@@ -916,6 +916,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="comms" onclick="showSection('comms')"><span class="sb-ic"><i class="fa-solid fa-comments"></i></span>Team Comms</button>
       <button class="sb-link" data-section="meetings" onclick="showSection('meetings')"><span class="sb-ic"><i class="fa-solid fa-calendar-check"></i></span>Meetings</button>
       <button class="sb-link" data-section="pricehistory" onclick="showSection('pricehistory')"><span class="sb-ic"><i class="fa-solid fa-chart-line"></i></span>Price History</button>
+      <button class="sb-link" data-section="reservations" onclick="showSection('reservations')"><span class="sb-ic"><i class="fa-solid fa-bookmark"></i></span>Reservations<span class="sb-badge" id="sb-reserv-count" style="display:none">0</span></button>
       <!-- Admin -->
       <div id="sb-admin-nav" style="display:none">
         <div class="sb-section-label">Administration</div>
@@ -1601,6 +1602,64 @@ tbody td{padding:12px 16px;vertical-align:middle}
     </section>
 
     <!-- ══════════════════════════════════════
+         DEVICE RESERVATIONS
+    ══════════════════════════════════════ -->
+    <section id="section-reservations" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Device Reservations</div>
+          <div class="sec-sub">Customers who reserved a device for future purchase</div>
+        </div>
+        <div class="sec-header-right">
+          <button class="btn-ghost btn-sm" onclick="exportReservations()"><i class="fa-solid fa-download"></i> Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-card blue">  <div class="stat-icon blue"><i class="fa-solid fa-bookmark"></i></div>    <div><div class="stat-num" id="rs-total">0</div>   <div class="stat-lbl">Total</div></div></div>
+        <div class="stat-card amber"> <div class="stat-icon amber"><i class="fa-solid fa-hourglass-half"></i></div><div><div class="stat-num" id="rs-pending">0</div>  <div class="stat-lbl">Pending</div></div></div>
+        <div class="stat-card green"> <div class="stat-icon green"><i class="fa-solid fa-phone"></i></div>       <div><div class="stat-num" id="rs-contacted">0</div><div class="stat-lbl">Contacted</div></div></div>
+        <div class="stat-card blue">  <div class="stat-icon blue"><i class="fa-solid fa-circle-check"></i></div> <div><div class="stat-num" id="rs-completed">0</div><div class="stat-lbl">Completed</div></div></div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn-ghost btn-sm" id="rsf-all"       onclick="filterReservations('all')"       style="background:var(--green);color:#fff;border-color:var(--green)">All</button>
+        <button class="btn-ghost btn-sm" id="rsf-pending"   onclick="filterReservations('pending')"   >⏳ Pending</button>
+        <button class="btn-ghost btn-sm" id="rsf-contacted" onclick="filterReservations('contacted')" >📞 Contacted</button>
+        <button class="btn-ghost btn-sm" id="rsf-completed" onclick="filterReservations('completed')" >✅ Completed</button>
+        <button class="btn-ghost btn-sm" id="rsf-cancelled" onclick="filterReservations('cancelled')" >❌ Cancelled</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card" style="padding:0;overflow:hidden">
+        <div class="table-topbar">
+          <div class="table-topbar-title"><i class="fa-solid fa-bookmark" style="color:var(--green)"></i> Reservation Requests <span id="rs-count-label" style="font-size:11px;font-weight:500;color:var(--muted)"></span></div>
+          <input class="search-input" id="rs-search" placeholder="Search customer, device…" oninput="renderReservations()" style="max-width:220px">
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:var(--bg)">
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Customer</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Device</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Note</th>
+                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Price</th>
+                <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Status</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Date</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reserv-tbody">
+              <tr><td colspan="7" style="padding:30px;text-align:center;color:var(--muted)">No reservations yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
          9. AUDIT TRAIL
     ══════════════════════════════════════ -->
     <section id="section-audit" class="content-section">
@@ -2239,7 +2298,7 @@ function showSection(name){
     warehouse:'Multi-Warehouse System', international:'International Business',
     marketing:'Marketing Tools', labels:'Labels & Barcodes',
     invoices:'Customer Invoices', comms:'Team Communication',
-    meetings:'Meeting Scheduler', pricehistory:'Price Change History',
+    meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations',
     audit:'Audit Trail'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
@@ -2256,6 +2315,7 @@ function showSection(name){
     if (name==='dealers')       { attachDealerListener(); }
     if (name==='comms')         { attachAnnouncementsListener(); renderTasks(); renderAnnouncements(); loadChatMessages(_chatChannel); }
     if (name==='meetings')      { renderMeetings(); }
+    if (name==='reservations')  { renderReservations(); }
     if (name==='pricehistory')  { renderPriceHistory(); }
   }, 0);
 }
@@ -4877,6 +4937,179 @@ window.addEventListener('DOMContentLoaded', () => {
 firebase.auth().onAuthStateChanged(user => {
   if (user) auditLog('LOGIN', `Admin signed in: ${user.email}`);
 });
+/* ══════════════════════════════════════════════
+   DEVICE RESERVATIONS
+══════════════════════════════════════════════ */
+let _reservations  = {};
+let _reservFilter  = 'all';
+
+const RESERV_STATUS = {
+  pending:   { label:'Pending',   color:'#f59e0b', bg:'#fffbeb', icon:'fa-hourglass-half' },
+  contacted: { label:'Contacted', color:'#3b82f6', bg:'#eff6ff', icon:'fa-phone' },
+  completed: { label:'Completed', color:'#16a34a', bg:'#f0fdf4', icon:'fa-circle-check' },
+  cancelled: { label:'Cancelled', color:'#ef4444', bg:'#fff1f2', icon:'fa-xmark' },
+};
+
+/* Real-time Firebase listener */
+db.ref('reservations').orderByChild('createdAt').on('value', snap => {
+  _reservations = snap.val() || {};
+  /* Update sidebar badge */
+  const pendingCount = Object.values(_reservations).filter(r => r.status === 'pending').length;
+  const badge = document.getElementById('sb-reserv-count');
+  if (badge) {
+    badge.textContent = pendingCount;
+    badge.style.display = pendingCount ? 'inline-flex' : 'none';
+  }
+  if (document.getElementById('section-reservations')?.classList.contains('active')) {
+    renderReservations();
+  }
+});
+
+function filterReservations(status) {
+  _reservFilter = status;
+  ['all','pending','contacted','completed','cancelled'].forEach(s => {
+    const b = document.getElementById('rsf-'+s); if (!b) return;
+    b.style.background  = s === status ? 'var(--green)' : '';
+    b.style.color       = s === status ? '#fff' : '';
+    b.style.borderColor = s === status ? 'var(--green)' : '';
+  });
+  renderReservations();
+}
+
+function renderReservations() {
+  const tbody  = document.getElementById('reserv-tbody'); if (!tbody) return;
+  const search = (document.getElementById('rs-search')?.value || '').toLowerCase();
+  const all    = Object.entries(_reservations).sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0));
+
+  /* Stats */
+  const setStat = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setStat('rs-total',     all.length);
+  setStat('rs-pending',   all.filter(([,r])=>r.status==='pending').length);
+  setStat('rs-contacted', all.filter(([,r])=>r.status==='contacted').length);
+  setStat('rs-completed', all.filter(([,r])=>r.status==='completed').length);
+
+  let list = all;
+  if (_reservFilter !== 'all') list = list.filter(([,r]) => r.status === _reservFilter);
+  if (search) list = list.filter(([,r]) =>
+    (r.customerName||'').toLowerCase().includes(search) ||
+    (r.customerPhone||'').includes(search) ||
+    (r.productTitle||'').toLowerCase().includes(search)
+  );
+
+  const countEl = document.getElementById('rs-count-label');
+  if (countEl) countEl.textContent = `(${list.length} reservations)`;
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--muted)">No reservations found</td></tr>';
+    return;
+  }
+
+  const SYMS = { USD:'$', AED:'AED ', INR:'₹' };
+
+  tbody.innerHTML = list.map(([id, r], i) => {
+    const st   = RESERV_STATUS[r.status] || RESERV_STATUS.pending;
+    const sym  = SYMS[(r.currency||'INR').toUpperCase()] || '';
+    const dt   = r.createdAt ? new Date(r.createdAt) : null;
+    const dateStr = dt ? dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const timeStr = dt ? dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '';
+    const initials = (r.customerName||'?').charAt(0).toUpperCase();
+    const rowBg = i%2===0 ? '' : 'background:var(--surface2)';
+
+    /* Product image or emoji */
+    const prodImg = r.productImage
+      ? `<img src="${esc(r.productImage)}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;background:var(--bg);padding:2px">`
+      : '<span style="font-size:24px">📱</span>';
+
+    return `<tr style="${rowBg};border-bottom:1px solid var(--border)">
+      <td style="padding:10px 14px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${initials}</div>
+          <div>
+            <div style="font-weight:700;font-size:13px">${esc(r.customerName||'—')}</div>
+            <a href="https://wa.me/${(r.customerPhone||'').replace(/\D/g,'')}" target="_blank"
+              style="font-size:11px;color:#25D366;font-weight:600;text-decoration:none">
+              <i class="fa-brands fa-whatsapp"></i> ${esc(r.customerPhone||'—')}
+            </a>
+          </div>
+        </div>
+      </td>
+      <td style="padding:10px 14px">
+        <div style="display:flex;align-items:center;gap:8px">
+          ${prodImg}
+          <div>
+            <div style="font-weight:700;font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.productTitle||'—')}</div>
+            <div style="font-size:10px;color:var(--muted)">${esc(r.variantLabel||'')}</div>
+          </div>
+        </div>
+      </td>
+      <td style="padding:10px 14px;font-size:11px;color:var(--muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.note||'—')}</td>
+      <td style="padding:10px 14px;text-align:right;font-weight:700;font-size:13px">${r.price ? sym+Number(r.price).toLocaleString() : '—'}</td>
+      <td style="padding:10px 14px;text-align:center">
+        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:${st.bg};color:${st.color}">
+          <i class="fa-solid ${st.icon}" style="font-size:9px"></i> ${st.label}
+        </span>
+      </td>
+      <td style="padding:10px 14px;white-space:nowrap">
+        <div style="font-size:12px;font-weight:600">${dateStr}</div>
+        <div style="font-size:11px;color:var(--muted)">${timeStr}</div>
+      </td>
+      <td style="padding:10px 14px">
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <select class="mf-input" onchange="updateReservationStatus('${id}',this.value)"
+            style="height:28px;font-size:11px;padding:0 6px;width:auto;border-radius:6px">
+            <option value="pending"   ${r.status==='pending'  ?'selected':''}>⏳ Pending</option>
+            <option value="contacted" ${r.status==='contacted'?'selected':''}>📞 Contacted</option>
+            <option value="completed" ${r.status==='completed'?'selected':''}>✅ Completed</option>
+            <option value="cancelled" ${r.status==='cancelled'?'selected':''}>❌ Cancelled</option>
+          </select>
+          <a href="https://wa.me/${(r.customerPhone||'').replace(/\D/g,'')}" target="_blank"
+            class="btn-ghost btn-sm" style="color:#25D366;border-color:#25D366;text-decoration:none"
+            title="WhatsApp ${esc(r.customerName||'')}">
+            <i class="fa-brands fa-whatsapp"></i>
+          </a>
+          <button class="act-btn danger" onclick="deleteReservation('${id}')" title="Delete">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function updateReservationStatus(id, status) {
+  const r = _reservations[id];
+  if (!r) return;
+  await db.ref('reservations/'+id).update({ status, updatedAt: Date.now(), updatedBy: APP.user?.email||'admin' });
+  showToast('Status updated to ' + status, 'success');
+  auditLog('EDIT', `Reservation status: ${r.customerName} → ${status}`, {
+    detail: `Device: ${r.productTitle} | Phone: ${r.customerPhone}`,
+    category: 'Reservations'
+  });
+}
+
+async function deleteReservation(id) {
+  const r = _reservations[id];
+  if (!r || !confirm(`Delete reservation for ${r.customerName}?`)) return;
+  await db.ref('reservations/'+id).remove();
+  showToast('Reservation deleted', 'success');
+}
+
+function exportReservations() {
+  const all = Object.values(_reservations);
+  if (!all.length) { showToast('No data to export', 'error'); return; }
+  const rows = [['Customer','Phone','Device','Variant','Price','Currency','Note','Status','Date']];
+  all.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(r => {
+    const dt = r.createdAt ? new Date(r.createdAt).toLocaleString() : '';
+    rows.push([r.customerName||'',r.customerPhone||'',r.productTitle||'',r.variantLabel||'',r.price||0,r.currency||'',r.note||'',r.status||'',dt]);
+  });
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'reservations_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  showToast('Exported!', 'success');
+}
+
 
 /* ══════════════════════════════════════════════════════
    MEETING SCHEDULER
