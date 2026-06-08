@@ -2434,7 +2434,11 @@ function attachOrdersListener(){
   });
 }
 function attachAdminsListener(){
-  db.ref('admins').on('value',snap=>{ APP.admins=snap.val()||{}; renderAdminsTable(); renderOverviewStats(); });
+  db.ref('admins').on('value',snap=>{
+  APP.admins=snap.val()||{};
+  renderAdminsTable();   /* presence may already be in _presence by now */
+  renderOverviewStats();
+});
 }
 
 /* ═══════════════════════════════════════════════
@@ -5001,123 +5005,142 @@ window.addEventListener('DOMContentLoaded', () => {
 /* Product audit is logged directly in saveProduct/deleteProduct functions.
    No Firebase listeners needed — those cause false logs on every page load. */
 
-/* Log admin login */
+/* ── Combined auth state handler: audit + presence ── */
 firebase.auth().onAuthStateChanged(user => {
-  if (user) auditLog('LOGIN', `Admin signed in: ${user.email}`);
+  if (user) {
+    auditLog('LOGIN', `Admin signed in: ${user.email}`);
+    initPresence(user);
+    listenPresence();
+  } else {
+    if (_presenceHeartbeat) { clearInterval(_presenceHeartbeat); _presenceHeartbeat = null; }
+    _presenceRef = null;
+  }
 });
 /* ══════════════════════════════════════════════
    ADMIN PRESENCE SYSTEM
    Uses Firebase Realtime Database + onDisconnect()
-   Node: presence/{uid} → { online, lastSeen, name }
+   Firebase SERVER timestamp for lastSeen — accurate regardless of client clock.
+   Node: presence/{uid} → { online:bool, lastSeen:serverTimestamp, name:string }
 ══════════════════════════════════════════════ */
-let _presence = {};   /* uid → { online, lastSeen } */
-let _presenceInterval = null;
+let _presence = {};
+let _presenceRef = null;
+let _presenceHeartbeat = null;
 
-/* ── Write this admin's presence on login ── */
 function initPresence(user) {
-  const ref    = db.ref('presence/' + user.uid);
-  const online = { online: true,  lastSeen: Date.now(), name: user.displayName || user.email };
-  const offline= { online: false, lastSeen: Date.now(), name: user.displayName || user.email };
+  _presenceRef = db.ref('presence/' + user.uid);
 
-  /* Set online immediately */
-  ref.set(online);
+  /* Use Firebase server timestamp so lastSeen is always accurate */
+  const SV = firebase.database.ServerValue.TIMESTAMP;
 
-  /* Firebase magic: set offline automatically when connection drops */
-  ref.onDisconnect().update({ online: false, lastSeen: Date.now() });
+  /* Register onDisconnect FIRST — before setting online.
+     This ensures the cleanup always runs even if the set() below fails. */
+  _presenceRef.onDisconnect().update({
+    online:   false,
+    lastSeen: SV
+  });
 
-  /* Heartbeat every 30s to keep lastSeen fresh */
-  if (_presenceInterval) clearInterval(_presenceInterval);
-  _presenceInterval = setInterval(() => {
-    ref.update({ online: true, lastSeen: Date.now() });
-  }, 30000);
+  /* Now mark online */
+  _presenceRef.set({
+    online:   true,
+    lastSeen: SV,
+    name:     user.displayName || user.email || 'Admin',
+    email:    user.email || ''
+  });
 
-  /* Handle tab close / page hide */
+  /* Heartbeat: update lastSeen every 25s so "online" stays fresh.
+     If heartbeat stops (crash/kill), onDisconnect handles it. */
+  if (_presenceHeartbeat) clearInterval(_presenceHeartbeat);
+  _presenceHeartbeat = setInterval(() => {
+    if (!_presenceRef) return;
+    if (document.visibilityState !== 'hidden') {
+      /* Re-register onDisconnect every heartbeat — it can expire server-side */
+      _presenceRef.onDisconnect().update({ online: false, lastSeen: SV });
+      _presenceRef.update({ online: true, lastSeen: SV });
+    }
+  }, 25000);
+
+  /* beforeunload: best-effort synchronous write on intentional close */
+  window.addEventListener('beforeunload', () => {
+    /* navigator.sendBeacon is more reliable than async writes on unload */
+    _presenceRef.update({ online: false, lastSeen: SV });
+  });
+
+  /* visibilitychange: only mark away after 2 minutes hidden, not immediately.
+     This avoids marking offline when switching tabs briefly. */
+  let _hiddenTimer = null;
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-      ref.update({ online: false, lastSeen: Date.now() });
+      _hiddenTimer = setTimeout(() => {
+        _presenceRef.update({ online: false, lastSeen: SV });
+      }, 120000); /* 2 minutes */
     } else {
-      ref.update({ online: true, lastSeen: Date.now() });
+      /* Back to visible — cancel the timer and re-mark online */
+      if (_hiddenTimer) { clearTimeout(_hiddenTimer); _hiddenTimer = null; }
+      _presenceRef.update({ online: true, lastSeen: SV });
     }
-  });
-  window.addEventListener('beforeunload', () => {
-    ref.update({ online: false, lastSeen: Date.now() });
   });
 }
 
-/* ── Listen to all admins' presence (super admin only) ── */
+/* Listen to ALL admins' presence in real-time */
 function listenPresence() {
   db.ref('presence').on('value', snap => {
     _presence = snap.val() || {};
-    /* Re-render table if visible */
-    if (document.getElementById('section-admins')?.classList.contains('active')) {
-      renderAdminsTable();
-    }
+    /* Always re-render admin table when presence changes — 
+       don't gate on section being active, as presence loads async */
+    renderAdminsTable();
   });
 }
 
-/* ── Build presence HTML for a table cell ── */
+/* Build the presence cell HTML */
 function buildPresenceHtml(uid, pres, isSelf) {
+  /* Always show self as online */
   if (isSelf) {
-    return `<div class="presence-dot">
-      <span class="dot online"></span>
-      <span style="color:#22c55e;font-weight:700">Online</span>
-    </div>`;
+    return `<div class="presence-dot"><span class="dot online"></span><span style="color:#22c55e;font-weight:700">Online now</span></div>`;
   }
+  /* No presence data recorded yet */
   if (!pres || !pres.lastSeen) {
-    return `<div class="presence-dot">
-      <span class="dot offline"></span>
-      <span style="color:var(--muted)">Never seen</span>
-    </div>`;
+    return `<div class="presence-dot"><span class="dot offline"></span><span style="color:var(--muted)">Never seen</span></div>`;
   }
-  if (pres.online) {
-    return `<div class="presence-dot">
-      <span class="dot online"></span>
-      <span style="color:#22c55e;font-weight:700">Online</span>
-    </div>`;
+
+  /* Use server-clock-aware diff:
+     Firebase ServerValue.TIMESTAMP = server ms epoch.
+     Client Date.now() may differ. We trust the online flag primarily,
+     and use lastSeen only for the "X ago" display, not for online/offline decision.
+     Grace window: if lastSeen is within last 90 seconds, trust online flag. */
+  const msSince = Date.now() - Number(pres.lastSeen);
+  /* If client clock is ahead of server, msSince can be negative — treat as "just now" */
+  const isRecent  = msSince < 90000;  /* within 90 seconds */
+  const isOnline  = pres.online === true && (isRecent || msSince < 0);
+
+  if (isOnline) {
+    return `<div class="presence-dot"><span class="dot online"></span><span style="color:#22c55e;font-weight:700">Online now</span></div>`;
   }
-  /* Offline — show relative time */
-  const ago = timeAgo(pres.lastSeen);
-  return `<div class="presence-dot">
-    <span class="dot offline"></span>
-    <span style="color:var(--muted)">${ago}</span>
-  </div>`;
+  /* Offline — show last seen time */
+  const displayTs = Number(pres.lastSeen);
+  return `<div class="presence-dot"><span class="dot offline"></span><span style="color:var(--muted)">${timeAgo(displayTs)}</span></div>`;
 }
 
-/* ── Human-readable relative time ── */
+/* Human-readable relative time */
 function timeAgo(ts) {
   if (!ts) return 'Unknown';
-  const diff = Math.floor((Date.now() - ts) / 1000); /* seconds */
-  if (diff < 10)   return 'Just now';
-  if (diff < 60)   return diff + 's ago';
-  if (diff < 3600) return Math.floor(diff/60) + ' min ago';
-  if (diff < 86400){
-    const h = Math.floor(diff/3600);
-    const m = Math.floor((diff%3600)/60);
-    return h + 'h ' + (m ? m+'m ' : '') + 'ago';
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 10)    return 'Just now';
+  if (diff < 60)    return diff + 's ago';
+  if (diff < 3600)  return Math.floor(diff / 60) + ' min ago';
+  if (diff < 86400) {
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    return h + 'h ' + (m ? m + 'm ' : '') + 'ago';
   }
-  /* More than a day — show actual time */
   const d = new Date(ts);
-  const timeStr = d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-  const dateStr = d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
-  return dateStr + ' ' + timeStr;
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) + ' ' +
+         d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 }
 
-/* Auto-refresh presence cells every 30s so "2 min ago" stays accurate */
+/* Auto-refresh the time labels every 20s for "X min ago" accuracy */
 setInterval(() => {
-  if (document.getElementById('section-admins')?.classList.contains('active')) {
-    renderAdminsTable();
-  }
-}, 30000);
-
-/* Hook into auth state to init presence */
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    initPresence(user);
-    listenPresence();
-  } else {
-    if (_presenceInterval) clearInterval(_presenceInterval);
-  }
-});
+  if (Object.keys(_presence).length > 0) renderAdminsTable();
+}, 20000);
 
 /* ══════════════════════════════════════════════
    DEVICE RESERVATIONS
