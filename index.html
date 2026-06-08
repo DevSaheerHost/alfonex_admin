@@ -932,6 +932,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="comms" onclick="showSection('comms')"><span class="sb-ic"><i class="fa-solid fa-comments"></i></span>Team Comms</button>
       <button class="sb-link" data-section="meetings" onclick="showSection('meetings')"><span class="sb-ic"><i class="fa-solid fa-calendar-check"></i></span>Meetings</button>
       <button class="sb-link" data-section="pricehistory" onclick="showSection('pricehistory')"><span class="sb-ic"><i class="fa-solid fa-chart-line"></i></span>Price History</button>
+      <button class="sb-link" data-section="pricelist" onclick="showSection('pricelist')"><span class="sb-ic"><i class="fa-solid fa-list-ol"></i></span>Price List</button>
       <button class="sb-link" data-section="reservations" onclick="showSection('reservations')"><span class="sb-ic"><i class="fa-solid fa-bookmark"></i></span>Reservations<span class="sb-badge" id="sb-reserv-count" style="display:none">0</span></button>
       <!-- Admin -->
       <div id="sb-admin-nav" style="display:none">
@@ -1561,6 +1562,90 @@ tbody td{padding:12px 16px;vertical-align:middle}
     </section>
 
     <!-- ══════════════════════════════════════
+         PRICE LIST MODULE
+    ══════════════════════════════════════ -->
+    <section id="section-pricelist" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Price List</div>
+          <div class="sec-sub">Manage wholesale cost, dealer details and profit margin for all products</div>
+        </div>
+        <div class="sec-header-right">
+          <button class="btn-ghost btn-sm" onclick="exportPriceList()"><i class="fa-solid fa-download"></i> Export</button>
+          <button class="btn-primary" onclick="openPriceListModal()"><i class="fa-solid fa-plus"></i> Add Product</button>
+        </div>
+      </div>
+
+      <!-- Global Profit Setting -->
+      <div style="background:linear-gradient(135deg,rgba(46,160,86,.08),rgba(46,160,86,.03));border:1.5px solid rgba(46,160,86,.2);border-radius:var(--radius);padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="font-size:20px">⚙️</div>
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:14px;color:var(--text)">Global Profit Margin</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Default profit added to all products. Override per-product if needed. Changing this recalculates all selling prices instantly.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="position:relative">
+            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:800;color:var(--muted)">AED</span>
+            <input type="number" id="pl-global-profit" class="mf-input" min="0" step="1" value="150"
+              style="padding-left:38px;width:120px;height:38px;font-size:15px;font-weight:900;color:var(--green)"
+              oninput="updateGlobalProfit(this.value)">
+          </div>
+          <div style="font-size:12px;color:var(--muted)">AED default profit</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn-primary btn-sm" onclick="applyGlobalProfit()">
+            <i class="fa-solid fa-rotate"></i> Apply to All
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--green);font-weight:700" id="pl-global-status"></div>
+      </div>
+
+      <!-- Search + Filter bar -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <div style="position:relative;flex:1;max-width:260px">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+          <input class="search-input" id="pl-search" placeholder="Search product, dealer…" oninput="renderPriceList()" style="padding-left:32px;width:100%">
+        </div>
+        <select class="mf-input" id="pl-dealer-filter" onchange="renderPriceList()" style="width:auto;height:36px;font-size:12px">
+          <option value="all">All Dealers</option>
+        </select>
+      </div>
+
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-card blue">  <div class="stat-icon blue"><i class="fa-solid fa-list-ol"></i></div>    <div><div class="stat-num" id="pl-stat-total">0</div>   <div class="stat-lbl">Products</div></div></div>
+        <div class="stat-card green"> <div class="stat-icon green"><i class="fa-solid fa-store"></i></div>      <div><div class="stat-num" id="pl-stat-dealers">0</div> <div class="stat-lbl">Dealers</div></div></div>
+        <div class="stat-card amber"> <div class="stat-icon amber"><i class="fa-solid fa-coins"></i></div>      <div><div class="stat-num" id="pl-stat-avgprofit">0</div><div class="stat-lbl">Avg Profit</div></div></div>
+        <div class="stat-card blue">  <div class="stat-icon blue"><i class="fa-solid fa-money-bill-trend-up"></i></div><div><div class="stat-num" id="pl-stat-totalval">0</div><div class="stat-lbl">Total Value</div></div></div>
+      </div>
+
+      <!-- Price List Table -->
+      <div class="table-card" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:var(--bg)">
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Product</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Dealer</th>
+                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Wholesale</th>
+                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Profit</th>
+                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Selling Price</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Updated</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pl-tbody">
+              <tr><td colspan="7" style="padding:40px;text-align:center;color:var(--muted)">
+                <i class="fa-solid fa-list-ol" style="font-size:32px;display:block;margin-bottom:10px;opacity:.3"></i>
+                No products yet — click <strong>Add Product</strong> to start
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
          11. PRICE CHANGE HISTORY
     ══════════════════════════════════════ -->
     <section id="section-pricehistory" class="content-section">
@@ -1740,6 +1825,89 @@ tbody td{padding:12px 16px;vertical-align:middle}
 
   </div><!-- end #main-area -->
 </div><!-- end #view-dashboard -->
+
+<!-- ══ MODAL: ADD/EDIT PRICE LIST ITEM ══ -->
+<div id="modal-pricelist" class="modal-backdrop">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <div class="modal-hicon"><i class="fa-solid fa-list-ol"></i></div>
+      <div class="modal-title" id="pl-modal-title">Add Product to Price List</div>
+      <button class="modal-close" onclick="closePriceListModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pl-edit-id">
+
+      <div class="mf-group">
+        <label class="mf-label">Product Name *</label>
+        <input class="mf-input" id="pl-name" placeholder="e.g. iPhone 13 Mini 128GB Black">
+      </div>
+
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Dealer Name *</label>
+          <input class="mf-input" id="pl-dealer" placeholder="e.g. SLR Mobiles">
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Dealer Phone</label>
+          <input class="mf-input" id="pl-dealer-phone" placeholder="+971 50 000 0000" type="tel">
+        </div>
+      </div>
+
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Wholesale Price (AED) *</label>
+          <div style="position:relative">
+            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;color:var(--muted)">AED</span>
+            <input type="number" class="mf-input" id="pl-cost" min="0" step="0.01" placeholder="0.00"
+              style="padding-left:38px" oninput="calcPLSellingPrice()">
+          </div>
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Profit (AED)
+            <span style="font-size:9px;font-weight:600;color:var(--green);cursor:pointer;margin-left:4px" onclick="resetPLProfit()">↺ Reset to default</span>
+          </label>
+          <div style="position:relative">
+            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;color:var(--muted)">AED</span>
+            <input type="number" class="mf-input" id="pl-profit" min="0" step="0.01"
+              style="padding-left:38px;color:var(--green);font-weight:800" oninput="calcPLSellingPrice()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-calculated selling price display -->
+      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-top:4px">
+        <div style="font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Formula: Wholesale + Profit = Selling Price</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="text-align:center">
+            <div style="font-size:18px;font-weight:900;color:var(--text)" id="pl-calc-cost">AED 0</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">Wholesale</div>
+          </div>
+          <div style="font-size:20px;color:var(--muted)">+</div>
+          <div style="text-align:center">
+            <div style="font-size:18px;font-weight:900;color:var(--green)" id="pl-calc-profit">AED 0</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">Profit</div>
+          </div>
+          <div style="font-size:20px;color:var(--muted)">=</div>
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:900;color:var(--text);font-family:var(--font-head)" id="pl-calc-sell">AED 0</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">Selling Price</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mf-group" style="margin-top:14px">
+        <label class="mf-label">Notes (optional)</label>
+        <input class="mf-input" id="pl-notes" placeholder="e.g. Just Active, 100BH, Physical SIM…">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closePriceListModal()">Cancel</button>
+      <button class="btn-primary" id="btn-save-pl" onclick="savePriceListItem()">
+        <i class="fa-solid fa-floppy-disk"></i> Save
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODAL: SCHEDULE MEETING ══ -->
 <div id="modal-meeting" class="modal-backdrop">
@@ -2325,7 +2493,7 @@ function showSection(name){
     warehouse:'Multi-Warehouse System', international:'International Business',
     marketing:'Marketing Tools', labels:'Labels & Barcodes',
     invoices:'Customer Invoices', comms:'Team Communication',
-    meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations',
+    meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
     audit:'Audit Trail'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
@@ -2344,6 +2512,7 @@ function showSection(name){
     if (name==='meetings')      { renderMeetings(); }
     if (name==='reservations')  { renderReservations(); }
     if (name==='pricehistory')  { renderPriceHistory(); }
+    if (name==='pricelist')     { renderPriceList(); }
   }, 0);
 }
 function togglePw(id,btn){
@@ -5004,6 +5173,275 @@ window.addEventListener('DOMContentLoaded', () => {
 
 /* Product audit is logged directly in saveProduct/deleteProduct functions.
    No Firebase listeners needed — those cause false logs on every page load. */
+
+
+/* ══════════════════════════════════════════════
+   PRICE LIST MODULE
+   Firebase node: price_list/{id}
+   Fields: name, dealer, dealerPhone, cost, profit,
+           notes, addedBy, createdAt, updatedAt
+══════════════════════════════════════════════ */
+let _priceList     = {};
+let _plGlobalProfit = 150;  /* default AED */
+
+/* Load global profit setting from Firebase */
+db.ref('settings/globalProfit').on('value', snap => {
+  const v = snap.val();
+  if (v !== null && v !== undefined) {
+    _plGlobalProfit = Number(v);
+    const el = document.getElementById('pl-global-profit');
+    if (el && document.activeElement !== el) el.value = _plGlobalProfit;
+  }
+});
+
+/* Load price list from Firebase */
+db.ref('price_list').on('value', snap => {
+  _priceList = snap.val() || {};
+  _buildPLDealerFilter();
+  if (document.getElementById('section-pricelist')?.classList.contains('active')) {
+    renderPriceList();
+  }
+});
+
+/* Open add modal */
+function openPriceListModal(id) {
+  const item = id ? (_priceList[id]||{}) : {};
+  document.getElementById('pl-modal-title').textContent = id ? 'Edit Product' : 'Add Product to Price List';
+  document.getElementById('pl-edit-id').value     = id || '';
+  document.getElementById('pl-name').value        = item.name || '';
+  document.getElementById('pl-dealer').value      = item.dealer || '';
+  document.getElementById('pl-dealer-phone').value= item.dealerPhone || '';
+  document.getElementById('pl-cost').value        = item.cost || '';
+  document.getElementById('pl-profit').value      = item.profit !== undefined ? item.profit : _plGlobalProfit;
+  document.getElementById('pl-notes').value       = item.notes || '';
+  calcPLSellingPrice();
+  document.getElementById('modal-pricelist').classList.add('open');
+}
+
+function closePriceListModal() {
+  document.getElementById('modal-pricelist').classList.remove('open');
+}
+
+/* Live calculation inside modal */
+function calcPLSellingPrice() {
+  const cost   = parseFloat(document.getElementById('pl-cost')?.value)   || 0;
+  const profit = parseFloat(document.getElementById('pl-profit')?.value) || 0;
+  const sell   = cost + profit;
+  const fmt = v => 'AED ' + Number(v).toLocaleString('en', {minimumFractionDigits:0, maximumFractionDigits:2});
+  const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('pl-calc-cost',   fmt(cost));
+  set('pl-calc-profit', fmt(profit));
+  set('pl-calc-sell',   fmt(sell));
+}
+
+/* Reset profit to global default */
+function resetPLProfit() {
+  const el = document.getElementById('pl-profit');
+  if (el) { el.value = _plGlobalProfit; calcPLSellingPrice(); }
+}
+
+/* Save item to Firebase */
+async function savePriceListItem() {
+  const id     = document.getElementById('pl-edit-id').value;
+  const name   = document.getElementById('pl-name').value.trim();
+  const dealer = document.getElementById('pl-dealer').value.trim();
+  const cost   = parseFloat(document.getElementById('pl-cost').value);
+  const profit = parseFloat(document.getElementById('pl-profit').value);
+
+  if (!name)         { showToast('Product name required','error'); return; }
+  if (!dealer)       { showToast('Dealer name required','error'); return; }
+  if (isNaN(cost))   { showToast('Wholesale price required','error'); return; }
+  if (isNaN(profit)) { showToast('Profit required','error'); return; }
+
+  const btn = setBtnLoading('btn-save-pl', 'Saving…');
+  const payload = {
+    name,
+    dealer,
+    dealerPhone: document.getElementById('pl-dealer-phone').value.trim(),
+    cost,
+    profit,
+    sellingPrice: cost + profit,
+    notes:  document.getElementById('pl-notes').value.trim(),
+    addedBy: APP.user?.email || 'admin',
+    updatedAt: Date.now(),
+  };
+
+  try {
+    if (id) {
+      await db.ref('price_list/'+id).update(payload);
+      showToast('Product updated!', 'success');
+      auditLog('PRICE', `Price list updated: ${name}`, { detail:`Cost: AED ${cost} | Profit: AED ${profit} | Sell: AED ${cost+profit}`, category:'Price List' });
+    } else {
+      payload.createdAt = Date.now();
+      await db.ref('price_list').push(payload);
+      showToast('Product added!', 'success');
+      auditLog('ADD', `Added to price list: ${name}`, { detail:`Dealer: ${dealer} | Cost: AED ${cost} | Sell: AED ${cost+profit}`, category:'Price List' });
+    }
+    closePriceListModal();
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+  finally { resetBtn(btn, '<i class="fa-solid fa-floppy-disk"></i> Save'); }
+}
+
+async function deletePriceListItem(id) {
+  const item = _priceList[id];
+  if (!item || !confirm(`Delete "${item.name}" from price list?`)) return;
+  await db.ref('price_list/'+id).remove();
+  showToast('Product deleted','success');
+  auditLog('DELETE', `Removed from price list: ${item.name}`, { category:'Price List' });
+}
+
+/* ── Global profit: update stored value ── */
+function updateGlobalProfit(val) {
+  _plGlobalProfit = parseFloat(val) || 0;
+  /* Debounce the Firebase write */
+  clearTimeout(window._gpDebounce);
+  window._gpDebounce = setTimeout(async () => {
+    await db.ref('settings/globalProfit').set(_plGlobalProfit);
+    const st = document.getElementById('pl-global-status');
+    if (st) { st.textContent = '✓ Saved'; setTimeout(() => { st.textContent=''; }, 2000); }
+  }, 800);
+}
+
+/* ── Apply global profit to ALL items that haven't been manually overridden ── */
+async function applyGlobalProfit() {
+  const val = parseFloat(document.getElementById('pl-global-profit')?.value);
+  if (isNaN(val)) { showToast('Enter a valid profit value','error'); return; }
+  if (!confirm(`Apply AED ${val} profit to ALL ${Object.keys(_priceList).length} products? This will overwrite individual profits.`)) return;
+
+  const updates = {};
+  Object.entries(_priceList).forEach(([id, item]) => {
+    updates[`price_list/${id}/profit`]       = val;
+    updates[`price_list/${id}/sellingPrice`] = Number(item.cost||0) + val;
+    updates[`price_list/${id}/updatedAt`]    = Date.now();
+  });
+  await db.ref().update(updates);
+  await db.ref('settings/globalProfit').set(val);
+  _plGlobalProfit = val;
+  showToast(`AED ${val} profit applied to all products!`, 'success');
+  auditLog('PRICE', `Global profit updated to AED ${val}`, { detail:`Applied to ${Object.keys(_priceList).length} products`, category:'Price List' });
+}
+
+/* ── Build dealer filter dropdown ── */
+function _buildPLDealerFilter() {
+  const sel = document.getElementById('pl-dealer-filter'); if(!sel) return;
+  const dealers = [...new Set(Object.values(_priceList).map(i=>i.dealer).filter(Boolean))].sort();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">All Dealers</option>' +
+    dealers.map(d=>`<option value="${esc(d)}"${cur===d?'selected':''}>${esc(d)}</option>`).join('');
+}
+
+/* ── Render price list table ── */
+function renderPriceList() {
+  const tbody  = document.getElementById('pl-tbody'); if(!tbody) return;
+  const search = (document.getElementById('pl-search')?.value||'').toLowerCase();
+  const dealer = document.getElementById('pl-dealer-filter')?.value||'all';
+
+  let items = Object.entries(_priceList);
+  if (dealer !== 'all') items = items.filter(([,i])=>i.dealer===dealer);
+  if (search) items = items.filter(([,i])=>
+    (i.name||'').toLowerCase().includes(search)||
+    (i.dealer||'').toLowerCase().includes(search)||
+    (i.notes||'').toLowerCase().includes(search)
+  );
+
+  /* Sort: dealer name then product name */
+  items.sort(([,a],[,b])=>(a.dealer||'').localeCompare(b.dealer||'')||(a.name||'').localeCompare(b.name||''));
+
+  /* Stats */
+  const all    = Object.values(_priceList);
+  const dealers= new Set(all.map(i=>i.dealer).filter(Boolean)).size;
+  const avgP   = all.length ? Math.round(all.reduce((s,i)=>s+(Number(i.profit)||0),0)/all.length) : 0;
+  const totalV = all.reduce((s,i)=>s+(Number(i.sellingPrice)||0),0);
+  const setStat=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setStat('pl-stat-total',   all.length);
+  setStat('pl-stat-dealers', dealers);
+  setStat('pl-stat-avgprofit', 'AED '+avgP);
+  setStat('pl-stat-totalval',  'AED '+Math.round(totalV).toLocaleString());
+
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--muted)">No products found</td></tr>`;
+    return;
+  }
+
+  /* Group by dealer for visual separation */
+  let currentDealer = null;
+  tbody.innerHTML = items.map(([id, item], i) => {
+    const cost   = Number(item.cost||0);
+    const profit = Number(item.profit||0);
+    const sell   = Number(item.sellingPrice || cost+profit);
+    const margin = cost > 0 ? ((profit/cost)*100).toFixed(1) : '0';
+    const dt     = item.updatedAt ? new Date(item.updatedAt) : null;
+    const dateStr= dt ? dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const rowBg  = i%2===0?'':'background:var(--surface2)';
+
+    /* Dealer group header row */
+    let dealerHeader = '';
+    if (item.dealer !== currentDealer) {
+      currentDealer = item.dealer;
+      const waNum = (item.dealerPhone||'').replace(/\D/g,'');
+      dealerHeader = `<tr style="background:linear-gradient(90deg,rgba(46,160,86,.06),transparent)">
+        <td colspan="7" style="padding:8px 14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:28px;height:28px;border-radius:8px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">
+              ${(item.dealer||'?').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <span style="font-size:13px;font-weight:800;color:var(--text)">${esc(item.dealer||'Unknown Dealer')}</span>
+              ${item.dealerPhone ? `<span style="font-size:11px;color:var(--muted);margin-left:8px">${esc(item.dealerPhone)}</span>` : ''}
+            </div>
+            ${waNum ? `<a href="https://wa.me/${waNum}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;background:#25D36610;border:1px solid #25D36630;padding:3px 9px;border-radius:20px">
+              <i class="fa-brands fa-whatsapp"></i> Chat
+            </a>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    const productRow = `<tr style="${rowBg};border-bottom:1px solid var(--border)">
+      <td style="padding:10px 14px">
+        <div style="font-weight:700;font-size:13px">${esc(item.name||'—')}</div>
+        ${item.notes ? `<div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(item.notes)}</div>` : ''}
+      </td>
+      <td style="padding:10px 14px;font-size:12px;color:var(--muted)">${esc(item.dealer||'—')}</td>
+      <td style="padding:10px 14px;text-align:right;font-weight:700;font-size:13px">AED ${cost.toLocaleString()}</td>
+      <td style="padding:10px 14px;text-align:right">
+        <div style="font-weight:800;color:var(--green);font-size:13px">AED ${profit.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted)">${margin}% margin</div>
+      </td>
+      <td style="padding:10px 14px;text-align:right">
+        <div style="font-family:var(--font-head);font-size:15px;font-weight:900;color:var(--text)">AED ${sell.toLocaleString()}</div>
+      </td>
+      <td style="padding:10px 14px;font-size:11px;color:var(--muted);white-space:nowrap">${dateStr}</td>
+      <td style="padding:10px 14px">
+        <div style="display:flex;gap:5px">
+          <button class="btn-edit btn-sm" onclick="openPriceListModal('${id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          <button class="act-btn danger" onclick="deletePriceListItem('${id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+
+    return dealerHeader + productRow;
+  }).join('');
+}
+
+/* Export CSV */
+function exportPriceList() {
+  const items = Object.values(_priceList);
+  if (!items.length) { showToast('No items to export','error'); return; }
+  const rows = [['Product','Notes','Dealer','Dealer Phone','Wholesale (AED)','Profit (AED)','Selling Price (AED)','Margin %','Last Updated']];
+  items.sort((a,b)=>(a.dealer||'').localeCompare(b.dealer||'')).forEach(item => {
+    const cost=Number(item.cost||0), profit=Number(item.profit||0);
+    const margin = cost>0 ? ((profit/cost)*100).toFixed(1)+'%' : '0%';
+    rows.push([item.name||'',item.notes||'',item.dealer||'',item.dealerPhone||'',cost,profit,cost+profit,margin,
+      item.updatedAt?new Date(item.updatedAt).toLocaleString():'']);
+  });
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='price_list_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  showToast('Price list exported!','success');
+}
 
 /* ── Combined auth state handler: audit + presence ── */
 firebase.auth().onAuthStateChanged(user => {
