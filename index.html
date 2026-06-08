@@ -914,6 +914,8 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <!-- Team -->
       <div class="sb-section-label">Team</div>
       <button class="sb-link" data-section="comms" onclick="showSection('comms')"><span class="sb-ic"><i class="fa-solid fa-comments"></i></span>Team Comms</button>
+      <button class="sb-link" data-section="meetings" onclick="showSection('meetings')"><span class="sb-ic"><i class="fa-solid fa-calendar-check"></i></span>Meetings</button>
+      <button class="sb-link" data-section="pricehistory" onclick="showSection('pricehistory')"><span class="sb-ic"><i class="fa-solid fa-chart-line"></i></span>Price History</button>
       <!-- Admin -->
       <div id="sb-admin-nav" style="display:none">
         <div class="sb-section-label">Administration</div>
@@ -1476,6 +1478,129 @@ tbody td{padding:12px 16px;vertical-align:middle}
     </section>
 
     <!-- ══════════════════════════════════════
+         10. MEETING SCHEDULER
+    ══════════════════════════════════════ -->
+    <section id="section-meetings" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Meeting Scheduler</div><div class="sec-sub">Schedule team and client meetings with agenda and participants</div></div>
+        <div class="sec-header-right">
+          <button class="btn-primary" onclick="openMeetingModal()"><i class="fa-solid fa-plus"></i> Schedule Meeting</button>
+        </div>
+      </div>
+
+      <!-- Calendar + upcoming split -->
+      <div class="two-col" style="margin-bottom:16px">
+        <!-- Upcoming meetings -->
+        <div class="table-card" style="padding:0;overflow:hidden">
+          <div class="table-topbar">
+            <div class="table-topbar-title"><i class="fa-solid fa-calendar-days" style="color:var(--green)"></i> Upcoming Meetings</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn-ghost btn-sm" onclick="filterMeetings('upcoming')" id="mf-upcoming" style="background:var(--green);color:#fff;border-color:var(--green)">Upcoming</button>
+              <button class="btn-ghost btn-sm" onclick="filterMeetings('past')" id="mf-past">Past</button>
+              <button class="btn-ghost btn-sm" onclick="filterMeetings('all')" id="mf-all">All</button>
+            </div>
+          </div>
+          <div id="meetings-list" style="padding:8px 0;max-height:540px;overflow-y:auto">
+            <div style="text-align:center;padding:40px;color:var(--muted)">
+              <i class="fa-solid fa-calendar-xmark" style="font-size:32px;margin-bottom:10px;display:block"></i>
+              No meetings scheduled yet
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick stats + today -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="table-card" style="padding:18px">
+            <div class="sec-sub" style="font-weight:700;margin-bottom:12px"><i class="fa-solid fa-chart-bar" style="color:var(--green)"></i> Overview</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+                <div style="font-size:28px;font-weight:900;color:var(--green)" id="meet-stat-upcoming">0</div>
+                <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Upcoming</div>
+              </div>
+              <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+                <div style="font-size:28px;font-weight:900;color:var(--text)" id="meet-stat-today">0</div>
+                <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Today</div>
+              </div>
+              <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+                <div style="font-size:28px;font-weight:900;color:var(--muted)" id="meet-stat-past">0</div>
+                <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Completed</div>
+              </div>
+              <div style="background:var(--bg);border-radius:8px;padding:14px;text-align:center">
+                <div style="font-size:28px;font-weight:900;color:#3b82f6" id="meet-stat-total">0</div>
+                <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Total</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Today's meetings -->
+          <div class="table-card" style="padding:18px">
+            <div class="sec-sub" style="font-weight:700;margin-bottom:12px"><i class="fa-solid fa-sun" style="color:#f59e0b"></i> Today's Schedule</div>
+            <div id="meetings-today">
+              <div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">No meetings today</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         11. PRICE CHANGE HISTORY
+    ══════════════════════════════════════ -->
+    <section id="section-pricehistory" class="content-section">
+      <div class="sec-header">
+        <div><div class="sec-title">Price Change History</div><div class="sec-sub">Track every price change — old price, new price, who changed it and when</div></div>
+        <div class="sec-header-right">
+          <button class="btn-ghost btn-sm" onclick="exportPriceHistory()"><i class="fa-solid fa-download"></i> Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <div style="position:relative;flex:1;max-width:260px">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+          <input class="search-input" id="ph-search" placeholder="Search product…" oninput="renderPriceHistory()" style="padding-left:32px;width:100%">
+        </div>
+        <select class="mf-input" id="ph-filter" onchange="renderPriceHistory()" style="width:auto;height:36px;font-size:12px">
+          <option value="all">All Products</option>
+        </select>
+        <button class="btn-ghost btn-sm" onclick="clearPriceHistory()" style="margin-left:auto">
+          <i class="fa-solid fa-trash" style="color:var(--red)"></i> Clear History
+        </button>
+      </div>
+
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="ph-stats-row">
+        <div class="stat-card blue"><div class="stat-icon blue"><i class="fa-solid fa-arrow-up-right-dots"></i></div><div><div class="stat-num" id="ph-total-changes">0</div><div class="stat-lbl">Total Changes</div></div></div>
+        <div class="stat-card green"><div class="stat-icon green"><i class="fa-solid fa-arrow-up"></i></div><div><div class="stat-num" id="ph-increases">0</div><div class="stat-lbl">Price Increases</div></div></div>
+        <div class="stat-card red"><div class="stat-icon red"><i class="fa-solid fa-arrow-down"></i></div><div><div class="stat-num" id="ph-decreases">0</div><div class="stat-lbl">Price Decreases</div></div></div>
+        <div class="stat-card amber"><div class="stat-icon amber"><i class="fa-solid fa-clock-rotate-left"></i></div><div><div class="stat-num" id="ph-today">0</div><div class="stat-lbl">Changed Today</div></div></div>
+      </div>
+
+      <!-- History table -->
+      <div class="table-card" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:var(--bg)">
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Product</th>
+                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Old Price</th>
+                <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)"></th>
+                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">New Price</th>
+                <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Change</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Changed By</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Date / Time</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Currency</th>
+              </tr>
+            </thead>
+            <tbody id="ph-tbody">
+              <tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No price changes recorded yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════
          9. AUDIT TRAIL
     ══════════════════════════════════════ -->
     <section id="section-audit" class="content-section">
@@ -1539,6 +1664,77 @@ tbody td{padding:12px 16px;vertical-align:middle}
 
   </div><!-- end #main-area -->
 </div><!-- end #view-dashboard -->
+
+<!-- ══ MODAL: SCHEDULE MEETING ══ -->
+<div id="modal-meeting" class="modal-backdrop">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-hicon"><i class="fa-solid fa-calendar-plus"></i></div>
+      <div class="modal-title" id="modal-meeting-title">Schedule Meeting</div>
+      <button class="modal-close" onclick="closeMeetingModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-meeting-id">
+      <div class="mf-group"><label class="mf-label">Meeting Title *</label>
+        <input class="mf-input" id="meet-title" placeholder="e.g. Weekly Sales Review, Client Call — iPhone Deal"></div>
+      <div class="mf-row">
+        <div class="mf-group"><label class="mf-label">Date *</label>
+          <input type="date" class="mf-input" id="meet-date"></div>
+        <div class="mf-group"><label class="mf-label">Time *</label>
+          <input type="time" class="mf-input" id="meet-time"></div>
+      </div>
+      <div class="mf-row">
+        <div class="mf-group"><label class="mf-label">Duration</label>
+          <select class="mf-input" id="meet-duration">
+            <option value="15">15 minutes</option>
+            <option value="30" selected>30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+          </select></div>
+        <div class="mf-group"><label class="mf-label">Type</label>
+          <select class="mf-input" id="meet-type">
+            <option value="internal">🏢 Internal Team</option>
+            <option value="client">🤝 Client Meeting</option>
+            <option value="dealer">🔗 Dealer Meeting</option>
+            <option value="video">📹 Video Call</option>
+            <option value="phone">📞 Phone Call</option>
+          </select></div>
+      </div>
+      <div class="mf-group"><label class="mf-label">Participants</label>
+        <input class="mf-input" id="meet-participants" placeholder="e.g. Saheer, Mohammed, Client Name — comma separated"></div>
+      <div class="mf-group"><label class="mf-label">Location / Link</label>
+        <input class="mf-input" id="meet-location" placeholder="e.g. Office Room A, or Zoom/Meet link"></div>
+      <div class="mf-group"><label class="mf-label">Agenda / Notes</label>
+        <textarea class="mf-textarea" id="meet-agenda" rows="3" placeholder="Meeting agenda, topics to discuss, preparation notes…"></textarea></div>
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Reminder</label>
+          <select class="mf-input" id="meet-reminder">
+            <option value="0">No reminder</option>
+            <option value="15" selected>15 min before</option>
+            <option value="30">30 min before</option>
+            <option value="60">1 hour before</option>
+            <option value="1440">1 day before</option>
+          </select></div>
+        <div class="mf-group">
+          <label class="mf-label">Priority</label>
+          <select class="mf-input" id="meet-priority">
+            <option value="normal" selected>Normal</option>
+            <option value="high">🔴 High</option>
+            <option value="low">🟢 Low</option>
+          </select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeMeetingModal()">Cancel</button>
+      <button class="btn-primary" id="btn-save-meeting" onclick="saveMeeting()">
+        <i class="fa-solid fa-calendar-plus"></i> Save Meeting
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODAL: ADD/EDIT BANNER ══ -->
 <div id="modal-banner" class="modal-backdrop">
@@ -2043,6 +2239,7 @@ function showSection(name){
     warehouse:'Multi-Warehouse System', international:'International Business',
     marketing:'Marketing Tools', labels:'Labels & Barcodes',
     invoices:'Customer Invoices', comms:'Team Communication',
+    meetings:'Meeting Scheduler', pricehistory:'Price Change History',
     audit:'Audit Trail'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
@@ -2058,6 +2255,8 @@ function showSection(name){
     if (name==='warehouse')     { attachWarehouseListener(); }
     if (name==='dealers')       { attachDealerListener(); }
     if (name==='comms')         { attachAnnouncementsListener(); renderTasks(); renderAnnouncements(); loadChatMessages(_chatChannel); }
+    if (name==='meetings')      { renderMeetings(); }
+    if (name==='pricehistory')  { renderPriceHistory(); }
   }, 0);
 }
 function togglePw(id,btn){
@@ -4678,6 +4877,326 @@ window.addEventListener('DOMContentLoaded', () => {
 firebase.auth().onAuthStateChanged(user => {
   if (user) auditLog('LOGIN', `Admin signed in: ${user.email}`);
 });
+
+/* ══════════════════════════════════════════════════════
+   MEETING SCHEDULER
+══════════════════════════════════════════════════════ */
+let _meetings    = {};
+let _meetFilter  = 'upcoming';
+
+const MEET_TYPE_META = {
+  internal: { icon:'🏢', label:'Internal',  color:'#3b82f6' },
+  client:   { icon:'🤝', label:'Client',    color:'#16a34a' },
+  dealer:   { icon:'🔗', label:'Dealer',    color:'#f59e0b' },
+  video:    { icon:'📹', label:'Video Call', color:'#8b5cf6' },
+  phone:    { icon:'📞', label:'Phone Call', color:'#06b6d4' },
+};
+const PRIO_META = {
+  high:   { icon:'🔴', color:'#ef4444' },
+  normal: { icon:'🔵', color:'#3b82f6' },
+  low:    { icon:'🟢', color:'#16a34a' },
+};
+
+db.ref('meetings').orderByChild('dateTime').on('value', snap => {
+  _meetings = snap.val() || {};
+  if (document.getElementById('section-meetings')?.classList.contains('active')) renderMeetings();
+});
+
+function openMeetingModal(id) {
+  const m = id ? (_meetings[id]||{}) : {};
+  document.getElementById('modal-meeting-title').textContent = id ? 'Edit Meeting' : 'Schedule Meeting';
+  document.getElementById('edit-meeting-id').value   = id || '';
+  document.getElementById('meet-title').value        = m.title || '';
+  document.getElementById('meet-date').value         = m.date  || new Date().toISOString().slice(0,10);
+  document.getElementById('meet-time').value         = m.time  || '10:00';
+  document.getElementById('meet-duration').value     = m.duration || '30';
+  document.getElementById('meet-type').value         = m.type  || 'internal';
+  document.getElementById('meet-participants').value = m.participants || '';
+  document.getElementById('meet-location').value     = m.location || '';
+  document.getElementById('meet-agenda').value       = m.agenda || '';
+  document.getElementById('meet-reminder').value     = m.reminder || '15';
+  document.getElementById('meet-priority').value     = m.priority || 'normal';
+  document.getElementById('modal-meeting').classList.add('open');
+}
+function closeMeetingModal() { document.getElementById('modal-meeting').classList.remove('open'); }
+
+async function saveMeeting() {
+  const id    = document.getElementById('edit-meeting-id').value;
+  const title = document.getElementById('meet-title').value.trim();
+  const date  = document.getElementById('meet-date').value;
+  const time  = document.getElementById('meet-time').value;
+  if (!title) { showToast('Title required','error'); return; }
+  if (!date)  { showToast('Date required','error');  return; }
+
+  const btn = setBtnLoading('btn-save-meeting','Saving...');
+  const payload = {
+    title, date, time,
+    dateTime:     date+'T'+time,
+    duration:     parseInt(document.getElementById('meet-duration').value)||30,
+    type:         document.getElementById('meet-type').value,
+    participants: document.getElementById('meet-participants').value.trim(),
+    location:     document.getElementById('meet-location').value.trim(),
+    agenda:       document.getElementById('meet-agenda').value.trim(),
+    reminder:     parseInt(document.getElementById('meet-reminder').value)||0,
+    priority:     document.getElementById('meet-priority').value,
+    createdBy:    APP.user?.email||'admin',
+    updatedAt:    Date.now(),
+  };
+  try {
+    if (id) {
+      await db.ref('meetings/'+id).update(payload);
+      showToast('Meeting updated!','success');
+      auditLog('EDIT',`Updated meeting: ${title}`,{detail:date+' '+time,category:'Meetings'});
+    } else {
+      payload.createdAt = Date.now();
+      await db.ref('meetings').push(payload);
+      showToast('Meeting scheduled!','success');
+      auditLog('ADD',`Scheduled: ${title}`,{detail:date+' '+time+' | '+payload.participants,category:'Meetings'});
+    }
+    closeMeetingModal();
+  } catch(e) { showToast('Error: '+e.message,'error'); }
+  finally { resetBtn(btn,'<i class="fa-solid fa-calendar-plus"></i> Save Meeting'); }
+}
+
+async function deleteMeeting(id) {
+  const m = _meetings[id];
+  if (!m || !confirm('Delete meeting: "'+m.title+'"?')) return;
+  await db.ref('meetings/'+id).remove();
+  auditLog('DELETE','Deleted meeting: '+m.title,{detail:m.date+' '+m.time,category:'Meetings'});
+  showToast('Meeting deleted','success');
+}
+
+function filterMeetings(type) {
+  _meetFilter = type;
+  ['upcoming','past','all'].forEach(t => {
+    const b = document.getElementById('mf-'+t); if(!b) return;
+    b.style.background  = t===type?'var(--green)':'';
+    b.style.color       = t===type?'#fff':'';
+    b.style.borderColor = t===type?'var(--green)':'';
+  });
+  renderMeetings();
+}
+
+function renderMeetings() {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const entries  = Object.entries(_meetings).sort((a,b)=>(a[1].dateTime||'').localeCompare(b[1].dateTime||''));
+
+  const setStat = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setStat('meet-stat-upcoming', entries.filter(([,m])=>m.date>=todayStr).length);
+  setStat('meet-stat-today',    entries.filter(([,m])=>m.date===todayStr).length);
+  setStat('meet-stat-past',     entries.filter(([,m])=>m.date<todayStr).length);
+  setStat('meet-stat-total',    entries.length);
+
+  let filtered;
+  if (_meetFilter==='upcoming')     filtered = entries.filter(([,m])=>m.date>=todayStr);
+  else if (_meetFilter==='past')    filtered = entries.filter(([,m])=>m.date<todayStr).reverse();
+  else filtered = entries;
+
+  const listEl = document.getElementById('meetings-list');
+  if (!listEl) return;
+  if (!filtered.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><i class="fa-solid fa-calendar-xmark" style="font-size:28px;margin-bottom:10px;display:block"></i>No '+_meetFilter+' meetings</div>';
+  } else {
+    listEl.innerHTML = filtered.map(([id,m])=>_meetingCard(id,m,todayStr)).join('');
+  }
+
+  const todayEl = document.getElementById('meetings-today');
+  const todayList = entries.filter(([,m])=>m.date===todayStr);
+  if (todayEl) {
+    todayEl.innerHTML = todayList.length
+      ? todayList.map(([,m])=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:18px">${MEET_TYPE_META[m.type]?.icon||'📅'}</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:13px">${esc(m.title)}</div>
+            <div style="font-size:11px;color:var(--muted)">${m.time} · ${m.duration}min · ${esc(m.location||'—')}</div>
+          </div>
+        </div>`).join('')
+      : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">No meetings today</div>';
+  }
+}
+
+function _meetingCard(id, m, todayStr) {
+  const meta   = MEET_TYPE_META[m.type] || {icon:'📅',label:'Meeting',color:'#3b82f6'};
+  const prio   = PRIO_META[m.priority]  || PRIO_META.normal;
+  const isPast = m.date < todayStr;
+  const isToday= m.date === todayStr;
+  const dt     = new Date((m.date||'')+'T'+(m.time||'00:00'));
+  const dateStr= dt.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  const todayBadge = isToday
+    ? '<span style="background:#fef3c7;color:#d97706;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px">TODAY</span>' : '';
+
+  return '<div style="display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);'+(isPast?'opacity:.55':'')+'">'
+    +'<div style="width:42px;height:42px;border-radius:12px;background:'+meta.color+'15;border:1.5px solid '+meta.color+'30;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+meta.icon+'</div>'
+    +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">'
+        +'<div style="font-weight:700;font-size:13px">'+esc(m.title)+'</div>'
+        +todayBadge
+        +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:'+prio.color+'20;color:'+prio.color+'">'+prio.icon+' '+(m.priority||'normal')+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--muted)">'
+        +'<i class="fa-regular fa-clock" style="width:12px"></i> '+dateStr+' · '+m.time+' ('+m.duration+'min)'
+        +(m.location ? ' &nbsp;·&nbsp; <i class="fa-solid fa-location-dot" style="width:12px"></i> '+esc(m.location) : '')
+        +(m.participants ? ' &nbsp;·&nbsp; <i class="fa-solid fa-users" style="width:12px"></i> '+esc(m.participants) : '')
+      +'</div>'
+      +(m.agenda ? '<div style="font-size:11px;color:var(--muted);margin-top:4px;font-style:italic">'+esc(m.agenda.slice(0,90))+(m.agenda.length>90?'...':'')+'</div>' : '')
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">'
+      +'<button class="btn-edit btn-sm" onclick="openMeetingModal(\'' + id + '\')"><i class="fa-solid fa-pen"></i></button>'
+      +'<button class="act-btn danger"  onclick="deleteMeeting(\'' + id + '\')"><i class="fa-solid fa-trash"></i></button>'
+    +'</div>'
+  +'</div>';
+}
+
+/* ══════════════════════════════════════════════════════
+   PRICE CHANGE HISTORY
+══════════════════════════════════════════════════════ */
+let _priceHistory = [];
+
+db.ref('price_history').orderByChild('ts').limitToLast(500).on('value', snap => {
+  _priceHistory = [];
+  snap.forEach(c => _priceHistory.push({id:c.key,...c.val()}));
+  _priceHistory.reverse();
+  _buildPriceHistoryFilter();
+  if (document.getElementById('section-pricehistory')?.classList.contains('active')) renderPriceHistory();
+});
+
+async function logPriceChange(productId, title, oldPrice, newPrice, oldAED, newAED, oldINR, newINR) {
+  const entry = {
+    productId, productTitle:title,
+    oldPrice:Number(oldPrice||0), newPrice:Number(newPrice||0),
+    oldAED:Number(oldAED||0),   newAED:Number(newAED||0),
+    oldINR:Number(oldINR||0),   newINR:Number(newINR||0),
+    changedBy: APP.user?.email||'admin',
+    ts: Date.now(),
+  };
+  await db.ref('price_history').push(entry);
+  auditLog('PRICE', 'Price changed: '+title, {
+    detail:'AED '+(oldAED||oldPrice)+' → AED '+(newAED||newPrice),
+    productId, category:'Products'
+  });
+}
+
+function _buildPriceHistoryFilter() {
+  const sel = document.getElementById('ph-filter'); if(!sel) return;
+  const prods = [...new Set(_priceHistory.map(e=>e.productTitle).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="all">All Products</option>'
+    + prods.map(t=>'<option value="'+esc(t)+'">'+esc(t)+'</option>').join('');
+}
+
+function renderPriceHistory() {
+  const tbody    = document.getElementById('ph-tbody'); if(!tbody) return;
+  const search   = (document.getElementById('ph-search')?.value||'').toLowerCase();
+  const filter   = document.getElementById('ph-filter')?.value||'all';
+  const todayStr = new Date().toDateString();
+
+  let list = _priceHistory;
+  if (filter !== 'all') list = list.filter(e=>e.productTitle===filter);
+  if (search) list = list.filter(e=>(e.productTitle||'').toLowerCase().includes(search)||(e.changedBy||'').toLowerCase().includes(search));
+
+  /* Stats */
+  const setStat = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setStat('ph-total-changes', _priceHistory.length);
+  setStat('ph-increases',     _priceHistory.filter(e=>Number(e.newAED||e.newPrice||0)>Number(e.oldAED||e.oldPrice||0)).length);
+  setStat('ph-decreases',     _priceHistory.filter(e=>Number(e.newAED||e.newPrice||0)<Number(e.oldAED||e.oldPrice||0)).length);
+  setStat('ph-today',         _priceHistory.filter(e=>e.ts&&new Date(e.ts).toDateString()===todayStr).length);
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No price changes found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map((e,i) => {
+    const oldP = Number(e.oldAED||e.oldPrice||0);
+    const newP = Number(e.newAED||e.newPrice||0);
+    const diff = newP - oldP;
+    const pct  = oldP>0 ? ((diff/oldP)*100).toFixed(1) : null;
+    const up   = diff>0, same = diff===0;
+    const col  = same?'#6b7280':up?'#ef4444':'#16a34a';
+    const ico  = same?'fa-equals':up?'fa-arrow-up':'fa-arrow-down';
+    const pctBadge = same
+      ? '<span style="font-size:10px;color:var(--muted)">No change</span>'
+      : '<span style="background:'+(up?'#fee2e2':'#dcfce7')+';color:'+col+';font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px"><i class="fa-solid '+ico+'" style="font-size:9px"></i> '+Math.abs(pct)+'%</span>';
+    const dt      = e.ts ? new Date(e.ts) : null;
+    const dateStr = dt ? dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const timeStr = dt ? dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '';
+    const who     = e.changedBy||'Unknown';
+    const oldINR  = Number(e.oldINR||0), newINR = Number(e.newINR||0);
+    const rowBg   = i%2===0?'':'background:var(--surface2)';
+    return '<tr style="'+rowBg+';border-bottom:1px solid var(--border)">'
+      +'<td style="padding:10px 14px">'
+        +'<div style="font-weight:700;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(e.productTitle||'—')+'</div>'
+        +'<div style="font-size:10px;color:var(--muted)">'+esc(e.productId?.slice(-8)||'')+'</div>'
+      +'</td>'
+      +'<td style="padding:10px 14px;text-align:right">'
+        +'<div style="font-weight:700">AED '+oldP.toLocaleString()+'</div>'
+        +(oldINR?'<div style="font-size:10px;color:var(--muted)">₹'+oldINR.toLocaleString()+'</div>':'')
+      +'</td>'
+      +'<td style="padding:10px 14px;text-align:center"><i class="fa-solid '+ico+'" style="color:'+col+';font-size:14px"></i></td>'
+      +'<td style="padding:10px 14px;text-align:right">'
+        +'<div style="font-weight:800;color:'+(up?'#ef4444':same?'var(--text)':'#16a34a')+'">AED '+newP.toLocaleString()+'</div>'
+        +(newINR?'<div style="font-size:10px;color:var(--muted)">₹'+newINR.toLocaleString()+'</div>':'')
+      +'</td>'
+      +'<td style="padding:10px 14px;text-align:center">'+pctBadge+'</td>'
+      +'<td style="padding:10px 14px">'
+        +'<div style="display:flex;align-items:center;gap:7px">'
+          +'<div style="width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">'+who.charAt(0).toUpperCase()+'</div>'
+          +'<div style="font-size:11px;font-weight:600">'+esc(who.split('@')[0])+'</div>'
+        +'</div>'
+      +'</td>'
+      +'<td style="padding:10px 14px;white-space:nowrap"><div style="font-size:12px;font-weight:600">'+dateStr+'</div><div style="font-size:11px;color:var(--muted)">'+timeStr+'</div></td>'
+      +'<td style="padding:10px 14px;font-size:11px;color:var(--muted)">AED'+(oldINR||newINR?'/INR':'')+'</td>'
+    +'</tr>';
+  }).join('');
+}
+
+async function clearPriceHistory() {
+  if (!confirm('Clear all price history? This cannot be undone.')) return;
+  await db.ref('price_history').remove();
+  showToast('Price history cleared','success');
+}
+
+function exportPriceHistory() {
+  if (!_priceHistory.length) { showToast('No data to export','error'); return; }
+  const rows = [['Product','Old AED','New AED','Change%','Old INR','New INR','Changed By','Date','Time']];
+  _priceHistory.forEach(e => {
+    const oldP = Number(e.oldAED||e.oldPrice||0);
+    const newP = Number(e.newAED||e.newPrice||0);
+    const pct  = oldP>0 ? (((newP-oldP)/oldP)*100).toFixed(1)+'%' : '—';
+    const dt   = e.ts ? new Date(e.ts) : null;
+    rows.push([e.productTitle||'',oldP,newP,pct,e.oldINR||0,e.newINR||0,e.changedBy||'',
+      dt?dt.toLocaleDateString('en-GB'):'', dt?dt.toLocaleTimeString():'']);
+  });
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'price_history_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  showToast('Exported!','success');
+}
+
+/* ── Hook into saveProduct to auto-log price changes on edit ── */
+const _origSaveProdPH = saveProduct;
+saveProduct = async function() {
+  const editId = document.getElementById('edit-prod-id')?.value;
+  const oldProd = editId ? JSON.parse(JSON.stringify(APP.products[editId]||{})) : null;
+  await _origSaveProdPH.apply(this, arguments);
+  if (!editId || !oldProd) return;
+  /* Wait a tick for APP.products to update from Firebase listener */
+  setTimeout(async () => {
+    const newProd = APP.products[editId]||{};
+    const oldAED = Number(oldProd.price||oldProd.priceAED||0);
+    const newAED = Number(newProd.price||newProd.priceAED||0);
+    const oldINR = Number(oldProd.priceINR||0);
+    const newINR = Number(newProd.priceINR||0);
+    if (oldAED !== newAED || oldINR !== newINR) {
+      await logPriceChange(editId, newProd.title||oldProd.title||editId,
+        oldProd.price||oldProd.priceAED||0, newProd.price||newProd.priceAED||0,
+        oldProd.priceAED||oldProd.price||0, newProd.priceAED||newProd.price||0,
+        oldINR, newINR);
+    }
+  }, 1500);
+};
 
 </script>
 </body>
