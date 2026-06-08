@@ -1695,28 +1695,11 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <div class="stat-card blue">  <div class="stat-icon blue"><i class="fa-solid fa-money-bill-trend-up"></i></div><div><div class="stat-num" id="pl-stat-totalval">0</div><div class="stat-lbl">Total Value</div></div></div>
       </div>
 
-      <!-- Price List Table -->
-      <div class="table-card" style="padding:0;overflow:hidden">
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead>
-              <tr style="background:var(--bg)">
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Product</th>
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Dealer</th>
-                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Wholesale</th>
-                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Profit</th>
-                <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Selling Price</th>
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Updated</th>
-                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="pl-tbody">
-              <tr><td colspan="7" style="padding:40px;text-align:center;color:var(--muted)">
-                <i class="fa-solid fa-list-ol" style="font-size:32px;display:block;margin-bottom:10px;opacity:.3"></i>
-                No products yet — click <strong>Add Product</strong> to start
-              </td></tr>
-            </tbody>
-          </table>
+      <!-- Price List — dealer-grouped tables -->
+      <div id="pl-container">
+        <div style="text-align:center;padding:50px;color:var(--muted)">
+          <i class="fa-solid fa-list-ol" style="font-size:32px;display:block;margin-bottom:10px;opacity:.3"></i>
+          No products yet — click <strong>Add Product</strong> to start
         </div>
       </div>
     </section>
@@ -1913,15 +1896,18 @@ tbody td{padding:12px 16px;vertical-align:middle}
     <div class="modal-body">
       <input type="hidden" id="pl-edit-id">
 
-      <div class="mf-group">
-        <label class="mf-label">Product Name *</label>
-        <input class="mf-input" id="pl-name" placeholder="e.g. iPhone 13 Mini 128GB Black">
-      </div>
-
+      <!-- Dealer (selectable from existing dealers list) -->
       <div class="mf-row">
         <div class="mf-group">
-          <label class="mf-label">Dealer Name *</label>
-          <input class="mf-input" id="pl-dealer" placeholder="e.g. SLR Mobiles">
+          <label class="mf-label">Dealer / List Name *</label>
+          <select class="mf-input" id="pl-dealer-select" onchange="onPLDealerSelect()">
+            <option value="">— Select dealer —</option>
+            <option value="__new__">+ Type new dealer name</option>
+          </select>
+        </div>
+        <div class="mf-group" id="pl-dealer-custom-wrap" style="display:none">
+          <label class="mf-label">New Dealer Name</label>
+          <input class="mf-input" id="pl-dealer" placeholder="e.g. SLR, ISTORE, A+ List">
         </div>
         <div class="mf-group">
           <label class="mf-label">Dealer Phone</label>
@@ -1929,7 +1915,39 @@ tbody td{padding:12px 16px;vertical-align:middle}
         </div>
       </div>
 
+      <!-- Model + Capacity -->
       <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Model *</label>
+          <input class="mf-input" id="pl-name" placeholder="e.g. IP13PRO, iPhone 14 Pro">
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Capacity</label>
+          <select class="mf-input" id="pl-capacity">
+            <option value="">— Select —</option>
+            <option value="64GB">64GB</option>
+            <option value="128GB">128GB</option>
+            <option value="256GB">256GB</option>
+            <option value="512GB">512GB</option>
+            <option value="1TB">1TB</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Battery Health + Wholesale -->
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Battery Health (BH)</label>
+          <select class="mf-input" id="pl-bh">
+            <option value="">— Select —</option>
+            <option value="100">100%</option>
+            <option value="95 to 100">95 to 100</option>
+            <option value="90 to 100">90 to 100</option>
+            <option value="85 to 90">85 to 90</option>
+            <option value="80 to 85">80 to 85</option>
+            <option value="Below 80">Below 80</option>
+          </select>
+        </div>
         <div class="mf-group">
           <label class="mf-label">Wholesale Price (AED) *</label>
           <div style="position:relative">
@@ -1938,21 +1956,23 @@ tbody td{padding:12px 16px;vertical-align:middle}
               style="padding-left:38px" oninput="calcPLSellingPrice()">
           </div>
         </div>
-        <div class="mf-group">
-          <label class="mf-label">Profit (AED)
-            <span style="font-size:9px;font-weight:600;color:var(--green);cursor:pointer;margin-left:4px" onclick="resetPLProfit()">↺ Reset to default</span>
-          </label>
-          <div style="position:relative">
-            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;color:var(--muted)">AED</span>
-            <input type="number" class="mf-input" id="pl-profit" min="0" step="0.01"
-              style="padding-left:38px;color:var(--green);font-weight:800" oninput="calcPLSellingPrice()">
-          </div>
+      </div>
+
+      <!-- Profit -->
+      <div class="mf-group">
+        <label class="mf-label">Profit (AED)
+          <span style="font-size:9px;font-weight:600;color:var(--green);cursor:pointer;margin-left:4px" onclick="resetPLProfit()">↺ Reset to default</span>
+        </label>
+        <div style="position:relative">
+          <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;color:var(--muted)">AED</span>
+          <input type="number" class="mf-input" id="pl-profit" min="0" step="0.01"
+            style="padding-left:38px;color:var(--green);font-weight:800" oninput="calcPLSellingPrice()">
         </div>
       </div>
 
       <!-- Auto-calculated selling price display -->
       <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-top:4px">
-        <div style="font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Formula: Wholesale + Profit = Selling Price</div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Formula: Wholesale + Profit = Selling Price (Price in AED)</div>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <div style="text-align:center">
             <div style="font-size:18px;font-weight:900;color:var(--text)" id="pl-calc-cost">AED 0</div>
@@ -1966,14 +1986,14 @@ tbody td{padding:12px 16px;vertical-align:middle}
           <div style="font-size:20px;color:var(--muted)">=</div>
           <div style="text-align:center">
             <div style="font-size:22px;font-weight:900;color:var(--text);font-family:var(--font-head)" id="pl-calc-sell">AED 0</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">Selling Price</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">Price in AED</div>
           </div>
         </div>
       </div>
 
       <div class="mf-group" style="margin-top:14px">
         <label class="mf-label">Notes (optional)</label>
-        <input class="mf-input" id="pl-notes" placeholder="e.g. Just Active, 100BH, Physical SIM…">
+        <input class="mf-input" id="pl-notes" placeholder="e.g. Just Active, Physical SIM, Dual…">
       </div>
     </div>
     <div class="modal-footer">
@@ -2588,7 +2608,7 @@ function showSection(name){
     if (name==='meetings')      { renderMeetings(); }
     if (name==='reservations')  { renderReservations(); }
     if (name==='pricehistory')  { renderPriceHistory(); }
-    if (name==='pricelist')     { renderPriceList(); }
+    if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
   }, 0);
 }
 function togglePw(id,btn){
@@ -5297,17 +5317,74 @@ db.ref('price_list').on('value', snap => {
   }
 });
 
+/* Populate dealer dropdown from existing dealers + any dealers already in price list */
+function _populatePLDealerDropdown(selectedDealer) {
+  const sel = document.getElementById('pl-dealer-select');
+  if (!sel) return;
+  /* Collect dealer names from dealers list AND price_list (so custom ones persist) */
+  const names = new Set();
+  Object.values(_dealers||{}).forEach(d => { if (d.name) names.add(d.name); });
+  Object.values(_priceList||{}).forEach(p => { if (p.dealer) names.add(p.dealer); });
+  const sorted = [...names].sort();
+  sel.innerHTML = '<option value="">— Select dealer —</option>'
+    + sorted.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
+    + '<option value="__new__">+ Type new dealer name</option>';
+  if (selectedDealer && sorted.includes(selectedDealer)) {
+    sel.value = selectedDealer;
+  }
+}
+
+/* When dealer dropdown changes */
+function onPLDealerSelect() {
+  const sel = document.getElementById('pl-dealer-select');
+  const customWrap = document.getElementById('pl-dealer-custom-wrap');
+  const phoneInput = document.getElementById('pl-dealer-phone');
+  if (sel.value === '__new__') {
+    customWrap.style.display = '';
+    document.getElementById('pl-dealer').value = '';
+    if (phoneInput) phoneInput.value = '';
+  } else {
+    customWrap.style.display = 'none';
+    document.getElementById('pl-dealer').value = sel.value;
+    /* Auto-fill phone from dealers list if available */
+    if (phoneInput && sel.value) {
+      const match = Object.values(_dealers||{}).find(d => d.name === sel.value);
+      if (match && match.phone) phoneInput.value = match.phone;
+    }
+  }
+}
+
 /* Open add modal */
 function openPriceListModal(id) {
   const item = id ? (_priceList[id]||{}) : {};
-  document.getElementById('pl-modal-title').textContent = id ? 'Edit Product' : 'Add Product to Price List';
+  document.getElementById('pl-modal-title').textContent = id ? 'Edit Price List Item' : 'Add to Price List';
   document.getElementById('pl-edit-id').value     = id || '';
   document.getElementById('pl-name').value        = item.name || '';
-  document.getElementById('pl-dealer').value      = item.dealer || '';
+  document.getElementById('pl-capacity').value    = item.capacity || '';
+  document.getElementById('pl-bh').value          = item.bh || '';
   document.getElementById('pl-dealer-phone').value= item.dealerPhone || '';
   document.getElementById('pl-cost').value        = item.cost || '';
   document.getElementById('pl-profit').value      = item.profit !== undefined ? item.profit : _plGlobalProfit;
   document.getElementById('pl-notes').value       = item.notes || '';
+
+  /* Setup dealer dropdown */
+  _populatePLDealerDropdown(item.dealer);
+  const sel = document.getElementById('pl-dealer-select');
+  const customWrap = document.getElementById('pl-dealer-custom-wrap');
+  if (item.dealer && sel.value === item.dealer) {
+    /* Existing dealer matched in dropdown */
+    customWrap.style.display = 'none';
+    document.getElementById('pl-dealer').value = item.dealer;
+  } else if (item.dealer) {
+    /* Dealer not in list — show as custom */
+    sel.value = '__new__';
+    customWrap.style.display = '';
+    document.getElementById('pl-dealer').value = item.dealer;
+  } else {
+    customWrap.style.display = 'none';
+    document.getElementById('pl-dealer').value = '';
+  }
+
   calcPLSellingPrice();
   document.getElementById('modal-pricelist').classList.add('open');
 }
@@ -5342,7 +5419,7 @@ async function savePriceListItem() {
   const cost   = parseFloat(document.getElementById('pl-cost').value);
   const profit = parseFloat(document.getElementById('pl-profit').value);
 
-  if (!name)         { showToast('Product name required','error'); return; }
+  if (!name)         { showToast('Model name required','error'); return; }
   if (!dealer)       { showToast('Dealer name required','error'); return; }
   if (isNaN(cost))   { showToast('Wholesale price required','error'); return; }
   if (isNaN(profit)) { showToast('Profit required','error'); return; }
@@ -5352,6 +5429,8 @@ async function savePriceListItem() {
     name,
     dealer,
     dealerPhone: document.getElementById('pl-dealer-phone').value.trim(),
+    capacity: document.getElementById('pl-capacity').value,
+    bh:       document.getElementById('pl-bh').value,
     cost,
     profit,
     sellingPrice: cost + profit,
@@ -5363,13 +5442,13 @@ async function savePriceListItem() {
   try {
     if (id) {
       await db.ref('price_list/'+id).update(payload);
-      showToast('Product updated!', 'success');
-      auditLog('PRICE', `Price list updated: ${name}`, { detail:`Cost: AED ${cost} | Profit: AED ${profit} | Sell: AED ${cost+profit}`, category:'Price List' });
+      showToast('Updated!', 'success');
+      auditLog('PRICE', `Price list updated: ${name}`, { detail:`${dealer} | AED ${cost+profit}`, category:'Price List' });
     } else {
       payload.createdAt = Date.now();
       await db.ref('price_list').push(payload);
-      showToast('Product added!', 'success');
-      auditLog('ADD', `Added to price list: ${name}`, { detail:`Dealer: ${dealer} | Cost: AED ${cost} | Sell: AED ${cost+profit}`, category:'Price List' });
+      showToast('Added to price list!', 'success');
+      auditLog('ADD', `Added to price list: ${name}`, { detail:`Dealer: ${dealer} | AED ${cost+profit}`, category:'Price List' });
     }
     closePriceListModal();
   } catch(e) { showToast('Error: '+e.message,'error'); }
@@ -5426,20 +5505,18 @@ function _buildPLDealerFilter() {
 
 /* ── Render price list table ── */
 function renderPriceList() {
-  const tbody  = document.getElementById('pl-tbody'); if(!tbody) return;
+  const container = document.getElementById('pl-container'); if(!container) return;
   const search = (document.getElementById('pl-search')?.value||'').toLowerCase();
-  const dealer = document.getElementById('pl-dealer-filter')?.value||'all';
+  const dealerFilter = document.getElementById('pl-dealer-filter')?.value||'all';
 
   let items = Object.entries(_priceList);
-  if (dealer !== 'all') items = items.filter(([,i])=>i.dealer===dealer);
+  if (dealerFilter !== 'all') items = items.filter(([,i])=>i.dealer===dealerFilter);
   if (search) items = items.filter(([,i])=>
     (i.name||'').toLowerCase().includes(search)||
     (i.dealer||'').toLowerCase().includes(search)||
+    (i.capacity||'').toLowerCase().includes(search)||
     (i.notes||'').toLowerCase().includes(search)
   );
-
-  /* Sort: dealer name then product name */
-  items.sort(([,a],[,b])=>(a.dealer||'').localeCompare(b.dealer||'')||(a.name||'').localeCompare(b.name||''));
 
   /* Stats */
   const all    = Object.values(_priceList);
@@ -5453,68 +5530,85 @@ function renderPriceList() {
   setStat('pl-stat-totalval',  'AED '+Math.round(totalV).toLocaleString());
 
   if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--muted)">No products found</td></tr>`;
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
+      <i class="fa-solid fa-magnifying-glass" style="font-size:28px;display:block;margin-bottom:10px;opacity:.3"></i>
+      No products found</div>`;
     return;
   }
 
-  /* Group by dealer for visual separation */
-  let currentDealer = null;
-  tbody.innerHTML = items.map(([id, item], i) => {
-    const cost   = Number(item.cost||0);
-    const profit = Number(item.profit||0);
-    const sell   = Number(item.sellingPrice || cost+profit);
-    const margin = cost > 0 ? ((profit/cost)*100).toFixed(1) : '0';
-    const dt     = item.updatedAt ? new Date(item.updatedAt) : null;
-    const dateStr= dt ? dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    const rowBg  = i%2===0?'':'background:var(--surface2)';
+  /* Group items by dealer */
+  const groups = {};
+  items.forEach(([id, item]) => {
+    const d = item.dealer || 'Unknown';
+    if (!groups[d]) groups[d] = [];
+    groups[d].push({ id, ...item });
+  });
 
-    /* Dealer group header row */
-    let dealerHeader = '';
-    if (item.dealer !== currentDealer) {
-      currentDealer = item.dealer;
-      const waNum = (item.dealerPhone||'').replace(/\D/g,'');
-      dealerHeader = `<tr style="background:linear-gradient(90deg,rgba(46,160,86,.06),transparent)">
-        <td colspan="7" style="padding:8px 14px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:28px;height:28px;border-radius:8px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">
-              ${(item.dealer||'?').charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <span style="font-size:13px;font-weight:800;color:var(--text)">${esc(item.dealer||'Unknown Dealer')}</span>
-              ${item.dealerPhone ? `<span style="font-size:11px;color:var(--muted);margin-left:8px">${esc(item.dealerPhone)}</span>` : ''}
-            </div>
-            ${waNum ? `<a href="https://wa.me/${waNum}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;color:#25D366;font-size:11px;font-weight:700;text-decoration:none;background:#25D36610;border:1px solid #25D36630;padding:3px 9px;border-radius:20px">
-              <i class="fa-brands fa-whatsapp"></i> Chat
-            </a>` : ''}
-          </div>
+  /* Sort dealers alphabetically, items within by name */
+  const sortedDealers = Object.keys(groups).sort();
+
+  container.innerHTML = sortedDealers.map(dealer => {
+    const list = groups[dealer].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    const phone = list.find(i=>i.dealerPhone)?.dealerPhone || '';
+    const waNum = phone.replace(/\D/g,'');
+    const groupTotal = list.reduce((s,i)=>s+(Number(i.sellingPrice)||0),0);
+
+    const rows = list.map((item, idx) => {
+      const cost   = Number(item.cost||0);
+      const profit = Number(item.profit||0);
+      const sell   = Number(item.sellingPrice || cost+profit);
+      const rowBg  = idx%2===0 ? '' : 'background:var(--surface2)';
+      return `<tr style="${rowBg}">
+        <td style="padding:9px 12px;text-align:center;font-weight:600;color:var(--muted);font-size:12px;border:1px solid var(--border)">${idx+1}</td>
+        <td style="padding:9px 12px;font-weight:700;font-size:13px;border:1px solid var(--border)">
+          ${esc(item.name||'—')}
+          ${item.notes ? `<div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:1px">${esc(item.notes)}</div>` : ''}
+        </td>
+        <td style="padding:9px 12px;font-size:12px;color:var(--text-soft);border:1px solid var(--border)">${esc(item.bh||'—')}</td>
+        <td style="padding:9px 12px;font-size:12px;color:var(--text-soft);border:1px solid var(--border)">${esc(item.capacity||'—')}</td>
+        <td style="padding:9px 12px;text-align:right;font-family:var(--font-head);font-weight:900;font-size:14px;border:1px solid var(--border)">${sell.toLocaleString()}</td>
+        <td style="padding:9px 8px;text-align:center;border:1px solid var(--border);white-space:nowrap">
+          <button class="btn-edit btn-sm" onclick="openPriceListModal('${item.id}')" title="Edit" style="padding:4px 8px"><i class="fa-solid fa-pen"></i></button>
+          <button class="act-btn danger" onclick="deletePriceListItem('${item.id}')" title="Delete" style="padding:4px 8px"><i class="fa-solid fa-trash"></i></button>
         </td>
       </tr>`;
-    }
+    }).join('');
 
-    const productRow = `<tr style="${rowBg};border-bottom:1px solid var(--border)">
-      <td style="padding:10px 14px">
-        <div style="font-weight:700;font-size:13px">${esc(item.name||'—')}</div>
-        ${item.notes ? `<div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(item.notes)}</div>` : ''}
-      </td>
-      <td style="padding:10px 14px;font-size:12px;color:var(--muted)">${esc(item.dealer||'—')}</td>
-      <td style="padding:10px 14px;text-align:right;font-weight:700;font-size:13px">AED ${cost.toLocaleString()}</td>
-      <td style="padding:10px 14px;text-align:right">
-        <div style="font-weight:800;color:var(--green);font-size:13px">AED ${profit.toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--muted)">${margin}% margin</div>
-      </td>
-      <td style="padding:10px 14px;text-align:right">
-        <div style="font-family:var(--font-head);font-size:15px;font-weight:900;color:var(--text)">AED ${sell.toLocaleString()}</div>
-      </td>
-      <td style="padding:10px 14px;font-size:11px;color:var(--muted);white-space:nowrap">${dateStr}</td>
-      <td style="padding:10px 14px">
-        <div style="display:flex;gap:5px">
-          <button class="btn-edit btn-sm" onclick="openPriceListModal('${id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
-          <button class="act-btn danger" onclick="deletePriceListItem('${id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+    return `<div class="table-card" style="padding:0;overflow:hidden;margin-bottom:18px">
+      <!-- Dealer title bar -->
+      <div style="background:linear-gradient(135deg,var(--green),var(--green-dark));padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900">
+          ${esc(dealer.charAt(0).toUpperCase())}
         </div>
-      </td>
-    </tr>`;
-
-    return dealerHeader + productRow;
+        <div style="flex:1;min-width:120px">
+          <div style="font-size:15px;font-weight:900;color:#fff;letter-spacing:.3px;text-transform:uppercase">${esc(dealer)} PRICE LIST</div>
+          ${phone ? `<div style="font-size:11px;color:rgba(255,255,255,.85)">${esc(phone)}</div>` : ''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:rgba(255,255,255,.7);font-weight:600">${list.length} items · Total</div>
+          <div style="font-size:14px;font-weight:900;color:#fff">AED ${Math.round(groupTotal).toLocaleString()}</div>
+        </div>
+        ${waNum ? `<a href="https://wa.me/${waNum}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;color:#fff;font-size:11px;font-weight:700;text-decoration:none;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);padding:5px 11px;border-radius:20px">
+          <i class="fa-brands fa-whatsapp"></i> Chat
+        </a>` : ''}
+      </div>
+      <!-- Items table -->
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:var(--bg)">
+              <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);width:48px">No</th>
+              <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Model</th>
+              <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">BH</th>
+              <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Capacity</th>
+              <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Price in AED</th>
+              <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);width:96px">Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -5522,12 +5616,16 @@ function renderPriceList() {
 function exportPriceList() {
   const items = Object.values(_priceList);
   if (!items.length) { showToast('No items to export','error'); return; }
-  const rows = [['Product','Notes','Dealer','Dealer Phone','Wholesale (AED)','Profit (AED)','Selling Price (AED)','Margin %','Last Updated']];
-  items.sort((a,b)=>(a.dealer||'').localeCompare(b.dealer||'')).forEach(item => {
-    const cost=Number(item.cost||0), profit=Number(item.profit||0);
-    const margin = cost>0 ? ((profit/cost)*100).toFixed(1)+'%' : '0%';
-    rows.push([item.name||'',item.notes||'',item.dealer||'',item.dealerPhone||'',cost,profit,cost+profit,margin,
-      item.updatedAt?new Date(item.updatedAt).toLocaleString():'']);
+  const rows = [['Dealer','No','Model','BH','Capacity','Price in AED','Wholesale','Profit','Dealer Phone','Notes','Last Updated']];
+  /* Group by dealer, number within each group */
+  const groups = {};
+  items.forEach(i => { const d=i.dealer||'Unknown'; (groups[d]=groups[d]||[]).push(i); });
+  Object.keys(groups).sort().forEach(dealer => {
+    groups[dealer].sort((a,b)=>(a.name||'').localeCompare(b.name||'')).forEach((item, idx) => {
+      const cost=Number(item.cost||0), profit=Number(item.profit||0);
+      rows.push([dealer, idx+1, item.name||'', item.bh||'', item.capacity||'', cost+profit, cost, profit,
+        item.dealerPhone||'', item.notes||'', item.updatedAt?new Date(item.updatedAt).toLocaleString():'']);
+    });
   });
   const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
   const a=document.createElement('a');
