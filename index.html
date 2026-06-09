@@ -2633,6 +2633,13 @@ function showSection(name){
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
+
+  /* ── Track section navigation (skip audit page itself + duplicates) ── */
+  if (name !== 'audit' && name !== _lastSection && APP?.user) {
+    _lastSection = name;
+    auditLog('VIEW', `Opened ${T[name]||name}`, { category:'Navigation' });
+  }
+
   /* ── Section-specific init (safe: functions defined later in same script) ── */
   setTimeout(() => {
     if (name==='marketing')     { populatePosterProducts(); updatePoster(); }
@@ -2650,6 +2657,7 @@ function showSection(name){
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
   }, 0);
 }
+let _lastSection = null;  /* prevents duplicate navigation logs */
 function togglePw(id,btn){
   const inp=document.getElementById(id), ic=btn.querySelector('i'), h=inp.type==='password';
   inp.type=h?'text':'password'; ic.className=h?'fa-regular fa-eye-slash':'fa-regular fa-eye';
@@ -2687,7 +2695,9 @@ async function doLogin(){
 }
 ['login-email','login-pass'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();}));
 async function doLogout(){
-  auditLog('LOGIN', `Admin signed out: ${APP.user?.email||'—'}`, {category:'Auth'});
+  const uid = APP.user?.uid;
+  auditLog('LOGOUT', `Admin signed out`, { detail: APP.user?.email||'—', category:'Auth' });
+  if (uid) sessionStorage.removeItem('ia_logged_' + uid);
   try{ await auth.signOut(); }catch(e){ showToast(e.message,'error'); }
 }
 
@@ -2714,7 +2724,13 @@ auth.onAuthStateChanged(async user=>{
       /* Start presence heartbeat + listener for ALL admins */
       initPresence(user);
       listenPresence();
-      auditLog('LOGIN', `Admin signed in: ${user.email}`);
+      /* Only log a real NEW sign-in, not every page refresh / token restore.
+         onAuthStateChanged fires on every load when a session exists. */
+      const _loginKey = 'ia_logged_' + user.uid;
+      if (!sessionStorage.getItem(_loginKey)) {
+        sessionStorage.setItem(_loginKey, Date.now());
+        auditLog('LOGIN', `Admin signed in`, { detail: user.email, category:'Auth' });
+      }
     }catch(err){ showToast('Permission check failed: '+err.message,'error'); await auth.signOut(); switchView('view-login'); }
   }else{ APP.user=null; APP.role=null; switchView('view-login'); }
   hideLoader();
@@ -4250,10 +4266,12 @@ const AUDIT_ICONS = {
   DELETE: { cls:'ai-delete', icon:'fa-solid fa-trash'         },
   PRICE:  { cls:'ai-price',  icon:'fa-solid fa-tag'           },
   LOGIN:  { cls:'ai-login',  icon:'fa-solid fa-right-to-bracket' },
+  LOGOUT: { cls:'ai-delete', icon:'fa-solid fa-right-from-bracket' },
   STOCK:  { cls:'ai-add',    icon:'fa-solid fa-boxes-stacked' },
   CHAT:   { cls:'ai-edit',   icon:'fa-solid fa-comment'       },
   TASK:   { cls:'ai-edit',   icon:'fa-solid fa-list-check'    },
   BANNER: { cls:'ai-edit',   icon:'fa-solid fa-image'         },
+  VIEW:   { cls:'ai-edit',   icon:'fa-solid fa-eye'           },
 };
 
 function auditLog(type, description, extra = {}) {
@@ -4274,9 +4292,11 @@ const TYPE_META = {
   PRICE:  { label:'Payment',     color:'#d97706', bg:'#fffbeb', icon:'fa-tag' },
   STOCK:  { label:'Stock',       color:'#16a34a', bg:'#f0fdf4', icon:'fa-boxes-stacked' },
   LOGIN:  { label:'Login',       color:'#7c3aed', bg:'#f5f3ff', icon:'fa-right-to-bracket' },
+  LOGOUT: { label:'Logout',      color:'#6b7280', bg:'#f9fafb', icon:'fa-right-from-bracket' },
   ANN:    { label:'Announce',    color:'#d97706', bg:'#fffbeb', icon:'fa-bullhorn' },
   TASK:   { label:'Task',        color:'#2563eb', bg:'#eff6ff', icon:'fa-list-check' },
   BANNER: { label:'Banner',      color:'#0891b2', bg:'#ecfeff', icon:'fa-image' },
+  VIEW:   { label:'Viewed',      color:'#64748b', bg:'#f8fafc', icon:'fa-eye' },
 };
 
 function renderAuditLog() {
@@ -5719,6 +5739,214 @@ function exportPriceList() {
   a.download='price_list_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
   showToast('Price list exported!','success');
+}
+
+/* ══════════════════════════════════════════════
+   MEETING SCHEDULER
+══════════════════════════════════════════════ */
+let _meetings = {};
+let _meetFilter = 'upcoming';
+const MEET_TYPE_META = {
+  internal:{icon:'🏢',color:'#3b82f6'}, client:{icon:'🤝',color:'#16a34a'},
+  dealer:{icon:'🔗',color:'#f59e0b'}, video:{icon:'📹',color:'#8b5cf6'}, phone:{icon:'📞',color:'#06b6d4'}
+};
+const PRIO_META = { high:{icon:'🔴',color:'#ef4444'}, normal:{icon:'🔵',color:'#3b82f6'}, low:{icon:'🟢',color:'#16a34a'} };
+
+db.ref('meetings').orderByChild('dateTime').on('value', snap => {
+  _meetings = snap.val() || {};
+  if (document.getElementById('section-meetings')?.classList.contains('active')) renderMeetings();
+});
+
+function openMeetingModal(id) {
+  const m = id ? (_meetings[id]||{}) : {};
+  document.getElementById('modal-meeting-title').textContent = id ? 'Edit Meeting' : 'Schedule Meeting';
+  document.getElementById('edit-meeting-id').value = id || '';
+  document.getElementById('meet-title').value = m.title || '';
+  document.getElementById('meet-date').value = m.date || new Date().toISOString().slice(0,10);
+  document.getElementById('meet-time').value = m.time || '10:00';
+  document.getElementById('meet-duration').value = m.duration || '30';
+  document.getElementById('meet-type').value = m.type || 'internal';
+  document.getElementById('meet-participants').value = m.participants || '';
+  document.getElementById('meet-location').value = m.location || '';
+  document.getElementById('meet-agenda').value = m.agenda || '';
+  document.getElementById('meet-reminder').value = m.reminder || '15';
+  document.getElementById('meet-priority').value = m.priority || 'normal';
+  document.getElementById('modal-meeting').classList.add('open');
+}
+function closeMeetingModal(){ document.getElementById('modal-meeting').classList.remove('open'); }
+
+async function saveMeeting() {
+  const id = document.getElementById('edit-meeting-id').value;
+  const title = document.getElementById('meet-title').value.trim();
+  const date = document.getElementById('meet-date').value;
+  const time = document.getElementById('meet-time').value;
+  if (!title){ showToast('Title required','error'); return; }
+  if (!date){ showToast('Date required','error'); return; }
+  const btn = setBtnLoading('btn-save-meeting','Saving…');
+  const payload = {
+    title, date, time, dateTime: date+'T'+time,
+    duration: parseInt(document.getElementById('meet-duration').value)||30,
+    type: document.getElementById('meet-type').value,
+    participants: document.getElementById('meet-participants').value.trim(),
+    location: document.getElementById('meet-location').value.trim(),
+    agenda: document.getElementById('meet-agenda').value.trim(),
+    reminder: parseInt(document.getElementById('meet-reminder').value)||0,
+    priority: document.getElementById('meet-priority').value,
+    createdBy: APP.user?.email||'admin', updatedAt: Date.now()
+  };
+  try {
+    if (id){ await db.ref('meetings/'+id).update(payload); showToast('Meeting updated!','success'); auditLog('EDIT',`Updated meeting: ${title}`,{detail:date+' '+time,category:'Meetings'}); }
+    else { payload.createdAt=Date.now(); await db.ref('meetings').push(payload); showToast('Meeting scheduled!','success'); auditLog('ADD',`Scheduled meeting: ${title}`,{detail:date+' '+time+' | '+payload.participants,category:'Meetings'}); }
+    closeMeetingModal();
+  } catch(e){ showToast('Error: '+e.message,'error'); }
+  finally { resetBtn(btn,'<i class="fa-solid fa-calendar-plus"></i> Save Meeting'); }
+}
+
+async function deleteMeeting(id) {
+  const m = _meetings[id];
+  if (!m || !confirm('Delete meeting: "'+m.title+'"?')) return;
+  await db.ref('meetings/'+id).remove();
+  auditLog('DELETE',`Deleted meeting: ${m.title}`,{detail:m.date+' '+m.time,category:'Meetings'});
+  showToast('Meeting deleted','success');
+}
+
+function filterMeetings(type) {
+  _meetFilter = type;
+  ['upcoming','past','all'].forEach(t=>{const b=document.getElementById('mf-'+t);if(!b)return;b.style.background=t===type?'var(--green)':'';b.style.color=t===type?'#fff':'';b.style.borderColor=t===type?'var(--green)':'';});
+  renderMeetings();
+}
+
+function renderMeetings() {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const entries = Object.entries(_meetings).sort((a,b)=>(a[1].dateTime||'').localeCompare(b[1].dateTime||''));
+  const setStat=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setStat('meet-stat-upcoming', entries.filter(([,m])=>m.date>=todayStr).length);
+  setStat('meet-stat-today', entries.filter(([,m])=>m.date===todayStr).length);
+  setStat('meet-stat-past', entries.filter(([,m])=>m.date<todayStr).length);
+  setStat('meet-stat-total', entries.length);
+  let filtered;
+  if (_meetFilter==='upcoming') filtered = entries.filter(([,m])=>m.date>=todayStr);
+  else if (_meetFilter==='past') filtered = entries.filter(([,m])=>m.date<todayStr).reverse();
+  else filtered = entries;
+  const listEl = document.getElementById('meetings-list'); if(!listEl) return;
+  listEl.innerHTML = filtered.length
+    ? filtered.map(([id,m])=>_meetingCard(id,m,todayStr)).join('')
+    : '<div style="text-align:center;padding:40px;color:var(--muted)"><i class="fa-solid fa-calendar-xmark" style="font-size:28px;margin-bottom:10px;display:block"></i>No '+_meetFilter+' meetings</div>';
+  const todayEl = document.getElementById('meetings-today');
+  const todayList = entries.filter(([,m])=>m.date===todayStr);
+  if (todayEl) todayEl.innerHTML = todayList.length
+    ? todayList.map(([,m])=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:18px">${MEET_TYPE_META[m.type]?.icon||'📅'}</div><div style="flex:1"><div style="font-weight:700;font-size:13px">${esc(m.title)}</div><div style="font-size:11px;color:var(--muted)">${m.time} · ${m.duration}min · ${esc(m.location||'—')}</div></div></div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">No meetings today</div>';
+}
+
+function _meetingCard(id, m, todayStr) {
+  const meta = MEET_TYPE_META[m.type]||{icon:'📅',color:'#3b82f6'};
+  const prio = PRIO_META[m.priority]||PRIO_META.normal;
+  const isPast = m.date<todayStr, isToday = m.date===todayStr;
+  const dt = new Date((m.date||'')+'T'+(m.time||'00:00'));
+  const dateStr = dt.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  const todayBadge = isToday?'<span style="background:#fef3c7;color:#d97706;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px">TODAY</span>':'';
+  return '<div style="display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);'+(isPast?'opacity:.55':'')+'">'
+    +'<div style="width:42px;height:42px;border-radius:12px;background:'+meta.color+'15;border:1.5px solid '+meta.color+'30;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+meta.icon+'</div>'
+    +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px"><div style="font-weight:700;font-size:13px">'+esc(m.title)+'</div>'+todayBadge+'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:'+prio.color+'20;color:'+prio.color+'">'+prio.icon+' '+(m.priority||'normal')+'</span></div>'
+    +'<div style="font-size:11px;color:var(--muted)"><i class="fa-regular fa-clock" style="width:12px"></i> '+dateStr+' · '+m.time+' ('+m.duration+'min)'+(m.location?' · <i class="fa-solid fa-location-dot"></i> '+esc(m.location):'')+(m.participants?' · <i class="fa-solid fa-users"></i> '+esc(m.participants):'')+'</div>'
+    +(m.agenda?'<div style="font-size:11px;color:var(--muted);margin-top:4px;font-style:italic">'+esc(m.agenda.slice(0,90))+(m.agenda.length>90?'…':'')+'</div>':'')+'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button class="btn-edit btn-sm" onclick="openMeetingModal(\''+id+'\')"><i class="fa-solid fa-pen"></i></button><button class="act-btn danger" onclick="deleteMeeting(\''+id+'\')"><i class="fa-solid fa-trash"></i></button></div></div>';
+}
+
+/* ══════════════════════════════════════════════
+   DEVICE RESERVATIONS
+══════════════════════════════════════════════ */
+let _reservations = {};
+let _reservFilter = 'all';
+const RESERV_STATUS = {
+  pending:{label:'Pending',color:'#f59e0b',bg:'#fffbeb',icon:'fa-hourglass-half'},
+  contacted:{label:'Contacted',color:'#3b82f6',bg:'#eff6ff',icon:'fa-phone'},
+  completed:{label:'Completed',color:'#16a34a',bg:'#f0fdf4',icon:'fa-circle-check'},
+  cancelled:{label:'Cancelled',color:'#ef4444',bg:'#fff1f2',icon:'fa-xmark'}
+};
+
+db.ref('reservations').orderByChild('createdAt').on('value', snap => {
+  _reservations = snap.val() || {};
+  const pendingCount = Object.values(_reservations).filter(r=>r.status==='pending').length;
+  const badge = document.getElementById('sb-reserv-count');
+  if (badge){ badge.textContent = pendingCount; badge.style.display = pendingCount?'inline-flex':'none'; }
+  if (document.getElementById('section-reservations')?.classList.contains('active')) renderReservations();
+});
+
+function filterReservations(status) {
+  _reservFilter = status;
+  ['all','pending','contacted','completed','cancelled'].forEach(s=>{const b=document.getElementById('rsf-'+s);if(!b)return;b.style.background=s===status?'var(--green)':'';b.style.color=s===status?'#fff':'';b.style.borderColor=s===status?'var(--green)':'';});
+  renderReservations();
+}
+
+function renderReservations() {
+  const tbody = document.getElementById('reserv-tbody'); if(!tbody) return;
+  const search = (document.getElementById('rs-search')?.value||'').toLowerCase();
+  const all = Object.entries(_reservations).sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0));
+  const setStat=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setStat('rs-total', all.length);
+  setStat('rs-pending', all.filter(([,r])=>r.status==='pending').length);
+  setStat('rs-contacted', all.filter(([,r])=>r.status==='contacted').length);
+  setStat('rs-completed', all.filter(([,r])=>r.status==='completed').length);
+  let list = all;
+  if (_reservFilter!=='all') list = list.filter(([,r])=>r.status===_reservFilter);
+  if (search) list = list.filter(([,r])=>(r.customerName||'').toLowerCase().includes(search)||(r.customerPhone||'').includes(search)||(r.productTitle||'').toLowerCase().includes(search));
+  const countEl = document.getElementById('rs-count-label'); if(countEl) countEl.textContent = `(${list.length} reservations)`;
+  if (!list.length){ tbody.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:var(--muted)">No reservations found</td></tr>'; return; }
+  const SYMS = {USD:'$',AED:'AED ',INR:'₹'};
+  tbody.innerHTML = list.map(([id,r],i)=>{
+    const st = RESERV_STATUS[r.status]||RESERV_STATUS.pending;
+    const sym = SYMS[(r.currency||'INR').toUpperCase()]||'';
+    const dt = r.createdAt?new Date(r.createdAt):null;
+    const dateStr = dt?dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    const timeStr = dt?dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'';
+    const initials = (r.customerName||'?').charAt(0).toUpperCase();
+    const rowBg = i%2===0?'':'background:var(--surface2)';
+    const prodImg = r.productImage?`<img src="${esc(r.productImage)}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;background:var(--bg);padding:2px">`:'<span style="font-size:24px">📱</span>';
+    const waNum = (r.customerPhone||'').replace(/\D/g,'');
+    return `<tr style="${rowBg};border-bottom:1px solid var(--border)">
+      <td style="padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><div style="width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${initials}</div><div><div style="font-weight:700;font-size:13px">${esc(r.customerName||'—')}</div><a href="https://wa.me/${waNum}" target="_blank" style="font-size:11px;color:#25D366;font-weight:600;text-decoration:none"><i class="fa-brands fa-whatsapp"></i> ${esc(r.customerPhone||'—')}</a></div></div></td>
+      <td style="padding:10px 14px"><div style="display:flex;align-items:center;gap:8px">${prodImg}<div><div style="font-weight:700;font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.productTitle||'—')}</div><div style="font-size:10px;color:var(--muted)">${esc(r.variantLabel||'')}</div></div></div></td>
+      <td style="padding:10px 14px;font-size:11px;color:var(--muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.note||'—')}</td>
+      <td style="padding:10px 14px;text-align:right;font-weight:700;font-size:13px">${r.price?sym+Number(r.price).toLocaleString():'—'}</td>
+      <td style="padding:10px 14px;text-align:right">${r.advance>0?`<div style="font-weight:800;color:var(--green);font-size:13px">${sym}${Number(r.advance).toLocaleString()}</div><div style="font-size:10px;color:var(--muted)">paid</div>`:'<span style="font-size:12px;color:var(--muted)">—</span>'}</td>
+      <td style="padding:10px 14px;text-align:center"><span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;background:${st.bg};color:${st.color}"><i class="fa-solid ${st.icon}" style="font-size:9px"></i> ${st.label}</span></td>
+      <td style="padding:10px 14px;white-space:nowrap"><div style="font-size:12px;font-weight:600">${dateStr}</div><div style="font-size:11px;color:var(--muted)">${timeStr}</div></td>
+      <td style="padding:10px 14px"><div style="display:flex;gap:5px;flex-wrap:wrap"><select class="mf-input" onchange="updateReservationStatus('${id}',this.value)" style="height:28px;font-size:11px;padding:0 6px;width:auto;border-radius:6px"><option value="pending" ${r.status==='pending'?'selected':''}>⏳ Pending</option><option value="contacted" ${r.status==='contacted'?'selected':''}>📞 Contacted</option><option value="completed" ${r.status==='completed'?'selected':''}>✅ Completed</option><option value="cancelled" ${r.status==='cancelled'?'selected':''}>❌ Cancelled</option></select><a href="https://wa.me/${waNum}" target="_blank" class="btn-ghost btn-sm" style="color:#25D366;border-color:#25D366;text-decoration:none"><i class="fa-brands fa-whatsapp"></i></a><button class="act-btn danger" onclick="deleteReservation('${id}')"><i class="fa-solid fa-trash"></i></button></div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function updateReservationStatus(id, status) {
+  const r = _reservations[id]; if(!r) return;
+  await db.ref('reservations/'+id).update({status,updatedAt:Date.now(),updatedBy:APP.user?.email||'admin'});
+  showToast('Status updated to '+status,'success');
+  auditLog('EDIT',`Reservation: ${r.customerName} → ${status}`,{detail:`Device: ${r.productTitle} | ${r.customerPhone}`,category:'Reservations'});
+}
+
+async function deleteReservation(id) {
+  const r = _reservations[id];
+  if (!r || !confirm(`Delete reservation for ${r.customerName}?`)) return;
+  await db.ref('reservations/'+id).remove();
+  showToast('Reservation deleted','success');
+  auditLog('DELETE',`Deleted reservation: ${r.customerName}`,{detail:r.productTitle,category:'Reservations'});
+}
+
+function exportReservations() {
+  const all = Object.values(_reservations);
+  if (!all.length){ showToast('No data to export','error'); return; }
+  const rows = [['Customer','Phone','Device','Variant','Price','Advance','Currency','Note','Status','Date']];
+  all.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(r=>{
+    const dt = r.createdAt?new Date(r.createdAt).toLocaleString():'';
+    rows.push([r.customerName||'',r.customerPhone||'',r.productTitle||'',r.variantLabel||'',r.price||0,r.advance||0,r.currency||'',r.note||'',r.status||'',dt]);
+  });
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='reservations_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  showToast('Exported!','success');
 }
 
 /* ══════════════════════════════════════════════
