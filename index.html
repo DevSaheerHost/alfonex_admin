@@ -985,6 +985,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
     <nav class="sb-nav">
       <div class="sb-section-label">Main</div>
       <button class="sb-link active" data-section="overview" onclick="showSection('overview')"><span class="sb-ic"><i class="fa-solid fa-gauge-high"></i></span>Overview</button>
+      <button class="sb-link" data-section="warranty" onclick="showSection('warranty')"><span class="sb-ic"><i class="fa-solid fa-shield-halved"></i></span>Warranty<span class="sb-badge" id="sb-warranty-count" style="display:none;background:#f59e0b">0</span></button>
       <button class="sb-link" data-section="products" onclick="showSection('products')"><span class="sb-ic"><i class="fa-solid fa-box-open"></i></span>Products<span class="sb-badge" id="sb-prod-count">0</span></button>
       <button class="sb-link" data-section="orders" onclick="showSection('orders')"><span class="sb-ic"><i class="fa-solid fa-clipboard-list"></i></span>Orders<span class="sb-badge" id="sb-order-count">0</span></button>
       <button class="sb-link" data-section="banners" onclick="showSection('banners')"><span class="sb-ic"><i class="fa-solid fa-image"></i></span>Banners</button>
@@ -1045,6 +1046,73 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <div class="table-card">
         <div class="table-topbar"><div class="table-topbar-title">Recent Products</div><button class="btn-primary btn-sm" onclick="showSection('products')"><i class="fa-solid fa-arrow-right"></i> View All</button></div>
         <div style="padding:2px 18px 16px"><ul class="mini-prod-list" id="recent-prod-list"><li style="padding:40px 0;text-align:center;color:var(--muted);font-size:13px">Loading…</li></ul></div>
+      </div>
+    </section>
+
+    <!-- ══ WARRANTY MANAGEMENT ══ -->
+    <section id="section-warranty" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Warranty Management</div>
+          <div class="sec-sub">Track, add and manage device warranties by IMEI</div>
+        </div>
+        <div class="sec-header-right">
+          <button class="btn-ghost btn-sm" onclick="exportWarranty()"><i class="fa-solid fa-download"></i> Export</button>
+          <button class="btn-primary" onclick="openWarrantyModal()"><i class="fa-solid fa-plus"></i> Add Device</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-card blue">  <div class="stat-icon blue"><i class="fa-solid fa-mobile-screen-button"></i></div><div><div class="stat-num" id="wr-total">0</div><div class="stat-lbl">Total Devices</div></div></div>
+        <div class="stat-card green"> <div class="stat-icon green"><i class="fa-solid fa-shield-halved"></i></div>       <div><div class="stat-num" id="wr-active">0</div><div class="stat-lbl">Active</div></div></div>
+        <div class="stat-card red">   <div class="stat-icon red"><i class="fa-solid fa-shield-xmark"></i></div>         <div><div class="stat-num" id="wr-expired">0</div><div class="stat-lbl">Expired</div></div></div>
+        <div class="stat-card amber"> <div class="stat-icon amber"><i class="fa-solid fa-circle-question"></i></div>    <div><div class="stat-num" id="wr-unknown">0</div><div class="stat-lbl">No Date</div></div></div>
+      </div>
+
+      <!-- Filter + Search -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <button class="btn-ghost btn-sm" id="wrf-all"     onclick="filterWarranty('all')"     style="background:var(--green);color:#fff;border-color:var(--green)">All</button>
+        <button class="btn-ghost btn-sm" id="wrf-active"  onclick="filterWarranty('active')"  >🟢 Active</button>
+        <button class="btn-ghost btn-sm" id="wrf-expired" onclick="filterWarranty('expired')" >🔴 Expired</button>
+        <button class="btn-ghost btn-sm" id="wrf-unknown" onclick="filterWarranty('unknown')" >⚪ No Date</button>
+        <div style="position:relative;flex:1;max-width:260px;margin-left:auto">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+          <input class="search-input" id="wr-search" placeholder="Search IMEI, model, customer…" oninput="renderWarrantyTable()" style="padding-left:32px;width:100%">
+        </div>
+      </div>
+
+      <!-- IMEI Quick Lookup -->
+      <div style="background:linear-gradient(135deg,rgba(46,160,86,.07),rgba(46,160,86,.03));border:1.5px solid rgba(46,160,86,.2);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <i class="fa-solid fa-magnifying-glass" style="color:var(--green);font-size:18px"></i>
+        <div style="font-weight:800;font-size:13px;color:var(--text)">Quick IMEI Lookup</div>
+        <input class="search-input" id="wr-lookup" placeholder="Enter IMEI to jump directly…" type="tel" inputmode="numeric"
+          style="flex:1;max-width:260px" onkeydown="if(event.key==='Enter')lookupWarranty()">
+        <button class="btn-primary btn-sm" onclick="lookupWarranty()"><i class="fa-solid fa-arrow-right"></i> Lookup</button>
+        <div id="wr-lookup-result" style="width:100%;display:none"></div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:var(--bg)">
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Device</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">IMEI</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Customer</th>
+                <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">BH</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Warranty Period</th>
+                <th style="padding:9px 14px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Status</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="warranty-tbody">
+              <tr><td colspan="7" style="padding:40px;text-align:center;color:var(--muted)">
+                <i class="fa-solid fa-shield-halved" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3"></i>Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -1909,6 +1977,139 @@ tbody td{padding:12px 16px;vertical-align:middle}
   </div><!-- end #main-area -->
 </div><!-- end #view-dashboard -->
 
+<!-- ══ MODAL: ADD / EDIT WARRANTY DEVICE ══ -->
+<div id="modal-warranty" class="modal-backdrop">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-hicon"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="modal-title" id="wr-modal-title">Add Device</div>
+      <button class="modal-close" onclick="closeWarrantyModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="wr-edit-imei">
+
+      <!-- IMEI -->
+      <div class="mf-group">
+        <label class="mf-label">IMEI * (15 digits)</label>
+        <input class="mf-input" id="wr-imei" type="tel" inputmode="numeric" maxlength="15" placeholder="e.g. 356133310050199"
+          style="font-family:monospace;letter-spacing:1px" oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+
+      <!-- Model + Storage + Colour -->
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Model *</label>
+          <select class="mf-input" id="wr-model">
+            <option value="">— Select —</option>
+            <option>IP13PRO</option><option>IP13</option><option>IP13MINI</option>
+            <option>IP14PRO</option><option>IP14</option>
+            <option>IP15PRO</option><option>IP15</option>
+            <option>IP16PRO</option><option>IP16</option>
+            <option>IP17PRO</option><option>IP17</option>
+          </select>
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Storage</label>
+          <select class="mf-input" id="wr-storage">
+            <option value="">— —</option>
+            <option>64GB</option><option>128GB</option><option>256GB</option>
+            <option>512GB</option><option>1TB</option>
+          </select>
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Colour</label>
+          <input class="mf-input" id="wr-colour" placeholder="Black, White, Gold…">
+        </div>
+      </div>
+
+      <!-- Battery Health + Version -->
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Battery Health</label>
+          <select class="mf-input" id="wr-bh">
+            <option value="">— Select —</option>
+            <option value="100PERCENT">100%</option>
+            <option value="95PERCENT">95%</option>
+            <option value="90ABOVE">90 Above</option>
+            <option value="85ABOVE">85 Above</option>
+            <option value="80ABOVE">80 Above</option>
+          </select>
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Version / Spec</label>
+          <input class="mf-input" id="wr-version" placeholder="e.g. mixed, LLA, JP">
+        </div>
+      </div>
+
+      <!-- Customer -->
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Customer Name</label>
+          <input class="mf-input" id="wr-customer" placeholder="Customer name">
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Customer Contact</label>
+          <input class="mf-input" id="wr-contact" placeholder="+971 50 000 0000" type="tel">
+        </div>
+      </div>
+
+      <!-- Warranty dates -->
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Warranty Start *</label>
+          <input type="date" class="mf-input" id="wr-start" onchange="calcWarrantyExpiry()">
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Warranty Duration</label>
+          <select class="mf-input" id="wr-duration" onchange="calcWarrantyExpiry()">
+            <option value="">Custom</option>
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+            <option value="180">6 months</option>
+            <option value="365">1 year</option>
+          </select>
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Warranty Expire *</label>
+          <input type="date" class="mf-input" id="wr-expire">
+        </div>
+      </div>
+
+      <!-- Sale info -->
+      <div class="mf-row">
+        <div class="mf-group">
+          <label class="mf-label">Purchase Date</label>
+          <input type="date" class="mf-input" id="wr-purchase-date">
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Sale Price (AED)</label>
+          <input type="number" class="mf-input" id="wr-sale-price" placeholder="0">
+        </div>
+        <div class="mf-group">
+          <label class="mf-label">Sale Type</label>
+          <select class="mf-input" id="wr-sale-type">
+            <option value="">—</option>
+            <option value="RETAIL">Retail</option>
+            <option value="WHOLESALE">Wholesale</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mf-group">
+        <label class="mf-label">Remarks</label>
+        <input class="mf-input" id="wr-remarks" placeholder="Any notes about this device…">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeWarrantyModal()">Cancel</button>
+      <button class="btn-primary" id="btn-save-wr" onclick="saveWarrantyDevice()">
+        <i class="fa-solid fa-shield-halved"></i> Save Device
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL: ADD/EDIT PRICE LIST ITEM ══ -->
 <div id="modal-pricelist" class="modal-backdrop">
   <div class="modal" style="max-width:540px">
@@ -2623,7 +2824,7 @@ function showSection(name){
   document.getElementById('section-'+name)?.classList.add('active');
   document.querySelectorAll('.sb-link').forEach(l=>l.classList.toggle('active',l.dataset.section===name));
   const T={
-    overview:'Overview', products:'Products', orders:'Orders',
+    overview:'Overview', products:'Products', orders:'Orders', warranty:'Warranty Management',
     banners:'Banner Manager', admins:'Admin Management',
     dealers:'Dealer Management', customers:'Customer Management',
     warehouse:'Multi-Warehouse System', international:'International Business',
@@ -2647,6 +2848,7 @@ function showSection(name){
     if (name==='labels')        { populateBarcodeProducts(); }
     if (name==='invoices')      { populateInvoiceOrders(); }
     if (name==='audit')         { renderAuditLog(); }
+    if (name==='warranty')      { renderWarrantyTable(); }
     if (name==='customers')     { renderCustomerTable(); }
     if (name==='international') { attachWarehouseListener(); attachDealerListener(); convertCurrency(); renderIntlStats(); }
     if (name==='warehouse')     { attachWarehouseListener(); }
@@ -5813,6 +6015,273 @@ function renderPriceList() {
 }
 
 /* Export CSV */
+/* ══════════════════════════════════════════════
+   WARRANTY MANAGEMENT
+   Firebase: warranty_devices/{imei}
+══════════════════════════════════════════════ */
+let _warranty = {};
+let _warrantyFilter = 'all';
+
+/* Real-time listener */
+db.ref('warranty_devices').on('value', snap => {
+  _warranty = snap.val() || {};
+  /* Sidebar badge — expiring in ≤7 days */
+  const today = new Date().toISOString().slice(0,10);
+  const soon  = new Date(Date.now() + 7*86400000).toISOString().slice(0,10);
+  const expiringSoon = Object.values(_warranty).filter(d =>
+    d.warrantyExpire && d.warrantyExpire >= today && d.warrantyExpire <= soon
+  ).length;
+  const badge = document.getElementById('sb-warranty-count');
+  if (badge) { badge.textContent = expiringSoon; badge.style.display = expiringSoon ? 'inline-flex' : 'none'; }
+  if (document.getElementById('section-warranty')?.classList.contains('active')) renderWarrantyTable();
+});
+
+/* Recalculate expiry when start + duration change */
+function calcWarrantyExpiry() {
+  const start    = document.getElementById('wr-start')?.value;
+  const duration = parseInt(document.getElementById('wr-duration')?.value);
+  const expEl    = document.getElementById('wr-expire');
+  if (start && duration && expEl) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + duration);
+    expEl.value = d.toISOString().slice(0,10);
+  }
+}
+
+/* Open modal */
+function openWarrantyModal(imei) {
+  const d = imei ? (_warranty[imei] || {}) : {};
+  document.getElementById('wr-modal-title').textContent = imei ? 'Edit Device' : 'Add Device';
+  document.getElementById('wr-edit-imei').value   = imei || '';
+  document.getElementById('wr-imei').value        = imei || '';
+  document.getElementById('wr-imei').readOnly     = !!imei;
+  document.getElementById('wr-model').value       = d.model || '';
+  document.getElementById('wr-storage').value     = d.storage || '';
+  document.getElementById('wr-colour').value      = d.colour || '';
+  document.getElementById('wr-bh').value          = d.batteryHealth || '';
+  document.getElementById('wr-version').value     = d.version || '';
+  document.getElementById('wr-customer').value    = d.customerName || '';
+  document.getElementById('wr-contact').value     = d.customerContact || '';
+  document.getElementById('wr-start').value       = d.warrantyStart || '';
+  document.getElementById('wr-expire').value      = d.warrantyExpire || '';
+  document.getElementById('wr-duration').value    = '';
+  document.getElementById('wr-purchase-date').value = d.purchaseDate || '';
+  document.getElementById('wr-sale-price').value  = d.salePrice || '';
+  document.getElementById('wr-sale-type').value   = d.saleType || '';
+  document.getElementById('wr-remarks').value     = d.remarks || '';
+  document.getElementById('modal-warranty').classList.add('open');
+}
+function closeWarrantyModal() { document.getElementById('modal-warranty').classList.remove('open'); }
+
+/* Save to Firebase */
+async function saveWarrantyDevice() {
+  const editImei = document.getElementById('wr-edit-imei').value;
+  const imei     = document.getElementById('wr-imei').value.replace(/\D/g,'').trim();
+  const model    = document.getElementById('wr-model').value;
+  if (!imei || imei.length < 14) { showToast('Valid IMEI required (14-15 digits)','error'); return; }
+  if (!model) { showToast('Model required','error'); return; }
+
+  const start  = document.getElementById('wr-start').value;
+  const expire = document.getElementById('wr-expire').value;
+  const today  = new Date().toISOString().slice(0,10);
+  const status = !start && !expire ? 'unknown' : (expire && expire >= today ? 'active' : 'expired');
+
+  const payload = {
+    imei,
+    model,
+    storage:       document.getElementById('wr-storage').value,
+    colour:        document.getElementById('wr-colour').value.trim(),
+    batteryHealth: document.getElementById('wr-bh').value,
+    version:       document.getElementById('wr-version').value.trim(),
+    customerName:  document.getElementById('wr-customer').value.trim(),
+    customerContact: document.getElementById('wr-contact').value.trim(),
+    warrantyStart: start,
+    warrantyExpire: expire,
+    purchaseDate:  document.getElementById('wr-purchase-date').value,
+    salePrice:     parseFloat(document.getElementById('wr-sale-price').value) || null,
+    saleType:      document.getElementById('wr-sale-type').value,
+    remarks:       document.getElementById('wr-remarks').value.trim(),
+    warrantyStatus: status,
+    updatedAt: Date.now()
+  };
+  /* Remove null/empty fields */
+  Object.keys(payload).forEach(k => { if (payload[k] === null || payload[k] === '' || payload[k] === undefined) delete payload[k]; });
+
+  const btn = setBtnLoading('btn-save-wr', 'Saving…');
+  try {
+    await db.ref('warranty_devices/' + imei).set(payload);
+    /* If IMEI changed on edit, delete old record */
+    if (editImei && editImei !== imei) await db.ref('warranty_devices/' + editImei).remove();
+    showToast((editImei ? 'Updated' : 'Added') + ' warranty device!', 'success');
+    auditLog(editImei ? 'EDIT' : 'ADD', `Warranty: ${model} ${document.getElementById('wr-storage').value||''} — IMEI ${imei}`,
+      { detail: `Customer: ${payload.customerName||'—'} | Expires: ${expire||'—'}`, category:'Warranty' });
+    closeWarrantyModal();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  finally { resetBtn(btn, '<i class="fa-solid fa-shield-halved"></i> Save Device'); }
+}
+
+/* Delete a warranty device */
+async function deleteWarrantyDevice(imei) {
+  const d = _warranty[imei];
+  if (!d || !confirm(`Delete warranty for ${d.model||imei}?`)) return;
+  await db.ref('warranty_devices/' + imei).remove();
+  showToast('Deleted', 'success');
+  auditLog('DELETE', `Warranty deleted: ${d.model} — IMEI ${imei}`, { category:'Warranty' });
+}
+
+/* Filter tabs */
+function filterWarranty(f) {
+  _warrantyFilter = f;
+  ['all','active','expired','unknown'].forEach(s => {
+    const b = document.getElementById('wrf-'+s); if (!b) return;
+    b.style.background  = s===f ? 'var(--green)' : '';
+    b.style.color       = s===f ? '#fff' : '';
+    b.style.borderColor = s===f ? 'var(--green)' : '';
+  });
+  renderWarrantyTable();
+}
+
+/* Quick IMEI lookup inside admin */
+async function lookupWarranty() {
+  const imei = (document.getElementById('wr-lookup')?.value || '').replace(/\D/g,'');
+  const resultEl = document.getElementById('wr-lookup-result'); if (!resultEl) return;
+  if (!imei || imei.length < 14) { showToast('Enter a valid IMEI','error'); return; }
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">Searching…</div>';
+  const snap = await db.ref('warranty_devices/'+imei).get();
+  if (!snap.exists()) {
+    resultEl.innerHTML = `<div style="font-size:12px;color:var(--red)">❌ IMEI ${imei} not found in warranty database.</div>`;
+  } else {
+    const d = snap.val();
+    const expire = d.warrantyExpire || '—';
+    const st = d.warrantyStatus;
+    const col = st==='active'?'#16a34a':st==='expired'?'#dc2626':'#64748b';
+    resultEl.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+      <span style="font-size:22px">📱</span>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:13px">${esc(d.model||'—')} ${esc(d.storage||'')} — ${esc(d.colour||'')}</div>
+        <div style="font-size:11px;color:var(--muted)">Customer: ${esc(d.customerName||'—')} | Expires: ${expire}</div>
+      </div>
+      <span style="background:${col}20;color:${col};font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase">${st||'unknown'}</span>
+      <button class="btn-edit btn-sm" onclick="openWarrantyModal('${imei}')"><i class="fa-solid fa-pen"></i></button>
+    </div>`;
+  }
+}
+
+/* Main table render */
+function renderWarrantyTable() {
+  const tbody  = document.getElementById('warranty-tbody'); if (!tbody) return;
+  const search = (document.getElementById('wr-search')?.value || '').toLowerCase();
+  const today  = new Date().toISOString().slice(0,10);
+
+  /* Recalculate status live (in case DB status is stale) */
+  const recalcStatus = d => {
+    if (!d.warrantyExpire) return 'unknown';
+    return d.warrantyExpire >= today ? 'active' : 'expired';
+  };
+
+  let entries = Object.entries(_warranty).map(([imei, d]) => ({
+    imei, ...d, warrantyStatus: recalcStatus(d)
+  }));
+
+  /* Stats */
+  const setStat = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setStat('wr-total',   entries.length);
+  setStat('wr-active',  entries.filter(d=>d.warrantyStatus==='active').length);
+  setStat('wr-expired', entries.filter(d=>d.warrantyStatus==='expired').length);
+  setStat('wr-unknown', entries.filter(d=>d.warrantyStatus==='unknown').length);
+
+  /* Filter */
+  if (_warrantyFilter !== 'all') entries = entries.filter(d => d.warrantyStatus === _warrantyFilter);
+  if (search) entries = entries.filter(d =>
+    (d.imei||'').includes(search) ||
+    (d.model||'').toLowerCase().includes(search) ||
+    (d.customerName||'').toLowerCase().includes(search) ||
+    (d.colour||'').toLowerCase().includes(search)
+  );
+
+  /* Sort: active first, then by expiry */
+  entries.sort((a,b) => {
+    const order = {active:0,unknown:1,expired:2};
+    const ao = order[a.warrantyStatus]||1, bo = order[b.warrantyStatus]||1;
+    if (ao !== bo) return ao - bo;
+    return (a.warrantyExpire||'').localeCompare(b.warrantyExpire||'');
+  });
+
+  if (!entries.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--muted)">No devices found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = entries.map((d, i) => {
+    const st  = d.warrantyStatus;
+    const stMeta = {
+      active:  { label:'Active',  color:'#16a34a', bg:'#f0fdf4', icon:'fa-shield-halved' },
+      expired: { label:'Expired', color:'#dc2626', bg:'#fff1f2', icon:'fa-shield-xmark'  },
+      unknown: { label:'No Date', color:'#64748b', bg:'#f8fafc', icon:'fa-circle-question' }
+    }[st] || { label:st, color:'#64748b', bg:'#f8fafc', icon:'fa-circle-question' };
+
+    /* Days remaining */
+    let daysHtml = '—';
+    if (d.warrantyExpire) {
+      const days = Math.ceil((new Date(d.warrantyExpire) - new Date()) / 86400000);
+      if (st === 'active') {
+        const col = days <= 7 ? '#dc2626' : days <= 14 ? '#d97706' : '#16a34a';
+        daysHtml = `<span style="color:${col};font-weight:700">${days}d left</span>`;
+      } else {
+        daysHtml = `<span style="color:var(--muted)">${Math.abs(days)}d ago</span>`;
+      }
+    }
+
+    /* BH display */
+    const bh = (d.batteryHealth||'').replace('PERCENT','%').replace('ABOVE','+');
+
+    return `<tr style="${i%2===0?'':'background:var(--surface2)'};border-bottom:1px solid var(--border)">
+      <td style="padding:10px 14px">
+        <div style="font-weight:800;font-size:13px">${esc(d.model||'—')} ${esc(d.storage||'')}</div>
+        <div style="font-size:11px;color:var(--muted)">${esc(d.colour||'')} ${d.version?'· '+esc(d.version):''}</div>
+      </td>
+      <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:var(--text-soft)">${esc(d.imei||'—')}</td>
+      <td style="padding:10px 14px">
+        <div style="font-weight:600;font-size:12px">${esc(d.customerName||'—')}</div>
+        ${d.customerContact ? `<a href="https://wa.me/${(d.customerContact||'').replace(/\D/g,'')}" target="_blank" style="font-size:11px;color:#25D366;text-decoration:none"><i class="fa-brands fa-whatsapp"></i> ${esc(d.customerContact)}</a>` : ''}
+      </td>
+      <td style="padding:10px 14px;text-align:center">
+        <span style="font-weight:800;font-size:12px;color:var(--green)">${bh||'—'}</span>
+      </td>
+      <td style="padding:10px 14px;white-space:nowrap">
+        <div style="font-size:11px;color:var(--muted)">${d.warrantyStart||'—'} →</div>
+        <div style="font-size:12px;font-weight:700">${d.warrantyExpire||'—'}</div>
+        <div style="font-size:11px;margin-top:2px">${daysHtml}</div>
+      </td>
+      <td style="padding:10px 14px;text-align:center">
+        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;background:${stMeta.bg};color:${stMeta.color}">
+          <i class="fa-solid ${stMeta.icon}" style="font-size:9px"></i> ${stMeta.label}
+        </span>
+      </td>
+      <td style="padding:10px 14px">
+        <div style="display:flex;gap:5px">
+          <button class="btn-edit btn-sm" onclick="openWarrantyModal('${esc(d.imei||'')}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          <button class="act-btn danger" onclick="deleteWarrantyDevice('${esc(d.imei||'')}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function exportWarranty() {
+  const all = Object.values(_warranty);
+  if (!all.length) { showToast('No data to export','error'); return; }
+  const rows = [['IMEI','Model','Storage','Colour','BH','Version','Customer','Contact','Warranty Start','Warranty Expire','Status','Sale Price','Remarks']];
+  all.forEach(d => rows.push([d.imei||'',d.model||'',d.storage||'',d.colour||'',d.batteryHealth||'',d.version||'',
+    d.customerName||'',d.customerContact||'',d.warrantyStart||'',d.warrantyExpire||'',d.warrantyStatus||'',d.salePrice||'',d.remarks||'']));
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'warranty_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); showToast('Exported!','success');
+}
+
 function exportPriceList() {
   const items = Object.values(_priceList);
   if (!items.length) { showToast('No items to export','error'); return; }
