@@ -1934,6 +1934,22 @@ tbody td{padding:12px 16px;vertical-align:middle}
         </div>
       </div>
 
+      <!-- Spec (region code) -->
+      <div class="mf-group">
+        <label class="mf-label">Spec / Region Code</label>
+        <input class="mf-input" id="pl-spec" list="pl-spec-options" placeholder="e.g. LLA, JP, ZP, AA, IN" style="text-transform:uppercase">
+        <datalist id="pl-spec-options">
+          <option value="LLA">LLA (USA)</option>
+          <option value="JP">JP (Japan)</option>
+          <option value="ZP">ZP (Hong Kong / Asia)</option>
+          <option value="ZA">ZA (Singapore)</option>
+          <option value="AA">AA (Middle East)</option>
+          <option value="IN">IN (India)</option>
+          <option value="HN">HN (China)</option>
+          <option value="B">B (UK)</option>
+        </datalist>
+      </div>
+
       <!-- Battery Health + Wholesale -->
       <div class="mf-row">
         <div class="mf-group">
@@ -5361,6 +5377,7 @@ function openPriceListModal(id) {
   document.getElementById('pl-edit-id').value     = id || '';
   document.getElementById('pl-name').value        = item.name || '';
   document.getElementById('pl-capacity').value    = item.capacity || '';
+  document.getElementById('pl-spec').value         = item.spec || '';
   document.getElementById('pl-bh').value          = item.bh || '';
   document.getElementById('pl-dealer-phone').value= item.dealerPhone || '';
   document.getElementById('pl-cost').value        = item.cost || '';
@@ -5430,6 +5447,7 @@ async function savePriceListItem() {
     dealer,
     dealerPhone: document.getElementById('pl-dealer-phone').value.trim(),
     capacity: document.getElementById('pl-capacity').value,
+    spec:     document.getElementById('pl-spec').value.trim().toUpperCase(),
     bh:       document.getElementById('pl-bh').value,
     cost,
     profit,
@@ -5566,6 +5584,7 @@ function renderPriceList() {
         </td>
         <td style="padding:9px 12px;font-size:12px;color:var(--text-soft);border:1px solid var(--border)">${esc(item.bh||'—')}</td>
         <td style="padding:9px 12px;font-size:12px;color:var(--text-soft);border:1px solid var(--border)">${esc(item.capacity||'—')}</td>
+        <td style="padding:9px 12px;font-size:12px;border:1px solid var(--border)">${item.spec ? `<span style="background:var(--green-light);color:var(--green);font-weight:800;font-size:11px;padding:2px 8px;border-radius:6px">${esc(item.spec)}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
         <td style="padding:9px 12px;text-align:right;font-family:var(--font-head);font-weight:900;font-size:14px;border:1px solid var(--border)">${sell.toLocaleString()}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid var(--border);white-space:nowrap">
           <button class="btn-edit btn-sm" onclick="openPriceListModal('${item.id}')" title="Edit" style="padding:4px 8px"><i class="fa-solid fa-pen"></i></button>
@@ -5601,6 +5620,7 @@ function renderPriceList() {
               <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Model</th>
               <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">BH</th>
               <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Capacity</th>
+              <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Spec</th>
               <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Price in AED</th>
               <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);width:96px">Actions</th>
             </tr>
@@ -5616,14 +5636,14 @@ function renderPriceList() {
 function exportPriceList() {
   const items = Object.values(_priceList);
   if (!items.length) { showToast('No items to export','error'); return; }
-  const rows = [['Dealer','No','Model','BH','Capacity','Price in AED','Wholesale','Profit','Dealer Phone','Notes','Last Updated']];
+  const rows = [['Dealer','No','Model','BH','Capacity','Spec','Price in AED','Wholesale','Profit','Dealer Phone','Notes','Last Updated']];
   /* Group by dealer, number within each group */
   const groups = {};
   items.forEach(i => { const d=i.dealer||'Unknown'; (groups[d]=groups[d]||[]).push(i); });
   Object.keys(groups).sort().forEach(dealer => {
     groups[dealer].sort((a,b)=>(a.name||'').localeCompare(b.name||'')).forEach((item, idx) => {
       const cost=Number(item.cost||0), profit=Number(item.profit||0);
-      rows.push([dealer, idx+1, item.name||'', item.bh||'', item.capacity||'', cost+profit, cost, profit,
+      rows.push([dealer, idx+1, item.name||'', item.bh||'', item.capacity||'', item.spec||'', cost+profit, cost, profit,
         item.dealerPhone||'', item.notes||'', item.updatedAt?new Date(item.updatedAt).toLocaleString():'']);
     });
   });
