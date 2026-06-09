@@ -1868,6 +1868,8 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <button class="btn-ghost btn-sm" onclick="filterAudit('PRICE')"  id="af-price" ><i class="fa-solid fa-tag"              style="color:#f59e0b"></i> Payments</button>
         <button class="btn-ghost btn-sm" onclick="filterAudit('STOCK')"  id="af-stock" ><i class="fa-solid fa-boxes-stacked"    style="color:var(--green)"></i> Stock</button>
         <button class="btn-ghost btn-sm" onclick="filterAudit('LOGIN')"  id="af-login" ><i class="fa-solid fa-right-to-bracket" style="color:#8b5cf6"></i> Logins</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('VIEW')"   id="af-view"  ><i class="fa-solid fa-eye"              style="color:#64748b"></i> Navigation</button>
+        <button class="btn-ghost btn-sm" onclick="filterAudit('SECURITY')" id="af-security" style="border-color:#fca5a5"><i class="fa-solid fa-shield-halved" style="color:var(--red)"></i> Security &amp; Errors</button>
         <button class="btn-ghost btn-sm" onclick="filterAudit('ANN')"    id="af-ann"   ><i class="fa-solid fa-bullhorn"         style="color:#f59e0b"></i> Announcements</button>
       </div>
 
@@ -2691,6 +2693,12 @@ async function doLogin(){
     const M={'auth/user-not-found':'No account for this email.','auth/wrong-password':'Incorrect password.','auth/invalid-email':'Invalid email.','auth/too-many-requests':'Too many attempts. Try later.','auth/invalid-credential':'Invalid email or password.'};
     document.getElementById('login-error-msg').textContent=M[err.code]||err.message;
     errEl.classList.add('show');
+    /* Log the failed login attempt so super admin can see it */
+    securityLog('LOGIN_FAIL', `Failed login attempt`, {
+      detail: `Email: ${email} — ${M[err.code]||err.code||err.message}`,
+      attemptedEmail: email,
+      errorCode: err.code || 'unknown'
+    });
   }finally{ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Sign In'; }
 }
 ['login-email','login-pass'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();}));
@@ -2709,7 +2717,15 @@ auth.onAuthStateChanged(async user=>{
     APP.user=user;
     try{
       const snap=await db.ref(`admins/${user.uid}`).get();
-      if(!snap.exists()){ await auth.signOut(); showToast('Access denied.','error'); switchView('view-login'); hideLoader(); return; }
+      if(!snap.exists()){
+        /* Authenticated but NOT an admin — log this security event */
+        securityLog('ACCESS_DENIED', `Non-admin login blocked`, {
+          detail: `Email: ${user.email} (valid account, not an admin)`,
+          attemptedEmail: user.email || '',
+          uid: user.uid
+        });
+        await auth.signOut(); showToast('Access denied.','error'); switchView('view-login'); hideLoader(); return;
+      }
       const a=snap.val(); APP.role=a.role; const sa=APP.role==='super_admin';
       const init=(a.name||user.email||'A').charAt(0).toUpperCase();
       document.getElementById('sb-avatar').textContent=init;
@@ -2731,7 +2747,10 @@ auth.onAuthStateChanged(async user=>{
         sessionStorage.setItem(_loginKey, Date.now());
         auditLog('LOGIN', `Admin signed in`, { detail: user.email, category:'Auth' });
       }
-    }catch(err){ showToast('Permission check failed: '+err.message,'error'); await auth.signOut(); switchView('view-login'); }
+    }catch(err){
+      securityLog('ERROR', `Permission check failed`, { detail: `${user?.email||'—'} — ${err.message}`, errorCode: err.code||'permission_denied' });
+      showToast('Permission check failed: '+err.message,'error'); await auth.signOut(); switchView('view-login');
+    }
   }else{ APP.user=null; APP.role=null; switchView('view-login'); }
   hideLoader();
 });
@@ -4260,6 +4279,18 @@ db.ref('audit_trail').orderByChild('ts').limitToLast(200).on('value', snap => {
   if (document.getElementById('section-audit')?.classList.contains('active')) renderAuditLog();
 });
 
+/* Load SECURITY events (failed logins, access denials, errors) — super admin only.
+   Stored in a separate node merged into the same view. */
+let _fbSecurityEvents = [];
+db.ref('security_log').orderByChild('ts').limitToLast(200).on('value', snap => {
+  _fbSecurityEvents = [];
+  snap.forEach(c => _fbSecurityEvents.push(c.val()));
+  _fbSecurityEvents.sort((a,b) => b.ts - a.ts);
+  if (document.getElementById('section-audit')?.classList.contains('active')) renderAuditLog();
+}, err => {
+  /* Non-super-admins can't read this node — that's fine, ignore */
+});
+
 const AUDIT_ICONS = {
   ADD:    { cls:'ai-add',    icon:'fa-solid fa-plus'          },
   EDIT:   { cls:'ai-edit',   icon:'fa-solid fa-pen'           },
@@ -4272,6 +4303,10 @@ const AUDIT_ICONS = {
   TASK:   { cls:'ai-edit',   icon:'fa-solid fa-list-check'    },
   BANNER: { cls:'ai-edit',   icon:'fa-solid fa-image'         },
   VIEW:   { cls:'ai-edit',   icon:'fa-solid fa-eye'           },
+  LOGIN_FAIL:    { cls:'ai-delete', icon:'fa-solid fa-user-xmark'        },
+  ACCESS_DENIED: { cls:'ai-delete', icon:'fa-solid fa-ban'               },
+  ERROR:         { cls:'ai-delete', icon:'fa-solid fa-triangle-exclamation' },
+  WARN:          { cls:'ai-price',  icon:'fa-solid fa-circle-exclamation'   },
 };
 
 function auditLog(type, description, extra = {}) {
@@ -4285,6 +4320,50 @@ function auditLog(type, description, extra = {}) {
   renderAuditLog();
 }
 
+/* ───────────────────────────────────────────────
+   SECURITY LOG — writes to a separate node that
+   allows UNAUTHENTICATED writes (failed logins happen
+   before auth), but only super-admin can read.
+   These appear in the audit trail merged with normal events.
+─────────────────────────────────────────────── */
+function securityLog(type, description, extra = {}) {
+  const ev = {
+    type,                       /* LOGIN_FAIL | ACCESS_DENIED | ERROR | WARN */
+    description,
+    who: APP?.user?.email || extra.attemptedEmail || 'Anonymous',
+    ts: Date.now(),
+    category: 'Security',
+    isSecurity: true,
+    ...extra
+  };
+  /* Always store locally so even unauth/offline events are captured this session */
+  _auditEvents.unshift(ev);
+  if (_auditEvents.length > 500) _auditEvents = _auditEvents.slice(0, 500);
+  try { localStorage.setItem('ia_audit', JSON.stringify(_auditEvents)); } catch(e){}
+  /* Push to the public-write security node (works without auth) */
+  try { db.ref('security_log').push(ev); } catch(e){}
+  if (typeof renderAuditLog === 'function') { try { renderAuditLog(); } catch(e){} }
+}
+
+/* Capture uncaught JS errors */
+window.addEventListener('error', (e) => {
+  /* Ignore noisy resource-load errors (images etc.) — only script errors */
+  if (e.message && e.filename) {
+    securityLog('ERROR', 'JavaScript error', {
+      detail: `${e.message} @ ${(e.filename||'').split('/').pop()}:${e.lineno||0}`
+    });
+  }
+});
+/* Capture unhandled promise rejections (e.g. Firebase permission_denied) */
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason;
+  const msg = (reason && (reason.message || reason.code)) ? (reason.code ? reason.code+': '+(reason.message||'') : reason.message) : String(reason);
+  /* Only log meaningful errors, especially permission issues */
+  if (msg && msg !== 'undefined') {
+    securityLog('ERROR', 'Unhandled error', { detail: msg.slice(0, 200) });
+  }
+});
+
 const TYPE_META = {
   ADD:    { label:'Added',       color:'#16a34a', bg:'#f0fdf4', icon:'fa-plus' },
   EDIT:   { label:'Edited',      color:'#2563eb', bg:'#eff6ff', icon:'fa-pen' },
@@ -4297,6 +4376,10 @@ const TYPE_META = {
   TASK:   { label:'Task',        color:'#2563eb', bg:'#eff6ff', icon:'fa-list-check' },
   BANNER: { label:'Banner',      color:'#0891b2', bg:'#ecfeff', icon:'fa-image' },
   VIEW:   { label:'Viewed',      color:'#64748b', bg:'#f8fafc', icon:'fa-eye' },
+  LOGIN_FAIL:    { label:'Failed Login',  color:'#dc2626', bg:'#fff1f2', icon:'fa-user-xmark' },
+  ACCESS_DENIED: { label:'Access Denied', color:'#dc2626', bg:'#fff1f2', icon:'fa-ban' },
+  ERROR:         { label:'Error',         color:'#dc2626', bg:'#fff1f2', icon:'fa-triangle-exclamation' },
+  WARN:          { label:'Warning',       color:'#d97706', bg:'#fffbeb', icon:'fa-circle-exclamation' },
 };
 
 function renderAuditLog() {
@@ -4307,7 +4390,7 @@ function renderAuditLog() {
   if (!el) return;
 
   /* Merge Firebase + local, deduplicate */
-  const combined = [..._auditEvents, ..._fbAuditEvents];
+  const combined = [..._auditEvents, ..._fbAuditEvents, ..._fbSecurityEvents];
   const seen = new Set();
   const merged = combined
     .filter(e => { const k = e.ts+'|'+e.description; if(seen.has(k)) return false; seen.add(k); return true; })
@@ -4315,7 +4398,15 @@ function renderAuditLog() {
     .slice(0, 500);
 
   /* Filter by type */
-  let list = _auditFilter === 'all' ? merged : merged.filter(e => e.type === _auditFilter);
+  const SECURITY_TYPES = ['LOGIN_FAIL','ACCESS_DENIED','ERROR','WARN'];
+  let list;
+  if (_auditFilter === 'all') {
+    list = merged;
+  } else if (_auditFilter === 'SECURITY') {
+    list = merged.filter(e => SECURITY_TYPES.includes(e.type) || e.isSecurity === true);
+  } else {
+    list = merged.filter(e => e.type === _auditFilter);
+  }
 
   /* Filter by search */
   if (searchQ) {
@@ -4390,7 +4481,7 @@ function filterAudit(type) {
   document.querySelectorAll('[id^="af-"]').forEach(b => {
     b.style.background = ''; b.style.color = ''; b.style.borderColor = '';
   });
-  const active = document.getElementById('af-' + type);
+  const active = document.getElementById('af-' + type.toLowerCase());
   if (active) { active.style.background='var(--green)'; active.style.color='#fff'; active.style.borderColor='var(--green)'; }
   renderAuditLog();
 }
