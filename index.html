@@ -1853,7 +1853,6 @@ tbody td{padding:12px 16px;vertical-align:middle}
           <div class="sec-sub">Complete log of every admin action — who, what, when, details</div>
         </div>
         <div class="sec-header-right">
-          <button class="btn-ghost btn-sm" onclick="clearAuditLog()"><i class="fa-solid fa-trash"></i> Clear Local</button>
           <button class="btn-primary btn-sm" onclick="exportAuditLog()"><i class="fa-solid fa-download"></i> Export CSV</button>
         </div>
       </div>
@@ -2736,7 +2735,7 @@ auth.onAuthStateChanged(async user=>{
       document.getElementById('welcome-name').textContent=`Welcome back, ${a.name||user.email}!`;
       switchView('view-dashboard');
       attachProductsListener(); attachOrdersListener();
-      if(sa) attachAdminsListener();
+      if(sa) { attachAdminsListener(); attachAuditListeners(); }
       /* Start presence heartbeat + listener for ALL admins */
       initPresence(user);
       listenPresence();
@@ -4263,33 +4262,44 @@ document.querySelectorAll('.modal-backdrop').forEach(b=>{
 ══════════════════════════════════════════════════════════ */
 
 /* ─── AUDIT TRAIL ENGINE ───────────────────────────────────
-   Every meaningful admin action calls auditLog(). Stored in
-   localStorage AND optionally synced to Firebase.
+   Every admin action is saved to Firebase under:
+       audit_trail/{adminEmailKey}/{pushKey}
+   organized per-admin. Super admins read the whole tree and
+   flatten it. No localStorage — Firebase is the single source.
 ─────────────────────────────────────────────────────────── */
-let _auditEvents = JSON.parse(localStorage.getItem('ia_audit') || '[]');
-let _fbAuditEvents = [];   /* loaded from Firebase — all admins' actions */
+let _auditEvents = [];        /* in-memory only, current session (instant feedback) */
+let _fbAuditEvents = [];      /* all admins' actions, flattened from Firebase */
+let _fbSecurityEvents = [];   /* security events (failed logins, errors) */
 let _auditFilter = 'all';
 
-/* Load all audit events from Firebase so we see ALL admins' actions with correct emails */
-db.ref('audit_trail').orderByChild('ts').limitToLast(200).on('value', snap => {
-  _fbAuditEvents = [];
-  snap.forEach(c => _fbAuditEvents.push(c.val()));
-  _fbAuditEvents.sort((a,b) => b.ts - a.ts);
-  /* Re-render if audit section is active */
-  if (document.getElementById('section-audit')?.classList.contains('active')) renderAuditLog();
-});
+/* Convert an email into a safe Firebase key (no . # $ [ ] /) */
+function emailKey(email) {
+  return String(email || 'anonymous').toLowerCase().replace(/[.#$\[\]/]/g, '_');
+}
 
-/* Load SECURITY events (failed logins, access denials, errors) — super admin only.
-   Stored in a separate node merged into the same view. */
-let _fbSecurityEvents = [];
-db.ref('security_log').orderByChild('ts').limitToLast(200).on('value', snap => {
-  _fbSecurityEvents = [];
-  snap.forEach(c => _fbSecurityEvents.push(c.val()));
-  _fbSecurityEvents.sort((a,b) => b.ts - a.ts);
-  if (document.getElementById('section-audit')?.classList.contains('active')) renderAuditLog();
-}, err => {
-  /* Non-super-admins can't read this node — that's fine, ignore */
-});
+/* Listeners are attached only for super admins (see attachAuditListeners),
+   so regular admins never hit a permission error. */
+function attachAuditListeners() {
+  /* All admins' actions — nested by email */
+  db.ref('audit_trail').on('value', snap => {
+    _fbAuditEvents = [];
+    snap.forEach(adminNode => {
+      adminNode.forEach(evSnap => { _fbAuditEvents.push(evSnap.val()); });
+    });
+    _fbAuditEvents.sort((a,b) => (b.ts||0) - (a.ts||0));
+    if (document.getElementById('section-audit')?.classList.contains('active')) renderAuditLog();
+  }, err => { /* not super admin — ignore */ });
+
+  /* Security events — nested by email (or attempted email) */
+  db.ref('security_log').on('value', snap => {
+    _fbSecurityEvents = [];
+    snap.forEach(adminNode => {
+      adminNode.forEach(evSnap => { _fbSecurityEvents.push(evSnap.val()); });
+    });
+    _fbSecurityEvents.sort((a,b) => (b.ts||0) - (a.ts||0));
+    if (document.getElementById('section-audit')?.classList.contains('active')) renderAuditLog();
+  }, err => { /* not super admin — ignore */ });
+}
 
 const AUDIT_ICONS = {
   ADD:    { cls:'ai-add',    icon:'fa-solid fa-plus'          },
@@ -4312,36 +4322,34 @@ const AUDIT_ICONS = {
 function auditLog(type, description, extra = {}) {
   const who  = APP?.user?.email || 'Unknown';
   const ev   = { type, description, who, ts: Date.now(), ...extra };
+  /* in-memory only (instant feedback for the acting admin) */
   _auditEvents.unshift(ev);
   if (_auditEvents.length > 500) _auditEvents = _auditEvents.slice(0, 500);
-  localStorage.setItem('ia_audit', JSON.stringify(_auditEvents));
-  /* async push to Firebase */
-  try { db.ref('audit_trail').push(ev); } catch(e){}
+  /* Save under audit_trail/{adminEmail}/{key} */
+  try { db.ref('audit_trail/' + emailKey(who)).push(ev); } catch(e){}
   renderAuditLog();
 }
 
 /* ───────────────────────────────────────────────
-   SECURITY LOG — writes to a separate node that
-   allows UNAUTHENTICATED writes (failed logins happen
-   before auth), but only super-admin can read.
-   These appear in the audit trail merged with normal events.
+   SECURITY LOG — saved under security_log/{email}/{key}.
+   Allows UNAUTHENTICATED writes (failed logins happen
+   before auth); only super-admin can read.
 ─────────────────────────────────────────────── */
 function securityLog(type, description, extra = {}) {
+  const who = APP?.user?.email || extra.attemptedEmail || 'Anonymous';
   const ev = {
     type,                       /* LOGIN_FAIL | ACCESS_DENIED | ERROR | WARN */
     description,
-    who: APP?.user?.email || extra.attemptedEmail || 'Anonymous',
+    who,
     ts: Date.now(),
     category: 'Security',
     isSecurity: true,
     ...extra
   };
-  /* Always store locally so even unauth/offline events are captured this session */
   _auditEvents.unshift(ev);
   if (_auditEvents.length > 500) _auditEvents = _auditEvents.slice(0, 500);
-  try { localStorage.setItem('ia_audit', JSON.stringify(_auditEvents)); } catch(e){}
-  /* Push to the public-write security node (works without auth) */
-  try { db.ref('security_log').push(ev); } catch(e){}
+  /* Save under security_log/{email}/{key} — public write so pre-auth events land */
+  try { db.ref('security_log/' + emailKey(who)).push(ev); } catch(e){}
   if (typeof renderAuditLog === 'function') { try { renderAuditLog(); } catch(e){} }
 }
 
@@ -4484,11 +4492,6 @@ function filterAudit(type) {
   const active = document.getElementById('af-' + type.toLowerCase());
   if (active) { active.style.background='var(--green)'; active.style.color='#fff'; active.style.borderColor='var(--green)'; }
   renderAuditLog();
-}
-
-function clearAuditLog() {
-  if (!confirm('Clear all local audit logs? Firebase records are kept.')) return;
-  _auditEvents = []; localStorage.setItem('ia_audit', '[]'); renderAuditLog();
 }
 
 function exportAuditLog() {
