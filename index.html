@@ -1676,6 +1676,29 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <div style="font-size:11px;color:var(--green);font-weight:700" id="pl-global-status"></div>
       </div>
 
+      <!-- INR/AED Exchange Rate Setting (controls client converter) -->
+      <div style="background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(59,130,246,.03));border:1.5px solid rgba(59,130,246,.2);border-radius:var(--radius);padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="font-size:20px">💱</div>
+        <div style="flex:1;min-width:160px">
+          <div style="font-weight:800;font-size:14px;color:var(--text)">Customer App Exchange Rate</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Set the INR ⇄ AED rate shown in the customer app converter. Leave empty to use the live market rate automatically.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">1 AED =</div>
+          <div style="position:relative">
+            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:800;color:var(--muted)">₹</span>
+            <input type="number" id="ex-rate" class="mf-input" min="0" step="0.01" placeholder="auto"
+              style="padding-left:24px;width:110px;height:38px;font-size:15px;font-weight:900;color:#3b82f6"
+              oninput="updateExchangeRate(this.value)">
+          </div>
+          <div style="font-size:12px;color:var(--muted)">INR</div>
+        </div>
+        <button class="btn-ghost btn-sm" onclick="clearExchangeRate()" style="color:var(--muted)">
+          <i class="fa-solid fa-arrows-rotate"></i> Use Live Rate
+        </button>
+        <div style="font-size:11px;color:#3b82f6;font-weight:700" id="ex-rate-status"></div>
+      </div>
+
       <!-- Search + Filter bar -->
       <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
         <div style="position:relative;flex:1;max-width:260px">
@@ -5493,6 +5516,45 @@ function updateGlobalProfit(val) {
   }, 800);
 }
 
+/* ── Exchange rate (controls customer app converter) ── */
+/* Load current value on startup */
+db.ref('settings/exchangeRate').on('value', snap => {
+  const v = snap.val();
+  const el = document.getElementById('ex-rate');
+  if (el && document.activeElement !== el) {
+    el.value = (v !== null && v !== undefined && Number(v) > 0) ? Number(v) : '';
+  }
+  const st = document.getElementById('ex-rate-status');
+  if (st) st.textContent = (v !== null && v !== undefined && Number(v) > 0) ? '✓ Custom rate active' : 'Using live rate';
+});
+
+function updateExchangeRate(val) {
+  const num = parseFloat(val);
+  clearTimeout(window._exDebounce);
+  window._exDebounce = setTimeout(async () => {
+    const st = document.getElementById('ex-rate-status');
+    if (!val || isNaN(num) || num <= 0) {
+      /* Empty → remove so client falls back to live */
+      await db.ref('settings/exchangeRate').remove();
+      if (st) { st.textContent = 'Using live rate'; }
+      return;
+    }
+    await db.ref('settings/exchangeRate').set(num);
+    if (st) { st.textContent = '✓ Saved'; setTimeout(()=>{ st.textContent='✓ Custom rate active'; }, 1500); }
+    auditLog('EDIT', `Exchange rate set: 1 AED = ₹${num}`, { category:'Settings' });
+  }, 800);
+}
+
+async function clearExchangeRate() {
+  await db.ref('settings/exchangeRate').remove();
+  const el = document.getElementById('ex-rate');
+  if (el) el.value = '';
+  const st = document.getElementById('ex-rate-status');
+  if (st) st.textContent = 'Using live rate';
+  showToast('Switched to live market rate', 'success');
+  auditLog('EDIT', 'Exchange rate cleared → live rate', { category:'Settings' });
+}
+
 /* ── Apply global profit to ALL items that haven't been manually overridden ── */
 async function applyGlobalProfit() {
   const val = parseFloat(document.getElementById('pl-global-profit')?.value);
@@ -5585,6 +5647,8 @@ function renderPriceList() {
         <td style="padding:9px 12px;font-size:12px;color:var(--text-soft);border:1px solid var(--border)">${esc(item.bh||'—')}</td>
         <td style="padding:9px 12px;font-size:12px;color:var(--text-soft);border:1px solid var(--border)">${esc(item.capacity||'—')}</td>
         <td style="padding:9px 12px;font-size:12px;border:1px solid var(--border)">${item.spec ? `<span style="background:var(--green-light);color:var(--green);font-weight:800;font-size:11px;padding:2px 8px;border-radius:6px">${esc(item.spec)}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+        <td style="padding:9px 12px;text-align:right;font-size:13px;color:var(--text-soft);border:1px solid var(--border)">${cost.toLocaleString()}</td>
+        <td style="padding:9px 12px;text-align:right;font-size:12px;font-weight:700;color:var(--green);border:1px solid var(--border)">+${profit.toLocaleString()}</td>
         <td style="padding:9px 12px;text-align:right;font-family:var(--font-head);font-weight:900;font-size:14px;border:1px solid var(--border)">${sell.toLocaleString()}</td>
         <td style="padding:9px 8px;text-align:center;border:1px solid var(--border);white-space:nowrap">
           <button class="btn-edit btn-sm" onclick="openPriceListModal('${item.id}')" title="Edit" style="padding:4px 8px"><i class="fa-solid fa-pen"></i></button>
@@ -5621,6 +5685,8 @@ function renderPriceList() {
               <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">BH</th>
               <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Capacity</th>
               <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Spec</th>
+              <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Wholesale</th>
+              <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Profit</th>
               <th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border)">Price in AED</th>
               <th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:800;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);width:96px">Actions</th>
             </tr>
