@@ -992,7 +992,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <!-- Business -->
       <div class="sb-section-label">Business</div>
       <button class="sb-link" data-section="dealers" onclick="showSection('dealers')"><span class="sb-ic"><i class="fa-solid fa-handshake"></i></span>Dealers</button>
-      <button class="sb-link" data-section="customers" onclick="showSection('customers')"><span class="sb-ic"><i class="fa-solid fa-users"></i></span>Customers</button>
+      <button class="sb-link" data-section="customers" onclick="showSection('customers')"><span class="sb-ic"><i class="fa-solid fa-users"></i></span>Customers<span class="sb-badge" style="display:none;background:#22c55e">0</span></button>
       <button class="sb-link" data-section="warehouse" onclick="showSection('warehouse')"><span class="sb-ic"><i class="fa-solid fa-warehouse"></i></span>Warehouses</button>
       <button class="sb-link" data-section="international" onclick="showSection('international')"><span class="sb-ic"><i class="fa-solid fa-globe"></i></span>International</button>
       <!-- Tools -->
@@ -1619,24 +1619,56 @@ tbody td{padding:12px 16px;vertical-align:middle}
     ══════════════════════════════════════ -->
     <section id="section-customers" class="content-section">
       <div class="sec-header">
-        <div><div class="sec-title">Customer Management</div><div class="sec-sub">View and manage all customers who have placed orders</div></div>
-      </div>
-      <div class="table-card">
-        <div class="table-topbar">
-          <div class="table-topbar-title">Customer List</div>
-          <input class="search-input" placeholder="Search customers…" oninput="filterCustomers(this.value)" style="max-width:240px">
-        </div>
-        <div class="table-wrap">
-          <table class="nf-table" style="width:100%;border-collapse:collapse">
-            <thead><tr>
-              <th>Customer</th><th>Email / Phone</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th>Actions</th>
-            </tr></thead>
-            <tbody id="customer-tbody">
-              <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>Customer data is derived from orders. Place orders to see customers.</p></div></td></tr>
-            </tbody>
-          </table>
+        <div><div class="sec-title">Customer Analytics</div><div class="sec-sub">Every customer, their orders, spending, and live online status</div></div>
+        <div class="sec-header-right">
+          <button class="btn-ghost btn-sm" onclick="exportCustomers()"><i class="fa-solid fa-download"></i> Export</button>
         </div>
       </div>
+
+      <!-- ── Stats row ── -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-card blue">
+          <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+          <div><div class="stat-num" id="cust-stat-total">0</div><div class="stat-lbl">Total Customers</div></div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon green"><i class="fa-solid fa-circle" style="font-size:10px;animation:presencePulse 2s infinite"></i></div>
+          <div><div class="stat-num" id="cust-stat-online">0</div><div class="stat-lbl">Online Now</div></div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon amber"><i class="fa-solid fa-bag-shopping"></i></div>
+          <div><div class="stat-num" id="cust-stat-orders">0</div><div class="stat-lbl">Total Orders</div></div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon blue"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+          <div><div class="stat-num" id="cust-stat-revenue">0</div><div class="stat-lbl">Total Revenue</div></div>
+        </div>
+      </div>
+
+      <!-- ── Sort + Search ── -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <div style="position:relative;flex:1;max-width:260px">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+          <input class="search-input" id="cust-search" placeholder="Name, phone, country…" oninput="renderCustomerTable(this.value)" style="padding-left:32px;width:100%">
+        </div>
+        <select class="mf-input" id="cust-sort" onchange="renderCustomerTable()" style="width:auto;height:36px;font-size:12px">
+          <option value="lastOrder">Recent Order</option>
+          <option value="spent">Highest Spent</option>
+          <option value="orders">Most Orders</option>
+          <option value="name">Name A–Z</option>
+        </select>
+        <div style="display:flex;gap:6px">
+          <button class="btn-ghost btn-sm" id="cf-all"    onclick="setCustFilter('all')"    style="background:var(--green);color:#fff;border-color:var(--green)">All</button>
+          <button class="btn-ghost btn-sm" id="cf-online" onclick="setCustFilter('online')" >🟢 Online</button>
+          <button class="btn-ghost btn-sm" id="cf-repeat" onclick="setCustFilter('repeat')" >🔁 Repeat</button>
+        </div>
+      </div>
+
+      <!-- ── Customer cards ── -->
+      <div id="customer-cards-grid"></div>
+
+      <!-- Legacy tbody kept for filterOrdersByCustomer compatibility -->
+      <table style="display:none"><tbody id="customer-tbody"></tbody></table>
     </section>
 
     <!-- ══════════════════════════════════════
@@ -4938,92 +4970,258 @@ async function deleteDealer(id, name) {
 }
 
 /* ─── CUSTOMER MANAGEMENT ────────────────────────────────── */
+/* ══════════════════════════════════════════════
+   CUSTOMER ANALYTICS
+══════════════════════════════════════════════ */
+let _clientPresence = {};   /* uid → { lastSeen, name, page } */
+let _custFilter = 'all';
+const CLIENT_ONLINE_MS = 90000; /* 90s = online */
+
+/* Real-time client presence listener */
+db.ref('client_presence').on('value', snap => {
+  _clientPresence = snap.val() || {};
+  if (document.getElementById('section-customers')?.classList.contains('active')) renderCustomerTable();
+}, () => {}); /* silent if permission denied */
+
+/* Refresh every 30s so Online badges expire correctly */
+setInterval(() => {
+  if (document.getElementById('section-customers')?.classList.contains('active')) renderCustomerTable();
+}, 30000);
+
+function isClientOnline(userId) {
+  const p = _clientPresence[userId];
+  return p && (Date.now() - Number(p.lastSeen)) <= CLIENT_ONLINE_MS;
+}
+
 function buildCustomerList() {
-  const orders = Object.entries(APP.orders||{});
+  const orders = Object.entries(APP.orders || {});
   const map = {};
   orders.forEach(([oid, o]) => {
-    /* Group by phone (most reliable unique key from client orders).
-       Fall back to name, then userId, then order id. */
-    const phone = o.customerPhone || o.whatsapp || o.phone || '';
-    const name  = o.customerName  || o.userName || o.name || 'Unknown';
-    /* Key: prefer phone, else name (normalised) */
-    const key = phone.replace(/\D/g,'') || name.toLowerCase().trim() || oid;
+    const phone = (o.customerPhone || o.whatsapp || o.phone || '').replace(/\D/g, '');
+    const name  = o.customerName || o.userName || o.name || 'Unknown';
+    const key   = phone || name.toLowerCase().trim() || oid;
+
     if (!map[key]) {
       map[key] = {
-        name,
-        phone,
-        email:    o.email || o.customerEmail || '—',
-        country:  o.customerCountry || o.country || '—',
+        name, phone,
+        email:    o.email || o.customerEmail || '',
+        country:  o.customerCountry || o.country || '',
         userId:   o.userId || o.createdBy || '',
-        orders:   0,
-        spent:    0,
         currency: o.currency || 'USD',
-        lastTs:   0,
-        orderIds: []
+        orders:   0, completed: 0, pending: 0, cancelled: 0,
+        revenue:  0,
+        lastTs:   0, firstTs: Infinity,
+        orderIds: [],
+        productCounts: {},   /* productTitle → count */
+        allItems: [],
       };
     }
-    map[key].orders++;
-    map[key].spent += Number(o.total||0);
-    map[key].orderIds.push(oid);
-    if ((o.createdAt||0) > map[key].lastTs) {
-      map[key].lastTs   = o.createdAt||0;
-      map[key].currency = o.currency || map[key].currency;
+    const c = map[key];
+    c.orders++;
+    c.orderIds.push(oid);
+    if (o.status === 'delivered' || o.status === 'completed') { c.completed++; c.revenue += Number(o.total || 0); }
+    else if (o.status === 'pending') c.pending++;
+    else if (o.status === 'cancelled') c.cancelled++;
+    else c.revenue += Number(o.total || 0);  /* count non-cancelled */
+    if ((o.createdAt || 0) > c.lastTs) { c.lastTs = o.createdAt || 0; c.currency = o.currency || c.currency; }
+    if ((o.createdAt || Infinity) < c.firstTs) c.firstTs = o.createdAt || Infinity;
+    /* Track products ordered */
+    (o.items || []).forEach(item => {
+      const t = item.title || item.name || 'Item';
+      c.productCounts[t] = (c.productCounts[t] || 0) + (item.qty || 1);
+    });
+  });
+  /* Compute top product per customer */
+  Object.values(map).forEach(c => {
+    const entries = Object.entries(c.productCounts);
+    if (entries.length) {
+      c.topProduct = entries.sort((a,b) => b[1]-a[1])[0][0];
     }
   });
   return Object.values(map);
 }
 
-function renderCustomerTable(filter = '') {
-  const tbody = document.getElementById('customer-tbody');
-  if (!tbody) return;
-  const ql = (filter||'').toLowerCase();
-  const list = buildCustomerList().filter(c =>
-    !ql ||
+function setCustFilter(f) {
+  _custFilter = f;
+  ['all','online','repeat'].forEach(s => {
+    const b = document.getElementById('cf-'+s); if (!b) return;
+    b.style.background  = s===f ? 'var(--green)' : '';
+    b.style.color       = s===f ? '#fff' : '';
+    b.style.borderColor = s===f ? 'var(--green)' : '';
+  });
+  renderCustomerTable();
+}
+
+function renderCustomerTable(filter) {
+  const grid  = document.getElementById('customer-cards-grid'); if (!grid) return;
+  const ql    = (filter ?? document.getElementById('cust-search')?.value ?? '').toLowerCase();
+  const sort  = document.getElementById('cust-sort')?.value || 'lastOrder';
+  const SYMS  = { USD:'$', AED:'AED ', INR:'₹', GBP:'£', EUR:'€' };
+
+  let list = buildCustomerList();
+
+  /* Filter */
+  if (ql) list = list.filter(c =>
     c.name.toLowerCase().includes(ql) ||
     c.phone.includes(ql) ||
-    c.email.toLowerCase().includes(ql) ||
-    c.country.toLowerCase().includes(ql)
+    (c.email||'').toLowerCase().includes(ql) ||
+    (c.country||'').toLowerCase().includes(ql)
   );
+  if (_custFilter === 'online') list = list.filter(c => isClientOnline(c.userId));
+  if (_custFilter === 'repeat') list = list.filter(c => c.orders >= 2);
+
+  /* Sort */
+  if (sort === 'spent')     list.sort((a,b) => b.revenue - a.revenue);
+  else if (sort === 'orders') list.sort((a,b) => b.orders - a.orders);
+  else if (sort === 'name')   list.sort((a,b) => a.name.localeCompare(b.name));
+  else list.sort((a,b) => b.lastTs - a.lastTs);  /* recent */
+
+  /* ── Stats ── */
+  const all = buildCustomerList();
+  const onlineCount   = all.filter(c => isClientOnline(c.userId)).length;
+  const totalRevenue  = all.reduce((s,c) => s+c.revenue, 0);
+  const totalOrders   = all.reduce((s,c) => s+c.orders, 0);
+  const setStat = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setStat('cust-stat-total',   all.length);
+  setStat('cust-stat-online',  onlineCount);
+  setStat('cust-stat-orders',  totalOrders);
+  setStat('cust-stat-revenue', '$'+Math.round(totalRevenue).toLocaleString());
+
+  /* ── Sidebar badge on customers nav ── */
+  const custBadge = document.querySelector('.sb-link[data-section="customers"] .sb-badge');
+  if (custBadge && onlineCount > 0) {
+    custBadge.textContent = onlineCount;
+    custBadge.style.display = 'inline-flex';
+    custBadge.style.background = '#22c55e';
+  } else if (custBadge) custBadge.style.display = 'none';
+
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>No customers yet. Orders placed from the storefront will appear here.</p></div></td></tr>`;
+    grid.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
+      <i class="fa-solid fa-users" style="font-size:32px;display:block;margin-bottom:10px;opacity:.3"></i>
+      No customers found</div>`;
     return;
   }
-  list.sort((a,b) => b.lastTs - a.lastTs);
-  const SYMS = { USD:'$', AED:'AED ', INR:'₹', GBP:'£', EUR:'€' };
-  tbody.innerHTML = list.map(c => {
-    const sym = SYMS[(c.currency||'USD').toUpperCase()] || '$';
-    /* Avatar initials */
+
+  grid.innerHTML = list.map((c, idx) => {
+    const sym      = SYMS[(c.currency||'USD').toUpperCase()] || '$';
     const initials = c.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase() || '?';
-    return `<tr>
-      <td>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:34px;height:34px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">${initials}</div>
-          <div>
-            <div style="font-weight:700;font-size:13px">${esc(c.name)}</div>
-            <div style="font-size:11px;color:var(--muted)">${esc(c.country)}</div>
+    const online   = isClientOnline(c.userId);
+    const presPage = online && _clientPresence[c.userId]?.page ? _clientPresence[c.userId].page : null;
+    const isRepeat = c.orders >= 2;
+    const isTop    = idx === 0 && sort === 'spent';
+
+    /* Progress bar for completed vs total */
+    const completePct = c.orders > 0 ? Math.round((c.completed / c.orders) * 100) : 0;
+
+    /* Last seen */
+    const lastStr = c.lastTs ? fmtDate(c.lastTs) : '—';
+
+    /* Member since */
+    const sinceStr = c.firstTs < Infinity ? fmtDate(c.firstTs) : '—';
+
+    return `<div style="
+      background:var(--surface);border-radius:var(--radius);
+      border:1.5px solid ${online?'var(--green)':'var(--border)'};
+      padding:16px;margin-bottom:12px;
+      transition:border-color .2s;
+      ${online?'box-shadow:0 0 0 3px rgba(34,197,94,.1)':''}">
+
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <!-- Avatar -->
+        <div style="position:relative;flex-shrink:0">
+          <div style="width:44px;height:44px;border-radius:50%;
+            background:${isTop?'linear-gradient(135deg,#f59e0b,#d97706)':'linear-gradient(135deg,var(--green),var(--green-dark))'};
+            color:#fff;display:flex;align-items:center;justify-content:center;
+            font-size:15px;font-weight:800">${initials}</div>
+          ${online ? `<span style="position:absolute;bottom:0;right:0;width:13px;height:13px;border-radius:50%;background:#22c55e;border:2px solid var(--surface)"></span>` : ''}
+        </div>
+
+        <!-- Main info -->
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+            <div style="font-weight:800;font-size:14px;color:var(--text)">${esc(c.name)}</div>
+            ${online ? `<span style="background:#dcfce7;color:#16a34a;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;animation:presencePulse 2s infinite">🟢 ONLINE</span>` : ''}
+            ${isRepeat ? `<span style="background:var(--green-light);color:var(--green);font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px">🔁 REPEAT</span>` : ''}
+            ${isTop ? `<span style="background:#fef3c7;color:#d97706;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px">⭐ TOP</span>` : ''}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">
+            ${c.phone ? `<i class="fa-solid fa-phone" style="width:12px"></i> ${esc(c.phone)}` : ''}
+            ${c.country ? ` &nbsp;·&nbsp; 📍 ${esc(c.country)}` : ''}
+            ${online && presPage ? ` &nbsp;·&nbsp; <span style="color:var(--green);font-weight:600">Browsing: ${esc(presPage)}</span>` : ''}
           </div>
         </div>
-      </td>
-      <td>
-        <div style="font-size:12px">${esc(c.phone||'—')}</div>
-        <div style="font-size:11px;color:var(--muted)">${esc(c.email==='—'?'':c.email)}</div>
-      </td>
-      <td style="font-weight:700;text-align:center;color:var(--text)">${c.orders}</td>
-      <td style="font-weight:800;color:var(--green);font-size:13px">${sym}${Number(c.spent).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-      <td style="font-size:12px;color:var(--muted)">${fmtDate(c.lastTs)}</td>
-      <td>
-        <button class="btn-ghost btn-sm" onclick="filterOrdersByCustomer('${esc(c.phone||c.name)}')">
-          <i class="fa-solid fa-eye"></i> Orders
-        </button>
-        ${c.phone ? `<a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank" class="btn-ghost btn-sm" style="margin-left:4px;color:#25D366;border-color:#25D366">
-          <i class="fa-brands fa-whatsapp"></i>
-        </a>` : ''}
-      </td>
-    </tr>`;
+
+        <!-- Actions -->
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          ${c.phone ? `<a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank"
+            class="btn-ghost btn-sm" style="color:#25D366;border-color:#25D366;text-decoration:none"
+            title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>` : ''}
+          <button class="btn-ghost btn-sm" onclick="filterOrdersByCustomer('${esc(c.phone||c.name)}')"
+            title="View Orders"><i class="fa-solid fa-bag-shopping"></i></button>
+        </div>
+      </div>
+
+      <!-- ── Stats strip ── -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 10px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:900;color:var(--text)">${c.orders}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Orders</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:900;color:var(--green)">${sym}${Math.round(c.revenue).toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Revenue</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:900;color:#3b82f6">${c.completed}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Completed</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:18px;font-weight:900;color:${c.pending>0?'#f59e0b':'var(--muted)'}">${c.pending}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Pending</div>
+        </div>
+      </div>
+
+      <!-- ── Order completion bar ── -->
+      ${c.orders > 0 ? `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px">
+          <span>Completion rate</span><span style="font-weight:700;color:var(--green)">${completePct}%</span>
+        </div>
+        <div style="height:5px;border-radius:3px;background:var(--bg);overflow:hidden">
+          <div style="height:100%;width:${completePct}%;background:var(--green);border-radius:3px;transition:width .6s"></div>
+        </div>
+      </div>` : ''}
+
+      <!-- ── Extra info row ── -->
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted)">
+        <span><i class="fa-solid fa-clock" style="width:12px"></i> Last order: <strong style="color:var(--text)">${lastStr}</strong></span>
+        <span><i class="fa-solid fa-calendar-plus" style="width:12px"></i> Since: <strong style="color:var(--text)">${sinceStr}</strong></span>
+        ${c.topProduct ? `<span><i class="fa-solid fa-star" style="width:12px;color:var(--green)"></i> Fav: <strong style="color:var(--text)">${esc(c.topProduct.slice(0,24))}</strong></span>` : ''}
+      </div>
+    </div>`;
   }).join('');
 }
 
 function filterCustomers(q) { renderCustomerTable(q.toLowerCase()); }
+
+function exportCustomers() {
+  const list = buildCustomerList();
+  if (!list.length) { showToast('No customers to export','error'); return; }
+  const rows = [['Name','Phone','Email','Country','Total Orders','Completed','Pending','Revenue','Currency','Last Order','Member Since','Top Product']];
+  list.forEach(c => rows.push([
+    c.name, c.phone, c.email, c.country,
+    c.orders, c.completed, c.pending,
+    Math.round(c.revenue), c.currency,
+    c.lastTs ? new Date(c.lastTs).toLocaleDateString() : '',
+    c.firstTs < Infinity ? new Date(c.firstTs).toLocaleDateString() : '',
+    c.topProduct || ''
+  ]));
+  const csv = rows.map(r=>r.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'customers_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  showToast('Customers exported!','success');
+}
 
 /* Jump to Orders tab pre-filtered to this customer */
 function filterOrdersByCustomer(phoneOrName) {
