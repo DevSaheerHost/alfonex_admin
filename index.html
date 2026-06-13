@@ -21,6 +21,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <link rel="icon" type="image/png" href="./logo.png">
   <!-- jsPDF + AutoTable — invoice generation, no server needed -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -2038,7 +2039,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <button class="btn-ghost btn-sm" onclick="filterAudit('PRICE')"  id="af-price" ><i class="fa-solid fa-tag"              style="color:#f59e0b"></i> Payments</button>
         <button class="btn-ghost btn-sm" onclick="filterAudit('STOCK')"  id="af-stock" ><i class="fa-solid fa-boxes-stacked"    style="color:var(--green)"></i> Stock</button>
         <button class="btn-ghost btn-sm" onclick="filterAudit('LOGIN')"  id="af-login" ><i class="fa-solid fa-right-to-bracket" style="color:#8b5cf6"></i> Logins</button>
-        <button class="btn-ghost btn-sm" onclick="filterAudit('VIEW')"   id="af-view"  ><i class="fa-solid fa-eye"              style="color:#64748b"></i> Navigation</button>
+        <!-- Navigation VIEW filter removed — navigation events are no longer logged -->
         <button class="btn-ghost btn-sm" onclick="filterAudit('SECURITY')" id="af-security" style="border-color:#fca5a5"><i class="fa-solid fa-shield-halved" style="color:var(--red)"></i> Security &amp; Errors</button>
         <button class="btn-ghost btn-sm" onclick="filterAudit('ANN')"    id="af-ann"   ><i class="fa-solid fa-bullhorn"         style="color:#f59e0b"></i> Announcements</button>
       </div>
@@ -3216,10 +3217,11 @@ function showSection(name){
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
 
-  /* ── Track section navigation (skip audit page itself + duplicates) ── */
-  if (name !== 'audit' && name !== _lastSection && APP?.user) {
+  /* ── Track section navigation — only meaningful transitions, not raw "opened" events ── */
+  if (name !== 'audit' && name !== _lastSection) {
     _lastSection = name;
-    auditLog('VIEW', `Opened ${T[name]||name}`, { category:'Navigation' });
+    // Navigation is not logged — it creates noise with zero actionable value.
+    // Only data mutations (ADD / EDIT / DELETE) and auth events are logged.
   }
 
   /* ── Section-specific init (safe: functions defined later in same script) ── */
@@ -3615,13 +3617,72 @@ async function saveProduct(){
       const old = APP.products[editId] || {};
       await db.ref(`products/${editId}`).update(payload);
       showToast('Product updated!','success');
-      /* Detailed change log */
+
+      /* ── Comprehensive change log ───────────────────────────────────────────── */
       const changes = [];
-      if(old.title !== title) changes.push(`Title: "${old.title}" → "${title}"`);
-      if(old.price !== price) changes.push(`Price: $${old.price} → $${price}`);
-      if(old.stock !== stock) changes.push(`Stock: ${old.stock} → ${stock}`);
-      if(old.isHidden !== (payload.isHidden||null)) changes.push(`Hidden: ${!!old.isHidden} → ${!!payload.isHidden}`);
-      auditLog('EDIT', `Updated product: ${title}`, { detail: changes.join(' | ')||'Minor update', productId:editId, category:'Products' });
+
+      // Core fields
+      if (old.title         !== title)              changes.push(`Title: "${old.title||'—'}" → "${title}"`);
+      if ((old.price  ||0)  !== price)              changes.push(`Base price: AED ${old.price||0} → AED ${price}`);
+      if ((old.costPrice||0)!== (payload.costPrice||0)) changes.push(`Cost price: AED ${old.costPrice||0} → AED ${payload.costPrice||0}`);
+      if ((old.stock  ||0)  !== stock)              changes.push(`Stock: ${old.stock||0} → ${stock}`);
+      if ((old.category||'')!== (category||''))     changes.push(`Category: "${old.category||'—'}" → "${category||'—'}"`);
+      if ((old.grade  ||'') !== (grade||''))        changes.push(`Grade: ${(old.grade||'—').toUpperCase()} → ${(grade||'—').toUpperCase()}`);
+      if ((old.description||'').trim() !== desc.trim()) changes.push('Description updated');
+
+      // Currency prices
+      if ((old.priceUSD||null) !== (priceUSD||null)) changes.push(`USD: $${old.priceUSD||'—'} → $${priceUSD||'—'}`);
+      if ((old.priceAED||null) !== (priceAED||null)) changes.push(`AED: ${old.priceAED||'—'} → ${priceAED||'—'}`);
+      if ((old.priceINR||null) !== (priceINR||null)) changes.push(`INR: ₹${old.priceINR||'—'} → ₹${priceINR||'—'}`);
+
+      // Status flags — use !! to normalise undefined/null/false all to false
+      const FLAGS_MAP = [
+        ['isHidden',     'Hidden'],
+        ['isOOS',        'Out of Stock'],
+        ['isNewArrival', 'New Arrival'],
+        ['isFeatured',   'Featured'],
+        ['isOnSale',     'On Sale'],
+        ['isComingSoon', 'Coming Soon'],
+      ];
+      for (const [key, label] of FLAGS_MAP) {
+        if (!!old[key] !== !!payload[key]) {
+          changes.push(`${label}: ${!!old[key] ? 'Yes' : 'No'} → ${!!payload[key] ? 'Yes' : 'No'}`);
+        }
+      }
+
+      // Images
+      const oldImgSet = [old.imageUrl, ...(Array.isArray(old.imageUrls) ? old.imageUrls : [])].filter(Boolean);
+      const newImgCount = allUrls.filter(Boolean).length;
+      if (oldImgSet.length !== newImgCount) {
+        changes.push(`Images: ${oldImgSet.length} → ${newImgCount}`);
+      } else if (old.imageUrl && old.imageUrl !== imgUrl) {
+        changes.push('Main image replaced');
+      }
+
+      // 3D model
+      const oldModel = old.modelUrl || null;
+      const newModel = payload.modelUrl || null;
+      if (oldModel !== newModel) {
+        if (!oldModel && newModel)   changes.push('3D model added');
+        else if (oldModel && !newModel) changes.push('3D model removed');
+        else                         changes.push('3D model replaced');
+      }
+
+      // Variants — compare JSON since order matters for slot consistency
+      const oldVarJson = JSON.stringify(old.variants || []);
+      const newVarJson = JSON.stringify(variants || []);
+      if (oldVarJson !== newVarJson) {
+        const oldOpts = (old.variants || []).reduce((s, g) => s + (g.values||[]).length, 0);
+        const newOpts = (variants     || []).reduce((s, g) => s + (g.values||[]).length, 0);
+        changes.push(`Variants updated (${oldOpts} → ${newOpts} options)`);
+      }
+
+      auditLog('EDIT', `Updated product: ${title}`, {
+        detail:    changes.length ? changes.join(' | ') : 'Saved (no field changes detected)',
+        productId: editId,
+        category:  'Products',
+        changes:   changes.length,
+      });
       // Delete replaced Cloudinary files after Firebase is updated — fire-and-forget
       deleteOldCloudinaryAssets(old, allUrls, payload.modelUrl || null);
     } else {
@@ -6205,7 +6266,11 @@ function generateInvoicePDF() {
   <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script>
   </body></html>`);
   win.document.close();
-  auditLog('EDIT', `Generated invoice PDF for order ${id}`);
+  auditLog('EDIT', `Invoice PDF generated: Order ${shortId(id)}`, {
+    detail:   `Customer: ${custName} | Total: ${sym}${o.total||0} | Status: ${o.status||'—'} | Currency: ${cur}`,
+    orderId:  id,
+    category: 'Orders',
+  });
 }
 
 /* ─── TEAM COMMUNICATION ─────────────────────────────────── */
