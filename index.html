@@ -907,6 +907,68 @@ tbody td{padding:12px 16px;vertical-align:middle}
   0%,100%{box-shadow:0 0 0 3px rgba(34,197,94,.2)}
   50%    {box-shadow:0 0 0 5px rgba(34,197,94,.1)}
 }
+
+/* ── REVIEWS SECTION ── */
+.review-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;transition:background .12s}
+.review-card:hover{background:var(--surface2)}
+.review-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+.review-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-family:var(--font-head);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.review-meta{flex:1;min-width:0}
+.review-user{font-size:13px;font-weight:700;color:var(--text)}
+.review-product{font-size:11px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.review-date{font-size:11px;color:var(--muted);flex-shrink:0}
+.star-row{display:flex;gap:2px;margin-bottom:6px}
+.star-row .fa-star{color:#fbbf24;font-size:13px}
+.star-row .fa-star.empty{color:var(--border)}
+.review-text{font-size:13px;color:var(--text-soft);line-height:1.55}
+.review-media-strip{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.review-media-strip img,.review-media-strip video{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer}
+.review-filter-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.review-filter-tabs button{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.review-filter-tabs button.active{border-color:var(--amber);background:#fffbeb;color:#92400e}
+[data-theme="dark"] .review-filter-tabs button.active{background:#3a2e10;color:#fbbf24;border-color:#5a4515}
+.review-rating-badge{display:inline-flex;align-items:center;gap:4px;background:#fffbeb;color:#92400e;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #fde68a}
+[data-theme="dark"] .review-rating-badge{background:#3a2e10;color:#fbbf24;border-color:#5a4515}
+/* ── LOYALTY SECTION ── */
+.loyalty-user-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.loyalty-user-row:last-child{border-bottom:none}
+.loyalty-pts{font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--green);min-width:60px;text-align:right}
+.loyalty-code{font-family:monospace;font-size:11px;background:var(--surface2);padding:2px 7px;border-radius:6px;border:1px solid var(--border);color:var(--muted)}
+.loyalty-history-entry{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.loyalty-history-entry:last-child{border-bottom:none}
+.lh-pts.earn{color:var(--green);font-weight:700}
+.lh-pts.redeem{color:var(--red);font-weight:700}
+.lh-pts.bonus{color:var(--purple);font-weight:700}
+
+
+/* ── SEARCH ANALYTICS ── */
+.sa-query-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.sa-query-row:last-child{border-bottom:none}
+.sa-query-pill{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--text);font-family:monospace;white-space:nowrap}
+.sa-bar-wrap{flex:1;background:var(--bg);border-radius:6px;height:8px;overflow:hidden}
+.sa-bar{height:100%;background:var(--green);border-radius:6px;transition:width .4s ease}
+.sa-count{font-size:12px;font-weight:700;color:var(--green);min-width:36px;text-align:right}
+.sa-top-product{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.sa-top-product:last-child{border-bottom:none}
+.sa-top-product-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sa-rank{width:22px;height:22px;border-radius:50%;background:var(--green-light);color:var(--green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sa-rank.gold{background:#fffbeb;color:#b45309}
+.sa-rank.silver{background:#f3f4f6;color:#6b7280}
+.sa-rank.bronze{background:#fff7ed;color:#c2410c}
+[data-theme="dark"] .sa-rank.gold{background:#3a2e10;color:#fbbf24}
+[data-theme="dark"] .sa-rank.silver{background:#2c313a;color:#9ca3af}
+[data-theme="dark"] .sa-rank.bronze{background:#3a1e10;color:#fb923c}
+.sa-feed-entry{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px}
+.sa-feed-entry:last-child{border-bottom:none}
+.sa-feed-query{font-weight:700;color:var(--text)}
+.sa-feed-product{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.sa-feed-time{color:var(--muted);font-size:10px;white-space:nowrap;margin-left:auto;flex-shrink:0}
+.sa-period-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.sa-period-tabs button{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.sa-period-tabs button.active{border-color:var(--green);background:var(--green-light);color:var(--green)}
+[data-theme="dark"] .sa-period-tabs button.active{background:var(--green-mid)}
+
+@media(max-width:600px){.sa-two-col{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -1006,6 +1068,9 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <button class="sb-link" data-section="meetings" onclick="showSection('meetings')"><span class="sb-ic"><i class="fa-solid fa-calendar-check"></i></span>Meetings</button>
       <button class="sb-link" data-section="pricehistory" onclick="showSection('pricehistory')"><span class="sb-ic"><i class="fa-solid fa-chart-line"></i></span>Price History</button>
       <button class="sb-link" data-section="pricelist" onclick="showSection('pricelist')"><span class="sb-ic"><i class="fa-solid fa-list-ol"></i></span>Price List</button>
+            <button class="sb-link" data-section="reviews" onclick="showSection('reviews')"><span class="sb-ic"><i class="fa-solid fa-star"></i></span>Reviews<span class="sb-badge" id="sb-reviews-count" style="display:none;background:#f59e0b">0</span></button>
+      <button class="sb-link" data-section="loyalty" onclick="showSection('loyalty')"><span class="sb-ic"><i class="fa-solid fa-coins"></i></span>Loyalty & Referrals</button>
+      <button class="sb-link" data-section="search-analytics" onclick="showSection('search-analytics')"><span class="sb-ic"><i class="fa-solid fa-magnifying-glass-chart"></i></span>Search Analytics</button>
       <button class="sb-link" data-section="reservations" onclick="showSection('reservations')"><span class="sb-ic"><i class="fa-solid fa-bookmark"></i></span>Reservations<span class="sb-badge" id="sb-reserv-count" style="display:none">0</span></button>
       <!-- Admin -->
       <div id="sb-admin-nav" style="display:none">
@@ -2006,6 +2071,122 @@ tbody td{padding:12px 16px;vertical-align:middle}
       </div>
     </section>
 
+
+    <!-- ══════════════════════════════════════
+         REVIEWS MANAGEMENT
+    ══════════════════════════════════════ -->
+    <section id="section-reviews" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Product Reviews</div>
+          <div class="sec-sub">All verified customer reviews — moderate and delete as needed</div>
+        </div>
+        <div class="sec-header-right">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="review-search" placeholder="Search reviews…" oninput="renderReviewsSection()"></div>
+        </div>
+      </div>
+      <div class="review-filter-tabs">
+        <button class="active" id="rev-tab-all"    onclick="setReviewFilter('all',this)">All</button>
+        <button id="rev-tab-5" onclick="setReviewFilter('5',this)">★★★★★ 5</button>
+        <button id="rev-tab-4" onclick="setReviewFilter('4',this)">★★★★ 4</button>
+        <button id="rev-tab-3" onclick="setReviewFilter('3',this)">★★★ 3 &amp; below</button>
+        <button id="rev-tab-media" onclick="setReviewFilter('media',this)">Has Media</button>
+      </div>
+      <div id="reviews-container"><div class="empty-state"><div class="empty-icon">⭐</div><p>No reviews yet.</p></div></div>
+    </section>
+
+    <!-- ══════════════════════════════════════
+         LOYALTY & REFERRALS
+    ══════════════════════════════════════ -->
+    <section id="section-loyalty" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Loyalty &amp; Referrals</div>
+          <div class="sec-sub">User point balances, referral codes, and redemption history</div>
+        </div>
+        <div class="sec-header-right">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="loyalty-search" placeholder="Search by name or email…" oninput="renderLoyaltySection()"></div>
+        </div>
+      </div>
+      <!-- Stats row -->
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:20px">
+        <div class="stat-card"><div class="stat-icon amber"><i class="fa-solid fa-coins"></i></div><div class="stat-value" id="loy-stat-total">0</div><div class="stat-label">Total Points Issued</div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-users"></i></div><div class="stat-value" id="loy-stat-users">0</div><div class="stat-label">Users with Points</div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="fa-solid fa-fire"></i></div><div class="stat-value" id="loy-stat-redeemed">0</div><div class="stat-label">Points Redeemed</div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="fa-solid fa-share-nodes"></i></div><div class="stat-value" id="loy-stat-referrals">0</div><div class="stat-label">Referral Bonuses</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-topbar"><div class="table-topbar-title">User Balances</div></div>
+        <div id="loyalty-list" style="padding:0 18px 12px"><div class="empty-state"><div class="empty-icon">🪙</div><p>Loading…</p></div></div>
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════════
+         SEARCH ANALYTICS
+    ══════════════════════════════════════ -->
+    <section id="section-search-analytics" class="content-section">
+      <div class="sec-header">
+        <div>
+          <div class="sec-title">Search Analytics</div>
+          <div class="sec-sub">What customers are searching for when they click through to products</div>
+        </div>
+        <div class="sec-header-right">
+          <button class="btn-secondary btn-sm" onclick="exportSearchAnalytics()"><i class="fa-solid fa-download"></i> Export CSV</button>
+          <button class="btn-danger btn-sm" onclick="clearSearchAnalytics()"><i class="fa-solid fa-trash"></i> Clear All</button>
+        </div>
+      </div>
+
+      <!-- Period filter -->
+      <div class="sa-period-tabs">
+        <button class="active" onclick="setSAPeriod(1,this)">Today</button>
+        <button onclick="setSAPeriod(7,this)">Last 7 days</button>
+        <button onclick="setSAPeriod(30,this)">Last 30 days</button>
+        <button onclick="setSAPeriod(0,this)">All time</button>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:20px">
+        <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-magnifying-glass"></i></div><div class="stat-value" id="sa-stat-clicks">0</div><div class="stat-label">Search Clicks</div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="fa-solid fa-fingerprint"></i></div><div class="stat-value" id="sa-stat-unique-q">0</div><div class="stat-label">Unique Queries</div></div>
+        <div class="stat-card"><div class="stat-icon amber"><i class="fa-solid fa-users"></i></div><div class="stat-value" id="sa-stat-users">0</div><div class="stat-label">Unique Users</div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="fa-solid fa-fire"></i></div><div class="stat-value" id="sa-stat-top-q">—</div><div class="stat-label">Top Query</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" class="sa-two-col">
+        <!-- Top Queries -->
+        <div class="table-card">
+          <div class="table-topbar">
+            <div class="table-topbar-title"><i class="fa-solid fa-ranking-star" style="color:var(--amber);margin-right:6px"></i>Top Search Queries</div>
+          </div>
+          <div id="sa-top-queries" style="padding:4px 18px 12px">
+            <div class="empty-state" style="padding:24px"><div class="empty-icon">🔍</div><p>No data yet.</p></div>
+          </div>
+        </div>
+
+        <!-- Top Clicked Products -->
+        <div class="table-card">
+          <div class="table-topbar">
+            <div class="table-topbar-title"><i class="fa-solid fa-box-open" style="color:var(--green);margin-right:6px"></i>Most Clicked Products</div>
+          </div>
+          <div id="sa-top-products" style="padding:4px 18px 12px">
+            <div class="empty-state" style="padding:24px"><div class="empty-icon">📦</div><p>No data yet.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live feed -->
+      <div class="table-card">
+        <div class="table-topbar">
+          <div class="table-topbar-title"><i class="fa-solid fa-satellite-dish" style="color:var(--green);margin-right:6px"></i>Recent Clicks (Live Feed)</div>
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="sa-feed-search" placeholder="Filter…" oninput="renderSearchAnalytics()"></div>
+        </div>
+        <div id="sa-feed" style="padding:4px 18px 12px">
+          <div class="empty-state" style="padding:24px"><div class="empty-icon">📡</div><p>Waiting for data…</p></div>
+        </div>
+      </div>
+    </section>
+
   </div><!-- end #main-area -->
 </div><!-- end #view-dashboard -->
 
@@ -2564,7 +2745,14 @@ tbody td{padding:12px 16px;vertical-align:middle}
 
       <!-- ① BASIC INFO -->
       <div class="mf-group"><label class="mf-label"><i class="fa-solid fa-tag" style="color:var(--green)"></i> Product Title *</label><input type="text" id="prod-title" class="mf-input" placeholder="e.g. iPhone 17 Pro Max 256GB"></div>
-      <div class="mf-group"><label class="mf-label">Description</label><textarea id="prod-desc" class="mf-textarea" placeholder="Brief product description…" rows="3"></textarea></div>
+      <div class="mf-group"><label class="mf-label">Description</label><textarea id="prod-desc" class="mf-textarea" placeholder="Processor:: A19 Chip:: Superfast&#10;Display:: 6.3 inch OLED:: Cinematic" rows="4"></textarea>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:3px solid var(--green);line-height:1.6">
+        <strong>Highlights format</strong> — one spec per line using <code style="background:var(--bg);padding:1px 4px;border-radius:3px">::</code> separator:<br>
+        <code style="background:var(--bg);padding:1px 4px;border-radius:3px">Processor:: A19 Chip, 6 Core Processor:: Superfast Multitasking</code><br>
+        <code style="background:var(--bg);padding:1px 4px;border-radius:3px">Display:: 6.3 inch OLED:: Cinematic. Sharpest Colours</code><br>
+        Format: <em>Label:: Value</em> or <em>Label:: Value:: Subtitle</em>
+      </div>
+      </div>
 
       <!-- ② CATEGORY -->
       <div class="mf-group">
@@ -2905,7 +3093,7 @@ function cldThumb(u, t='f_auto,q_auto,w_200'){ return u ? u.replace('/upload/',`
 ═══════════════════════════════════════════════ */
 const APP = {
   user:null, role:null,
-  products:{}, orders:{}, admins:{}, banners:{},
+  products:{}, orders:{}, admins:{}, banners:{}, reviews:{}, loyaltyUsers:{}, loyaltyHistory:{}, searchAnalytics:{},
   deleteTarget:null,
   activeOrderId:null,
   orderFilter:'all',
@@ -2941,7 +3129,7 @@ function showSection(name){
     marketing:'Marketing Tools', labels:'Labels & Barcodes',
     invoices:'Customer Invoices', comms:'Team Communication',
     meetings:'Meeting Scheduler', pricehistory:'Price Change History', reservations:'Device Reservations', pricelist:'Price List',
-    audit:'Audit Trail'
+    audit:'Audit Trail', reviews:'Product Reviews', loyalty:'Loyalty & Referrals', 'search-analytics':'Search Analytics'
   };
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
@@ -2966,6 +3154,9 @@ function showSection(name){
     if (name==='comms')         { attachAnnouncementsListener(); renderTasks(); renderAnnouncements(); loadChatMessages(_chatChannel); }
     if (name==='meetings')      { renderMeetings(); }
     if (name==='reservations')  { renderReservations(); }
+    if (name==='reviews')      { renderReviewsSection(); }
+    if (name==='loyalty')      { renderLoyaltySection(); }
+    if (name==='search-analytics') { renderSearchAnalytics(); }
     if (name==='pricehistory')  { renderPriceHistory(); }
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
   }, 0);
@@ -3046,7 +3237,7 @@ auth.onAuthStateChanged(async user=>{
       ['sb-admin-nav','stat-admins-card'].forEach(id=>document.getElementById(id).style.display=sa?'block':'none');
       document.getElementById('welcome-name').textContent=`Welcome back, ${a.name||user.email}!`;
       switchView('view-dashboard');
-      attachProductsListener(); attachOrdersListener();
+      attachProductsListener(); attachOrdersListener(); attachReviewsListener(); attachLoyaltyListener(); attachSearchAnalyticsListener();
       if(sa) { attachAdminsListener(); attachAuditListeners(); }
       /* Start presence heartbeat + listener for ALL admins */
       initPresence(user);
@@ -3184,7 +3375,10 @@ function renderProductsTable(){
         </div>
       </div></td>
       <td>${priceHTML}</td>
-      <td class="hide-mobile">${Number(p.stock||0)}</td>
+      <td class="hide-mobile">
+        <div style="font-size:13px;font-weight:600">${Number(p.stock||0)}</div>
+        ${p.purchaseCount?`<div style="font-size:10px;color:var(--muted);margin-top:2px"><i class="fa-solid fa-fire" style="color:#f97316"></i> ${p.purchaseCount} sold</div>`:''}
+      </td>
       <td><span class="${sBadgeClass(p)}">${sLabel(p)}</span></td>
       <td><div class="action-cell">
         <button class="btn-edit btn-sm" onclick="openProductModal('${esc(id)}')"><i class="fa-solid fa-pen"></i> Edit</button>
@@ -4363,6 +4557,19 @@ async function executeDelete(){
       const a=APP.admins[id]||{};
       await db.ref(`admins/${id}`).remove();
       auditLog('DELETE',`Removed admin: ${a.email||a.name||id}`,{detail:`Role: ${a.role||'—'}`,category:'Admins'});
+    }
+    if(type==='review'){
+      const [productId, reviewId]=id.split('/');
+      await db.ref(`reviews/${productId}/${reviewId}`).remove();
+      await db.ref(`order_reviews`).get().then(snap=>{
+        if(!snap.exists()) return;
+        const promises=[];
+        Object.entries(snap.val()).forEach(([orderId,items])=>{
+          if(items[productId]) promises.push(db.ref(`order_reviews/${orderId}/${productId}`).remove());
+        });
+        return Promise.all(promises);
+      }).catch(()=>{});
+      auditLog('DELETE',`Deleted review for product ${productId}`,{detail:`Review ID: ${reviewId}`,category:'Reviews'});
     }
     if(type==='banner'){
       const b=APP.banners[id]||{};
@@ -7001,6 +7208,315 @@ function timeAgo(ts) {
 setInterval(() => {
   if (Object.keys(_presence).length > 0) renderAdminsTable();
 }, 20000);
+
+
+/* ═══════════════════════════════════════════════
+   REVIEWS MANAGEMENT
+═══════════════════════════════════════════════ */
+let _reviewFilter = 'all';
+
+function attachReviewsListener() {
+  db.ref('reviews').on('value', snap => {
+    APP.reviews = snap.val() || {};
+    /* Update badge count */
+    let total = 0;
+    Object.values(APP.reviews).forEach(pv => { total += Object.keys(pv||{}).length; });
+    const badge = document.getElementById('sb-reviews-count');
+    if (badge) { badge.textContent = total; badge.style.display = total ? '' : 'none'; }
+    if (document.getElementById('section-reviews')?.classList.contains('active')) renderReviewsSection();
+  });
+}
+
+function setReviewFilter(f, btn) {
+  _reviewFilter = f;
+  document.querySelectorAll('.review-filter-tabs button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderReviewsSection();
+}
+
+function renderReviewsSection() {
+  const container = document.getElementById('reviews-container');
+  if (!container) return;
+  const q = (document.getElementById('review-search')?.value || '').toLowerCase().trim();
+  /* Flatten all reviews from all products */
+  let rows = [];
+  Object.entries(APP.reviews).forEach(([productId, entries]) => {
+    if (!entries) return;
+    Object.entries(entries).forEach(([id, r]) => {
+      const prod = APP.products[productId] || {};
+      rows.push({ ...r, id, productId, productTitle: prod.title || productId });
+    });
+  });
+  rows.sort((a, b) => b.createdAt - a.createdAt);
+  /* Filter */
+  if (q) rows = rows.filter(r => (r.userName||'').toLowerCase().includes(q) || (r.text||'').toLowerCase().includes(q) || r.productTitle.toLowerCase().includes(q));
+  if (_reviewFilter === '5') rows = rows.filter(r => r.rating >= 5);
+  if (_reviewFilter === '4') rows = rows.filter(r => r.rating === 4);
+  if (_reviewFilter === '3') rows = rows.filter(r => r.rating <= 3);
+  if (_reviewFilter === 'media') rows = rows.filter(r => (r.mediaUrls||[]).length > 0);
+
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">${q?'🔍':'⭐'}</div><p>${q?'No reviews match.':'No reviews yet.'}</p></div>`;
+    return;
+  }
+  container.innerHTML = rows.map(r => {
+    const stars = Array.from({length:5},(_,i)=>`<i class="fa-solid fa-star${i<r.rating?'':' empty'}"></i>`).join('');
+    const initials = (r.userName||'U').charAt(0).toUpperCase();
+    const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const media = (r.mediaUrls||[]).map(url => {
+      const isVideo = url.includes('/video/');
+      return isVideo
+        ? `<video src="${esc(url)}" controls style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"></video>`
+        : `<img src="${url.replace('/upload/','/upload/f_auto,q_auto,w_120/')}" loading="lazy" onclick="window.open('${esc(url)}','_blank')">`;
+    }).join('');
+    return `<div class="review-card">
+      <div class="review-card-header">
+        <div class="review-avatar">${initials}</div>
+        <div class="review-meta">
+          <div class="review-user">${esc(r.userName||'Anonymous')}</div>
+          <div class="review-product"><i class="fa-solid fa-box" style="font-size:9px"></i> ${esc(r.productTitle)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div class="review-date">${dateStr}</div>
+          <span class="review-rating-badge"><i class="fa-solid fa-star"></i> ${r.rating||0}</span>
+        </div>
+      </div>
+      <div class="star-row">${stars}</div>
+      <div class="review-text">${esc(r.text||'')}</div>
+      ${media ? `<div class="review-media-strip">${media}</div>` : ''}
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        ${r.verified ? '<span style="font-size:10px;color:var(--green);font-weight:600"><i class="fa-solid fa-circle-check"></i> Verified Purchase</span>' : ''}
+        <button class="btn-danger btn-sm" style="margin-left:auto" onclick="promptDelete('review','${esc(r.productId+'/'+r.id)}','review by ${esc(r.userName||'user')}')"><i class="fa-solid fa-trash"></i> Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   LOYALTY & REFERRALS
+═══════════════════════════════════════════════ */
+function attachLoyaltyListener() {
+  db.ref('users').on('value', snap => {
+    APP.loyaltyUsers = snap.val() || {};
+    if (document.getElementById('section-loyalty')?.classList.contains('active')) renderLoyaltySection();
+  });
+  db.ref('loyalty_history').on('value', snap => {
+    APP.loyaltyHistory = snap.val() || {};
+    if (document.getElementById('section-loyalty')?.classList.contains('active')) renderLoyaltySection();
+  });
+}
+
+function renderLoyaltySection() {
+  const listEl = document.getElementById('loyalty-list');
+  if (!listEl) return;
+  const q = (document.getElementById('loyalty-search')?.value || '').toLowerCase().trim();
+
+  /* Build user + points list */
+  let users = Object.entries(APP.loyaltyUsers)
+    .map(([uid, u]) => ({ uid, ...u }))
+    .filter(u => (u.loyaltyPoints || 0) > 0 || u.referralCode);
+
+  if (q) users = users.filter(u =>
+    (u.name||'').toLowerCase().includes(q) ||
+    (u.email||'').toLowerCase().includes(q) ||
+    (u.referralCode||'').toLowerCase().includes(q)
+  );
+  users.sort((a, b) => (b.loyaltyPoints||0) - (a.loyaltyPoints||0));
+
+  /* Stats */
+  let totalIssued = 0, totalRedeemed = 0, totalReferrals = 0;
+  Object.values(APP.loyaltyHistory).forEach(entries => {
+    Object.values(entries||{}).forEach(e => {
+      if (e.type === 'earned')          totalIssued    += (e.points||0);
+      if (e.type === 'redeemed')        totalRedeemed  += Math.abs(e.points||0);
+      if (e.type === 'referral_bonus')  totalReferrals += 1;
+    });
+  });
+  document.getElementById('loy-stat-total').textContent     = totalIssued.toLocaleString();
+  document.getElementById('loy-stat-users').textContent     = users.length;
+  document.getElementById('loy-stat-redeemed').textContent  = totalRedeemed.toLocaleString();
+  document.getElementById('loy-stat-referrals').textContent = totalReferrals;
+
+  if (!users.length) {
+    listEl.innerHTML = `<div class="empty-state" style="padding:32px 20px"><div class="empty-icon">🪙</div><p>No users with loyalty points yet.</p></div>`;
+    return;
+  }
+
+  listEl.innerHTML = users.map(u => {
+    const initials = (u.name||u.email||'U').charAt(0).toUpperCase();
+    const history = APP.loyaltyHistory[u.uid]
+      ? Object.values(APP.loyaltyHistory[u.uid]).sort((a,b)=>b.createdAt-a.createdAt).slice(0,3)
+      : [];
+    const histHtml = history.map(h => {
+      const sign   = h.type==='redeemed'?'-':'+';
+      const cls    = h.type==='redeemed'?'redeem':h.type==='referral_bonus'?'bonus':'earn';
+      const label  = h.type==='earned'?'Earned':h.type==='redeemed'?'Redeemed':'Referral Bonus';
+      const d      = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '—';
+      return `<div class="loyalty-history-entry">
+        <span class="lh-pts ${cls}">${sign}${Math.abs(h.points||0)} pts</span>
+        <span style="flex:1;color:var(--muted)">${label}${h.orderId?` · <span style="font-family:monospace">${h.orderId.slice(-6)}</span>`:''}</span>
+        <span style="color:var(--muted);font-size:10px">${d}</span>
+      </div>`;
+    }).join('');
+
+    const referredBy = u.referredBy ? `<span style="font-size:10px;color:var(--muted);margin-top:2px"><i class="fa-solid fa-share-nodes"></i> Referred by <code style="font-size:10px">${esc(u.referredBy.slice(0,8))}</code></span>` : '';
+
+    return `<div class="loyalty-user-row">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-family:var(--font-head);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(u.name||u.email||u.uid)}</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:3px">
+          ${u.referralCode ? `<span class="loyalty-code">${esc(u.referralCode)}</span>` : ''}
+          ${referredBy}
+        </div>
+        ${history.length ? `<details style="margin-top:6px"><summary style="font-size:11px;color:var(--muted);cursor:pointer">Last 3 transactions</summary><div style="margin-top:6px">${histHtml}</div></details>` : ''}
+      </div>
+      <div class="loyalty-pts">${(u.loyaltyPoints||0).toLocaleString()} <span style="font-size:10px;font-weight:500;color:var(--muted)">pts</span></div>
+    </div>`;
+  }).join('');
+}
+
+
+/* ═══════════════════════════════════════════════
+   SEARCH ANALYTICS
+═══════════════════════════════════════════════ */
+let _saPeriodDays = 1; // default: today
+
+function attachSearchAnalyticsListener() {
+  // Listen to the last 500 click events in real-time
+  db.ref('search_analytics').orderByChild('timestamp').limitToLast(500).on('value', snap => {
+    APP.searchAnalytics = snap.val() || {};
+    if (document.getElementById('section-search-analytics')?.classList.contains('active')) {
+      renderSearchAnalytics();
+    }
+  });
+}
+
+function setSAPeriod(days, btn) {
+  _saPeriodDays = days;
+  document.querySelectorAll('.sa-period-tabs button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderSearchAnalytics();
+}
+
+/* Filter entries by the selected time window */
+function _saFilteredEntries() {
+  const entries = Object.values(APP.searchAnalytics);
+  if (_saPeriodDays === 0) return entries; // all time
+  const cutoff = Date.now() - _saPeriodDays * 86400000;
+  return entries.filter(e => (e.timestamp || 0) >= cutoff);
+}
+
+function renderSearchAnalytics() {
+  const entries = _saFilteredEntries();
+  const q = (document.getElementById('sa-feed-search')?.value || '').toLowerCase().trim();
+
+  /* ── Stats ── */
+  const uniqueQueries = new Set(entries.map(e => (e.query||'').toLowerCase()));
+  const uniqueUsers   = new Set(entries.filter(e => e.uid).map(e => e.uid));
+
+  // Top query by frequency
+  const qFreq = {};
+  entries.forEach(e => { const k=(e.query||'').toLowerCase(); qFreq[k]=(qFreq[k]||0)+1; });
+  const topQ = Object.entries(qFreq).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
+
+  document.getElementById('sa-stat-clicks').textContent   = entries.length.toLocaleString();
+  document.getElementById('sa-stat-unique-q').textContent = uniqueQueries.size;
+  document.getElementById('sa-stat-users').textContent    = uniqueUsers.size;
+  document.getElementById('sa-stat-top-q').textContent    = topQ.length > 12 ? topQ.slice(0,12)+'…' : topQ;
+
+  /* ── Top queries bar chart ── */
+  const sortedQ = Object.entries(qFreq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxQ = sortedQ[0]?.[1] || 1;
+  const topQEl = document.getElementById('sa-top-queries');
+  if (!sortedQ.length) {
+    topQEl.innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-icon">🔍</div><p>No data yet.</p></div>';
+  } else {
+    topQEl.innerHTML = sortedQ.map(([term, count]) => `
+      <div class="sa-query-row">
+        <span class="sa-query-pill">${esc(term)}</span>
+        <div class="sa-bar-wrap"><div class="sa-bar" style="width:${Math.round(count/maxQ*100)}%"></div></div>
+        <span class="sa-count">${count}</span>
+      </div>`).join('');
+  }
+
+  /* ── Top clicked products ── */
+  const prodFreq = {};
+  entries.forEach(e => {
+    if (!e.productId) return;
+    if (!prodFreq[e.productId]) prodFreq[e.productId] = { title: e.productTitle || e.productId, count: 0 };
+    prodFreq[e.productId].count++;
+  });
+  const sortedP = Object.entries(prodFreq).sort((a,b)=>b[1].count-a[1].count).slice(0,8);
+  const rankLabels = ['gold','silver','bronze'];
+  const topPEl = document.getElementById('sa-top-products');
+  if (!sortedP.length) {
+    topPEl.innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-icon">📦</div><p>No data yet.</p></div>';
+  } else {
+    topPEl.innerHTML = sortedP.map(([,v], i) => {
+      const rankCls = rankLabels[i] || '';
+      return `<div class="sa-top-product">
+        <span class="sa-rank ${rankCls}">${i+1}</span>
+        <span class="sa-top-product-name" title="${esc(v.title)}">${esc(v.title)}</span>
+        <span style="font-size:11px;font-weight:700;color:var(--muted)">${v.count} click${v.count!==1?'s':''}</span>
+      </div>`;
+    }).join('');
+  }
+
+  /* ── Live feed (newest first, optional filter) ── */
+  let feedEntries = [...entries].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  if (q) feedEntries = feedEntries.filter(e =>
+    (e.query||'').toLowerCase().includes(q) ||
+    (e.productTitle||'').toLowerCase().includes(q)
+  );
+  const feedEl = document.getElementById('sa-feed');
+  if (!feedEntries.length) {
+    feedEl.innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-icon">📡</div><p>' + (q ? 'No matches.' : 'No data yet.') + '</p></div>';
+  } else {
+    feedEl.innerHTML = feedEntries.slice(0,100).map(e => {
+      const d = e.timestamp ? new Date(e.timestamp).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+      const user = e.uid ? `<span title="${esc(e.uid)}" style="font-size:9px;background:var(--green-light);color:var(--green);padding:1px 5px;border-radius:10px;font-weight:700">user</span>` : '<span style="font-size:9px;background:var(--surface2);color:var(--muted);padding:1px 5px;border-radius:10px">guest</span>';
+      return `<div class="sa-feed-entry">
+        <div style="min-width:0;flex:1">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span class="sa-feed-query">"${esc(e.query||'')}"</span>
+            ${user}
+          </div>
+          <div class="sa-feed-product">→ ${esc(e.productTitle||e.productId||'—')}</div>
+        </div>
+        <div class="sa-feed-time">${d}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+async function exportSearchAnalytics() {
+  const entries = _saFilteredEntries().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  if (!entries.length) { showToast('No data to export.','error'); return; }
+  const rows = [['Timestamp','Query','Product Title','Product ID','User ID']];
+  entries.forEach(e => rows.push([
+    e.timestamp ? new Date(e.timestamp).toISOString() : '',
+    e.query || '',
+    e.productTitle || '',
+    e.productId || '',
+    e.uid || 'guest'
+  ]));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `search_analytics_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('Exported!', 'success');
+}
+
+async function clearSearchAnalytics() {
+  if (!confirm('Delete ALL search analytics data? This cannot be undone.')) return;
+  try {
+    await db.ref('search_analytics').remove();
+    showToast('Search analytics cleared.', 'success');
+    auditLog('DELETE', 'Cleared all search analytics', { category: 'Analytics' });
+  } catch(err) { showToast('Error: ' + err.message, 'error'); }
+}
 
 </script>
 </body>
