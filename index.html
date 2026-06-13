@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <title>iAlfonex – Admin Panel</title>
+
+  <!-- ── PWA & Favicon ─────────────────────────────────────────────────── -->
+  <link rel="manifest"          href="manifest.json">
+  <link rel="icon"              href="logo.png" type="image/png">
+  <link rel="apple-touch-icon"  href="logo.png">
+  <meta name="theme-color"                  content="#2EA056">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title"   content="iAlfonex Admin">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable"       content="yes">
+  <meta name="application-name"             content="iAlfonex Admin">
   <script>
     /* Set theme before paint to prevent flash of wrong theme */
     (function(){
@@ -18,9 +29,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
   <!-- jsPDF + AutoTable — invoice generation, no server needed -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -1095,11 +1107,38 @@ tbody td{padding:12px 16px;vertical-align:middle}
     <header id="top-header">
       <button id="ham-btn" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
       <div class="header-page-title" id="header-page-title"><span>Overview</span></div>
+      <!-- Notification bell -->
+      <button id="notif-bell" onclick="toggleNotifPanel()" title="Notifications"
+        style="position:relative;background:none;border:none;color:var(--text);font-size:18px;cursor:pointer;padding:6px;border-radius:8px;transition:background .15s"
+        onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='none'">
+        <i class="fa-solid fa-bell"></i>
+        <span id="notif-count" style="display:none;position:absolute;top:2px;right:2px;background:#e11d48;color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;line-height:16px;text-align:center;padding:0 3px">0</span>
+      </button>
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle theme">
         <i class="fa-solid fa-moon moon"></i>
         <i class="fa-solid fa-sun sun"></i>
       </button>
     </header>
+
+    <!-- Notification panel (slides in from top-right) -->
+    <div id="notif-panel" style="display:none;position:fixed;top:64px;right:12px;width:320px;max-height:420px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:9999;padding:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+        <span style="font-weight:700;font-size:13px;color:var(--text)"><i class="fa-solid fa-bell" style="color:var(--green)"></i> Notifications</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="clearAllNotifItems()" style="font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer">Clear all</button>
+          <button onclick="toggleNotifPanel()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">&times;</button>
+        </div>
+      </div>
+      <div id="notif-list" style="padding:8px 0">
+        <p style="text-align:center;color:var(--muted);font-size:12px;padding:24px">No notifications yet</p>
+      </div>
+      <div style="padding:10px 16px;border-top:1px solid var(--border)">
+        <button id="notif-permission-btn" onclick="requestNotifPermission()" style="width:100%;padding:8px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:none">
+          <i class="fa-solid fa-bell"></i> Enable push notifications
+        </button>
+        <p id="notif-status-txt" style="font-size:10px;color:var(--muted);text-align:center;margin:0"></p>
+      </div>
+    </div>
 
     <!-- OVERVIEW -->
     <section id="section-overview" class="content-section active">
@@ -3332,6 +3371,8 @@ auth.onAuthStateChanged(async user=>{
         sessionStorage.setItem(_loginKey, Date.now());
         auditLog('LOGIN', `Admin signed in`, { detail: user.email, category:'Auth' });
       }
+      // Init PWA + notification listeners (safe to call on every page load)
+      initPWA().catch(() => {});
     }catch(err){
       securityLog('ERROR', `Permission check failed`, { detail: `${user?.email||'—'} — ${err.message}`, errorCode: err.code||'permission_denied' });
       showToast('Permission check failed: '+err.message,'error'); await auth.signOut(); switchView('view-login');
@@ -7863,6 +7904,279 @@ async function clearSearchAnalytics() {
     auditLog('DELETE', 'Cleared all search analytics', { category: 'Analytics' });
   } catch(err) { showToast('Error: ' + err.message, 'error'); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   PWA — SERVICE WORKER + PUSH NOTIFICATIONS ENGINE
+   ─────────────────────────────────────────────────────────────────────────────
+   Two notification layers:
+     1. LOCAL  — RTDB listeners → Notification API. Works when tab is open.
+                 No backend or VAPID key needed.
+     2. PUSH   — Firebase Cloud Messaging. Works when tab is CLOSED.
+                 Requires VAPID key from Firebase Console
+                 (Project Settings → Cloud Messaging → Web Push certificates).
+═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── VAPID key ──────────────────────────────────────────────────────────────────
+   Get yours from: Firebase Console → Project Settings → Cloud Messaging tab
+   → Web Push certificates → Generate key pair → copy the Key pair value.    */
+const VAPID_KEY = 'BPkjwllhibVtxHfsbhcS64609zmyHcuXR7EsJ-73Wd6Caf5w54NIzRcHs7eSW1DcrNSjSsX796XuFn1rL30Ej7A'; // ← Replace this
+
+/* ── In-memory notification list (shown in the bell panel) ── */
+let _notifItems = JSON.parse(localStorage.getItem('admin_notifs') || '[]');
+let _notifOpen  = false;
+let _notifUnread = 0;
+
+/* ── Notified IDs (prevents duplicate alerts across page reloads) ── */
+const NOTIF_SEEN_KEY = 'admin_notif_seen';
+function getSeenIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(NOTIF_SEEN_KEY) || '[]')); } catch { return new Set(); }
+}
+function markSeen(id) {
+  const seen = getSeenIds();
+  seen.add(id);
+  // Keep the set bounded to last 500 IDs
+  const arr = [...seen].slice(-500);
+  localStorage.setItem(NOTIF_SEEN_KEY, JSON.stringify(arr));
+}
+
+/* ── Register Service Worker ── */
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('./admin-sw.js', { scope: './' });
+    console.log('[SW] Registered:', reg.scope);
+    return reg;
+  } catch (e) {
+    console.warn('[SW] Registration failed:', e);
+    return null;
+  }
+}
+
+/* ── Request notification permission ── */
+async function requestNotifPermission() {
+  const perm = await Notification.requestPermission();
+  updateNotifStatusUI();
+  if (perm === 'granted') {
+    showToast('Push notifications enabled!', 'success');
+    await subscribeFCM();
+  } else {
+    showToast('Notifications blocked. Enable them in browser settings.', 'error');
+  }
+}
+
+/* ── Subscribe to FCM and store token in RTDB ── */
+async function subscribeFCM() {
+  if (!('serviceWorker' in navigator) || VAPID_KEY === 'YOUR_VAPID_KEY_HERE') return;
+  try {
+    const messaging = firebase.messaging();
+    const swReg     = await navigator.serviceWorker.ready;
+    const token     = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
+    if (token && APP.user?.uid) {
+      await db.ref(`admin_fcm_tokens/${APP.user.uid}`).set({
+        token,
+        email:     APP.user.email,
+        updatedAt: Date.now(),
+        userAgent: navigator.userAgent.slice(0, 120),
+      });
+      console.log('[FCM] Token stored:', token.slice(0, 20) + '…');
+    }
+  } catch (e) {
+    console.warn('[FCM] Subscribe failed:', e);
+  }
+}
+
+/* ── Update the permission status label ── */
+function updateNotifStatusUI() {
+  const btn = document.getElementById('notif-permission-btn');
+  const txt = document.getElementById('notif-status-txt');
+  if (!btn || !txt) return;
+  const perm = Notification.permission;
+  if (perm === 'granted') {
+    btn.style.display = 'none';
+    txt.textContent   = '✓ Push notifications are enabled';
+  } else if (perm === 'denied') {
+    btn.style.display = 'none';
+    txt.textContent   = '✕ Blocked — allow notifications in browser site settings';
+  } else {
+    btn.style.display = 'block';
+    txt.textContent   = '';
+  }
+}
+
+/* ── Show a system notification (when tab is visible, skip system notification;
+      always add to the in-panel list) ── */
+function pushAdminNotification({ title, body, url, tag, icon = './logo.png' }) {
+  // Add to the panel list
+  const item = { id: tag || Date.now().toString(), title, body, url, ts: Date.now(), read: false };
+  _notifItems.unshift(item);
+  if (_notifItems.length > 50) _notifItems = _notifItems.slice(0, 50);
+  localStorage.setItem('admin_notifs', JSON.stringify(_notifItems));
+  _notifUnread++;
+  renderNotifPanel();
+  updateNotifBadge();
+
+  // Only show system notification if the tab is not focused or permission granted
+  if (Notification.permission !== 'granted') return;
+  if (document.visibilityState === 'visible') return; // tab is active — panel is enough
+
+  const n = new Notification(title, { body, icon, tag, data: { url } });
+  n.onclick = () => { window.focus(); if (url) window.location.hash = url.split('#')[1] || ''; n.close(); };
+}
+
+/* ── Bell panel toggle ── */
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  _notifOpen  = !_notifOpen;
+  panel.style.display = _notifOpen ? 'block' : 'none';
+  if (_notifOpen) {
+    _notifUnread = 0;
+    updateNotifBadge();
+    // Mark all as read
+    _notifItems.forEach(i => i.read = true);
+    localStorage.setItem('admin_notifs', JSON.stringify(_notifItems));
+    updateNotifStatusUI();
+  }
+}
+
+/* ── Update the red badge count ── */
+function updateNotifBadge() {
+  const badge = document.getElementById('notif-count');
+  if (!badge) return;
+  if (_notifUnread > 0) {
+    badge.textContent   = _notifUnread > 99 ? '99+' : _notifUnread;
+    badge.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+/* ── Render the panel list ── */
+function renderNotifPanel() {
+  const el = document.getElementById('notif-list');
+  if (!el) return;
+  if (!_notifItems.length) {
+    el.innerHTML = '<p style="text-align:center;color:var(--muted);font-size:12px;padding:24px">No notifications yet</p>';
+    return;
+  }
+  el.innerHTML = _notifItems.map(item => {
+    const ago  = timeAgo(item.ts);
+    const dot  = item.read ? '' : '<span style="width:7px;height:7px;background:#e11d48;border-radius:50%;flex-shrink:0;margin-top:4px"></span>';
+    const href = item.url ? `onclick="window.location.hash='${(item.url.split('#')[1]||'')}';toggleNotifPanel()"` : '';
+    return `<div ${href} style="display:flex;gap:10px;align-items:flex-start;padding:10px 16px;cursor:${item.url?'pointer':'default'};transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      ${dot || '<span style="width:7px;flex-shrink:0"></span>'}
+      <div style="flex:1;min-width:0">
+        <p style="font-size:12px;font-weight:700;color:var(--text);margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.title)}</p>
+        <p style="font-size:11px;color:var(--muted);margin:0;line-height:1.4">${esc(item.body)}</p>
+        <p style="font-size:10px;color:var(--muted);margin:4px 0 0;opacity:.7">${ago}</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function clearAllNotifItems() {
+  _notifItems  = [];
+  _notifUnread = 0;
+  localStorage.setItem('admin_notifs', '[]');
+  renderNotifPanel();
+  updateNotifBadge();
+}
+
+/* ── RTDB-based notification listeners ─────────────────────────────────────────
+   Each listener uses startAt(sessionStart) so it only fires for records
+   created AFTER the admin panel was opened (prevents spamming old data).     */
+const _sessionStart = Date.now();
+
+function setupRTDBNotificationListeners() {
+  const seen = getSeenIds();
+
+  /* ── 1. New Orders ── */
+  db.ref('orders').orderByChild('createdAt').startAt(_sessionStart)
+    .on('child_added', (snap) => {
+      const id = snap.key;
+      if (seen.has(id)) return;
+      markSeen(id);
+      const o = snap.val();
+      pushAdminNotification({
+        title: `🛒 New Order — ${o.customerName || 'Customer'}`,
+        body:  `${(o.items||[]).length} item(s) · ${o.currency?.toUpperCase()||'AED'} ${o.total||0} · ${o.payMethod?.toUpperCase()||'—'}`,
+        url:   './admin.html#orders',
+        tag:   'order-' + id,
+      });
+    });
+
+  /* ── 2. New Reservations ── */
+  db.ref('reservations').orderByChild('createdAt').startAt(_sessionStart)
+    .on('child_added', (snap) => {
+      const id = snap.key;
+      if (seen.has(id)) return;
+      markSeen(id);
+      const r = snap.val();
+      pushAdminNotification({
+        title: `📌 New Reservation — ${r.customerName || 'Customer'}`,
+        body:  `${r.productTitle || 'Device'} · Advance: ${r.currency?.toUpperCase()||'AED'} ${r.advance||0} · ${r.customerPhone||''}`,
+        url:   './admin.html#reservations',
+        tag:   'reservation-' + id,
+      });
+    });
+
+  /* ── 3. New Meetings ── */
+  db.ref('meetings').orderByChild('createdAt').startAt(_sessionStart)
+    .on('child_added', (snap) => {
+      const id = snap.key;
+      if (seen.has(id)) return;
+      markSeen(id);
+      const m = snap.val();
+      pushAdminNotification({
+        title: `📅 New Meeting — ${m.title || 'Untitled'}`,
+        body:  `${m.date||''} ${m.time||''} · ${m.participants || 'No participants listed'}`,
+        url:   './admin.html#meetings',
+        tag:   'meeting-' + id,
+      });
+    });
+
+  /* ── 4. New Team Chat Messages ── */
+  db.ref('chat/general').orderByChild('ts').startAt(_sessionStart)
+    .on('child_added', (snap) => {
+      const id  = snap.key;
+      // Don't notify about your own messages
+      if (seen.has(id)) return;
+      markSeen(id);
+      const msg = snap.val();
+      if (msg.uid === APP.user?.uid) return; // skip own messages
+      pushAdminNotification({
+        title: `💬 Team Chat — ${msg.name || msg.sender || 'Admin'}`,
+        body:  msg.text || msg.message || '(attachment)',
+        url:   './admin.html#comms',
+        tag:   'chat-' + id,
+      });
+    });
+}
+
+/* ── Initialise everything after login ── */
+async function initPWA() {
+  await registerServiceWorker();
+  updateNotifStatusUI();
+  setupRTDBNotificationListeners();
+  // Restore unread count from saved items
+  _notifUnread = _notifItems.filter(i => !i.read).length;
+  updateNotifBadge();
+
+  // Auto-subscribe FCM if permission already granted
+  if (Notification.permission === 'granted' && VAPID_KEY !== 'YOUR_VAPID_KEY_HERE') {
+    subscribeFCM().catch(() => {});
+  }
+}
+
+/* Close notification panel when clicking outside */
+document.addEventListener('click', (e) => {
+  if (!_notifOpen) return;
+  const panel = document.getElementById('notif-panel');
+  const bell  = document.getElementById('notif-bell');
+  if (panel && !panel.contains(e.target) && !bell.contains(e.target)) {
+    _notifOpen = false;
+    panel.style.display = 'none';
+  }
+});
 
 </script>
 </body>
