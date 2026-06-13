@@ -21,7 +21,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <link rel="icon" type="image/png" href="./logo.png">
   <!-- jsPDF + AutoTable — invoice generation, no server needed -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -2905,7 +2904,30 @@ tbody td{padding:12px 16px;vertical-align:middle}
         <div id="variant-types-wrap" style="margin-top:10px"></div>
       </div>
 
-      <!-- ⑦ IMAGES -->
+      <!-- ⑦ 3D MODEL URL -->
+      <div class="mf-group">
+        <label class="mf-label"><i class="fa-solid fa-cube" style="color:var(--green)"></i> 3D Model URL <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11px">(optional — .glb or .gltf)</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="prod-model-url" class="mf-input" placeholder="https://res.cloudinary.com/…/raw/upload/…/model.glb" style="flex:1;min-width:0">
+          <button type="button" id="btn-upload-model" class="btn-secondary" style="white-space:nowrap;padding:8px 14px;font-size:12px" onclick="uploadModelFile(this)">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Upload .glb
+          </button>
+        </div>
+        <!-- Upload progress bar (hidden until upload starts) -->
+        <div id="model-upload-progress" style="display:none;margin-top:8px">
+          <div style="height:4px;background:var(--green-light);border-radius:4px;overflow:hidden">
+            <div id="model-upload-bar" style="height:100%;background:var(--green);border-radius:4px;width:0%;transition:width .2s"></div>
+          </div>
+          <p id="model-upload-txt" style="font-size:11px;color:var(--green);font-weight:600;margin-top:4px">Uploading…</p>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px">
+          <i class="fa-solid fa-circle-info"></i>
+          Click <strong>Upload .glb</strong> to upload directly to Cloudinary CDN, or paste any public URL.
+          Tip: keep models under 15 MB for fast loading.
+        </p>
+      </div>
+
+      <!-- ⑧ IMAGES -->
       <div class="mf-group">
         <label class="mf-label"><i class="fa-solid fa-images" style="color:var(--green)"></i> Product Images <span style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11px">(up to 6 &middot; first = main)</span></label>
         <div id="img-gallery-strip" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:0"></div>
@@ -3449,9 +3471,10 @@ function openProductModal(id=null){
     document.getElementById('prod-price').value   = p.price || '';
     document.getElementById('prod-cost').value    = p.costPrice || '';
     document.getElementById('prod-stock').value   = p.stock || '';
-    document.getElementById('prod-price-usd').value = p.priceUSD || '';
-    document.getElementById('prod-price-aed').value = p.priceAED || '';
-    document.getElementById('prod-price-inr').value = p.priceINR || '';
+    document.getElementById('prod-price-usd').value  = p.priceUSD  || '';
+    document.getElementById('prod-price-aed').value  = p.priceAED  || '';
+    document.getElementById('prod-price-inr').value  = p.priceINR  || '';
+    document.getElementById('prod-model-url').value  = p.modelUrl  || '';
     /* category */
     const catEl = document.getElementById('prod-category');
     if (catEl) catEl.value = p.category || '';
@@ -3477,13 +3500,15 @@ function openProductModal(id=null){
 }
 function closeProductModal(){ document.getElementById('modal-product').classList.remove('open'); resetProductForm(); }
 function resetProductForm(){
-  ['edit-prod-id','prod-title','prod-desc','prod-price','prod-cost','prod-stock','prod-price-usd','prod-price-aed','prod-price-inr'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  ['edit-prod-id','prod-title','prod-desc','prod-price','prod-cost','prod-stock','prod-price-usd','prod-price-aed','prod-price-inr','prod-model-url'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
   const grEl=document.getElementById('prod-grade'); if(grEl) grEl.value='';
   const catEl = document.getElementById('prod-category');
   if (catEl) catEl.value = '';
   if (typeof resetFlags === 'function') resetFlags();
   resetVariantsEditor();
   resetGallery();
+  const mp = document.getElementById('model-upload-progress');
+  if (mp) mp.style.display = 'none';
 }
 async function saveProduct(){
   const editId=document.getElementById('edit-prod-id').value;
@@ -3509,6 +3534,7 @@ async function saveProduct(){
       category: category || null,
       grade:    grade    || null,
       imageUrl:imgUrl, imageUrls:extraUrls.length?extraUrls:null,
+      modelUrl: (document.getElementById('prod-model-url').value.trim()) || null,
       updatedAt:Date.now(),
       /* Status flags — stored as booleans, null when false to keep DB clean */
       isHidden:     _FLAGS.hidden     || null,
@@ -4029,6 +4055,89 @@ function galleryDragEnd() {
   document.querySelectorAll('.img-thumb-tile').forEach(t => {
     t.classList.remove('dragging'); t.classList.remove('drag-over');
   });
+}
+
+/* ── Upload a .glb/.gltf 3D model to Cloudinary (raw resource type) ──────────
+   Uses XHR instead of fetch so we can show real upload progress.
+   Cloudinary's raw/upload endpoint accepts any file type.
+   The returned secure_url is placed directly into #prod-model-url.           */
+function uploadModelFile(btn) {
+  const urlInput  = document.getElementById('prod-model-url');
+  const progWrap  = document.getElementById('model-upload-progress');
+  const progBar   = document.getElementById('model-upload-bar');
+  const progTxt   = document.getElementById('model-upload-txt');
+
+  const input = document.createElement('input');
+  input.type   = 'file';
+  input.accept = '.glb,.gltf,.usdz';
+
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Warn for very large files (> 40 MB)
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    if (file.size > 40 * 1024 * 1024) {
+      showToast(`File is ${sizeMB} MB — upload may take a while.`, '');
+    }
+
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 0%`;
+    progWrap.style.display = 'block';
+    progBar.style.width    = '0%';
+    progTxt.textContent    = `Uploading ${file.name} (${sizeMB} MB)…`;
+
+    const fd = new FormData();
+    fd.append('file',           file);
+    fd.append('upload_preset',  CLD.preset);
+    // 'resource_type: raw' is required for non-image files (.glb, .gltf, etc.)
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLD.cloud}/raw/upload`);
+
+    // Real-time upload progress
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      const pct = Math.round((e.loaded / e.total) * 100);
+      progBar.style.width  = pct + '%';
+      progTxt.textContent  = `Uploading… ${pct}%`;
+      btn.innerHTML        = `<i class="fa-solid fa-spinner fa-spin"></i> ${pct}%`;
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+        urlInput.value       = data.secure_url;
+        progBar.style.width  = '100%';
+        progTxt.textContent  = `✓ Uploaded: ${file.name} (${sizeMB} MB)`;
+        btn.innerHTML        = '<i class="fa-solid fa-check"></i> Done!';
+        showToast('3D model uploaded to Cloudinary!', 'success');
+        setTimeout(() => {
+          btn.innerHTML  = originalHTML;
+          btn.disabled   = false;
+        }, 2500);
+      } else {
+        let msg = 'Upload failed';
+        try { msg = JSON.parse(xhr.responseText)?.error?.message || msg; } catch {}
+        showToast(msg, 'error');
+        progWrap.style.display = 'none';
+        btn.innerHTML  = originalHTML;
+        btn.disabled   = false;
+      }
+    };
+
+    xhr.onerror = () => {
+      showToast('Network error — check your connection and try again.', 'error');
+      progWrap.style.display = 'none';
+      btn.innerHTML  = originalHTML;
+      btn.disabled   = false;
+    };
+
+    xhr.send(fd);
+  };
+
+  input.click();
 }
 
 /* ── Upload one file to Cloudinary ── */
