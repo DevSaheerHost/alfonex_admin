@@ -3117,6 +3117,56 @@ const CLD = {
   cloud:'saheerbabu', preset:'Alfonex',
   get url(){ return `https://api.cloudinary.com/v1_1/${this.cloud}/image/upload`; }
 };
+
+/* Base URL of the Next.js app — used for server-side API calls (e.g. Cloudinary delete).
+   Change this if your app is deployed at a different domain.                            */
+const SITE_BASE = 'https://alfonex.com';
+
+/* ── Delete old Cloudinary assets after a product is updated ──────────────────
+   Compares old and new image/model URLs; calls the secure API route to delete
+   any URLs that were removed. Fire-and-forget: errors are logged but never
+   shown to the admin or allowed to block the save flow.                        */
+async function deleteOldCloudinaryAssets(oldProduct, newImageUrls, newModelUrl) {
+  const toDelete = [];
+
+  // Collect old image URLs that are no longer in the new set
+  const oldImageUrls = [
+    oldProduct.imageUrl,
+    ...(Array.isArray(oldProduct.imageUrls) ? oldProduct.imageUrls : []),
+  ].filter(Boolean);
+
+  const newImageSet = new Set(newImageUrls.filter(Boolean));
+  for (const url of oldImageUrls) {
+    if (url && url.includes('cloudinary.com') && !newImageSet.has(url)) {
+      toDelete.push(url);
+    }
+  }
+
+  // Check if the 3D model URL was replaced or removed
+  const oldModel = oldProduct.modelUrl;
+  if (oldModel && oldModel.includes('cloudinary.com') && oldModel !== newModelUrl) {
+    toDelete.push(oldModel);
+  }
+
+  if (!toDelete.length) return; // nothing to clean up
+
+  try {
+    const token = await firebase.auth().currentUser.getIdToken();
+    const res   = await fetch(`${SITE_BASE}/api/admin/cloudinary-delete`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body:    JSON.stringify({ urls: toDelete }),
+    });
+    if (!res.ok) { console.warn('[storage-cleanup] API returned', res.status); return; }
+    const data = await res.json();
+    if (data.deleted > 0) {
+      showToast(`Storage: removed ${data.deleted} old file${data.deleted > 1 ? 's' : ''} from Cloudinary.`, 'success');
+    }
+  } catch (e) {
+    // Never block the save flow for cleanup failures
+    console.warn('[storage-cleanup] Failed:', e);
+  }
+}
 /* Build optimised delivery URL (thumbnail) from the stored original */
 function cldThumb(u, t='f_auto,q_auto,w_200'){ return u ? u.replace('/upload/',`/upload/${t}/`) : ''; }
 
@@ -3561,7 +3611,8 @@ async function saveProduct(){
       payload.variantSlugs = null;
     }
     if(editId){
-      const old = APP.products[editId]||{};
+      // Snapshot the old product before overwriting — needed for cleanup
+      const old = APP.products[editId] || {};
       await db.ref(`products/${editId}`).update(payload);
       showToast('Product updated!','success');
       /* Detailed change log */
@@ -3571,6 +3622,8 @@ async function saveProduct(){
       if(old.stock !== stock) changes.push(`Stock: ${old.stock} → ${stock}`);
       if(old.isHidden !== (payload.isHidden||null)) changes.push(`Hidden: ${!!old.isHidden} → ${!!payload.isHidden}`);
       auditLog('EDIT', `Updated product: ${title}`, { detail: changes.join(' | ')||'Minor update', productId:editId, category:'Products' });
+      // Delete replaced Cloudinary files after Firebase is updated — fire-and-forget
+      deleteOldCloudinaryAssets(old, allUrls, payload.modelUrl || null);
     } else {
       payload.createdAt=Date.now();
       const ref = await db.ref('products').push(payload);
