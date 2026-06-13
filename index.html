@@ -21,7 +21,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <link rel="icon" type="image/png" href="./logo.png">
   <!-- jsPDF + AutoTable — invoice generation, no server needed -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -3668,13 +3667,48 @@ async function saveProduct(){
         else                         changes.push('3D model replaced');
       }
 
-      // Variants — compare JSON since order matters for slot consistency
+      // Variants — detect exactly what changed (groups added/removed, option counts, values edited)
       const oldVarJson = JSON.stringify(old.variants || []);
       const newVarJson = JSON.stringify(variants || []);
       if (oldVarJson !== newVarJson) {
-        const oldOpts = (old.variants || []).reduce((s, g) => s + (g.values||[]).length, 0);
-        const newOpts = (variants     || []).reduce((s, g) => s + (g.values||[]).length, 0);
-        changes.push(`Variants updated (${oldOpts} → ${newOpts} options)`);
+        const oldGroups = old.variants || [];
+        const newGroups = variants     || [];
+        const varChanges = [];
+
+        // Group added or removed
+        const oldNames = new Set(oldGroups.map(g => g.name));
+        const newNames = new Set(newGroups.map(g => g.name));
+        for (const n of newNames) if (!oldNames.has(n)) varChanges.push(`"${n}" group added`);
+        for (const n of oldNames) if (!newNames.has(n)) varChanges.push(`"${n}" group removed`);
+
+        // Per-group option changes
+        for (const newG of newGroups) {
+          const oldG = oldGroups.find(g => g.name === newG.name);
+          if (!oldG) continue; // already counted as added above
+          const oldVals = oldG.values  || [];
+          const newVals = newG.values  || [];
+
+          // Options added / removed
+          const oldLabels = new Set(oldVals.map(v => v.label));
+          const newLabels = new Set(newVals.map(v => v.label));
+          for (const l of newLabels) if (!oldLabels.has(l)) varChanges.push(`${newG.name}: "${l}" added`);
+          for (const l of oldLabels) if (!newLabels.has(l)) varChanges.push(`${newG.name}: "${l}" removed`);
+
+          // Values edited (stock, image, price)
+          for (const nv of newVals) {
+            const ov = oldVals.find(v => v.label === nv.label);
+            if (!ov) continue; // already counted as added
+            const fieldChanges = [];
+            if ((ov.stock||0)    !== (nv.stock||0))    fieldChanges.push(`stock ${ov.stock||0}→${nv.stock||0}`);
+            if ((ov.imageUrl||'')!== (nv.imageUrl||'')) fieldChanges.push('image updated');
+            if ((ov.price||null) !== (nv.price||null))  fieldChanges.push(`price updated`);
+            if (fieldChanges.length) varChanges.push(`${newG.name} "${nv.label}": ${fieldChanges.join(', ')}`);
+          }
+        }
+
+        changes.push(varChanges.length
+          ? `Variants: ${varChanges.join(' | ')}`
+          : 'Variants reordered');
       }
 
       auditLog('EDIT', `Updated product: ${title}`, {
