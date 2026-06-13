@@ -34,7 +34,7 @@ messaging.onBackgroundMessage((payload) => {
     icon:    '/logo.png',
     badge:   '/logo.png',
     tag:     data.tag    || 'admin-notification',  // tag deduplicates; same tag replaces old
-    data:    { url: data.url || './admin.html' },
+    data:    { url: data.url || './index.html' },
     vibrate: [200, 100, 200],
     requireInteraction: true,  // notification stays until dismissed
     actions: [
@@ -60,7 +60,7 @@ self.addEventListener('push', (event) => {
       icon:    payload.icon  || '/logo.png',
       badge:   '/logo.png',
       tag:     payload.tag   || 'admin-notification',
-      data:    { url: payload.url || './admin.html' },
+      data:    { url: payload.url || './index.html' },
       vibrate: [200, 100, 200],
       requireInteraction: true,
     })
@@ -74,7 +74,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const targetUrl = event.notification.data?.url || './admin.html';
+  const targetUrl = event.notification.data?.url || './index.html';
   const action    = event.action;
 
   // Clicking "Dismiss" action → just close, do nothing else
@@ -86,7 +86,7 @@ self.addEventListener('notificationclick', (event) => {
       .then((clientList) => {
         // Find any existing admin tab
         const adminTab = clientList.find(
-          (c) => c.url.includes('admin') || c.url.includes(self.location.origin),
+          (c) => c.url.includes('index.html') || c.url.includes(self.location.origin),
         );
 
         if (adminTab) {
@@ -104,7 +104,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // ── Basic app-shell caching (offline support) ──────────────────────────────────
 const CACHE_NAME = 'alfonex-admin-v1';
-const SHELL      = ['./admin.html', './logo.png', './manifest.json'];
+const SHELL      = ['./index.html', './logo.png', './manifest.json'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

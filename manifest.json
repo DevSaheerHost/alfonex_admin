@@ -2,7 +2,7 @@
   "name": "iAlfonex Admin Panel",
   "short_name": "Admin",
   "description": "Alfonex e-commerce admin dashboard — orders, products, analytics",
-  "start_url": "./admin.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -27,13 +27,13 @@
     {
       "name": "New Orders",
       "short_name": "Orders",
-      "url": "./admin.html#orders",
+      "url": "./index.html#orders",
       "icons": [{ "src": "logo.png", "sizes": "192x192" }]
     },
     {
       "name": "Products",
       "short_name": "Products",
-      "url": "./admin.html#products",
+      "url": "./index.html#products",
       "icons": [{ "src": "logo.png", "sizes": "192x192" }]
     }
   ]

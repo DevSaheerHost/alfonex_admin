@@ -7919,7 +7919,7 @@ async function clearSearchAnalytics() {
 /* ── VAPID key ──────────────────────────────────────────────────────────────────
    Get yours from: Firebase Console → Project Settings → Cloud Messaging tab
    → Web Push certificates → Generate key pair → copy the Key pair value.    */
-const VAPID_KEY = 'BPkjwllhibVtxHfsbhcS64609zmyHcuXR7EsJ-73Wd6Caf5w54NIzRcHs7eSW1DcrNSjSsX796XuFn1rL30Ej7A'; // ← Replace this
+const VAPID_KEY = 'YOUR_VAPID_KEY_HERE'; // ← Replace this
 
 /* ── In-memory notification list (shown in the bell panel) ── */
 let _notifItems = JSON.parse(localStorage.getItem('admin_notifs') || '[]');
@@ -8099,7 +8099,7 @@ function setupRTDBNotificationListeners() {
       pushAdminNotification({
         title: `🛒 New Order — ${o.customerName || 'Customer'}`,
         body:  `${(o.items||[]).length} item(s) · ${o.currency?.toUpperCase()||'AED'} ${o.total||0} · ${o.payMethod?.toUpperCase()||'—'}`,
-        url:   './admin.html#orders',
+        url:   './index.html#orders',
         tag:   'order-' + id,
       });
     });
@@ -8114,7 +8114,7 @@ function setupRTDBNotificationListeners() {
       pushAdminNotification({
         title: `📌 New Reservation — ${r.customerName || 'Customer'}`,
         body:  `${r.productTitle || 'Device'} · Advance: ${r.currency?.toUpperCase()||'AED'} ${r.advance||0} · ${r.customerPhone||''}`,
-        url:   './admin.html#reservations',
+        url:   './index.html#reservations',
         tag:   'reservation-' + id,
       });
     });
@@ -8129,7 +8129,7 @@ function setupRTDBNotificationListeners() {
       pushAdminNotification({
         title: `📅 New Meeting — ${m.title || 'Untitled'}`,
         body:  `${m.date||''} ${m.time||''} · ${m.participants || 'No participants listed'}`,
-        url:   './admin.html#meetings',
+        url:   './index.html#meetings',
         tag:   'meeting-' + id,
       });
     });
@@ -8146,7 +8146,7 @@ function setupRTDBNotificationListeners() {
       pushAdminNotification({
         title: `💬 Team Chat — ${msg.name || msg.sender || 'Admin'}`,
         body:  msg.text || msg.message || '(attachment)',
-        url:   './admin.html#comms',
+        url:   './index.html#comms',
         tag:   'chat-' + id,
       });
     });
