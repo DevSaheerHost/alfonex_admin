@@ -3526,7 +3526,13 @@ async function saveProduct(){
     if(priceAED!==null)payload.priceAED=priceAED; else payload.priceAED=null;
     if(priceINR!==null)payload.priceINR=priceINR; else payload.priceINR=null;
     const variants = readVariantsFromEditor();
-    if (variants) payload.variants = variants; else payload.variants = null;
+    if (variants) {
+      payload.variants     = variants;
+      payload.variantSlugs = generateVariantSlugs(title, variants);
+    } else {
+      payload.variants     = null;
+      payload.variantSlugs = null;
+    }
     if(editId){
       const old = APP.products[editId]||{};
       await db.ref(`products/${editId}`).update(payload);
@@ -3554,6 +3560,38 @@ async function saveProduct(){
 ═══════════════════════════════════════════════ */
 let _vtCount = 0; // option-type counter
 let _vvCount = 0; // option-value counter
+
+/* Mirrors the slugify() function in src/lib/slug.ts */
+function adminSlugify(text) {
+  return String(text).toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+/* Generates the variantSlugs index: { "silver-256gb": { Color:"Silver", Storage:"256GB" }, … }
+   Used by the Next.js server to recover the selected variant from the URL slug. */
+function generateVariantSlugs(title, variants) {
+  if (!variants || !variants.length) return null;
+  const result = {};
+  function cartesian(groups, current, idx) {
+    if (idx === groups.length) {
+      const suffix = groups.map(g => adminSlugify(current[g.name])).join('-');
+      result[suffix] = Object.assign({}, current);
+      return;
+    }
+    const group = groups[idx];
+    for (const v of group.values) {
+      current[group.name] = v.label;
+      cartesian(groups, current, idx + 1);
+    }
+    delete current[groups[idx].name];
+  }
+  cartesian(variants, {}, 0);
+  return Object.keys(result).length ? result : null;
+}
 
 function addVariantType(name = '', values = []) {
   _vtCount++;
