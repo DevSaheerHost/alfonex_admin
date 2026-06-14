@@ -714,6 +714,41 @@ tbody td{padding:12px 16px;vertical-align:middle}
   .modal-footer{gap:6px}
 }
 
+/* ── Mobile back button ─────────────────────────────────────────────────── */
+#mob-back-btn{
+  display:none;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:10px;
+  border:1.5px solid var(--border);background:var(--surface);
+  color:var(--text);cursor:pointer;font-size:15px;
+  transition:all .15s;flex-shrink:0;
+}
+#mob-back-btn:hover{border-color:var(--green);color:var(--green)}
+#mob-back-btn.hidden{display:none!important}
+
+@media(max-width:480px){
+  #mob-back-btn{display:flex}
+  #mob-back-btn.hidden{display:none!important}
+
+  /* Prevent page title overflowing with back btn */
+  #header-page-title{min-width:0;overflow:hidden}
+
+  /* Customer card 4-col stat strip → 2×2 */
+  .cust-stat-strip{grid-template-columns:repeat(2,1fr)!important}
+
+  /* Section header right side — wrap on mobile */
+  .sec-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .sec-header-right{width:100%;display:flex;flex-wrap:wrap;gap:6px}
+  .sec-header-right .btn-primary,.sec-header-right .btn-ghost,.sec-header-right .btn-secondary{flex:1;min-width:0;justify-content:center}
+
+  /* Customer drawer — full height from bottom on mobile */
+  .cust-drawer-backdrop{justify-content:flex-end;align-items:flex-end}
+  .cust-drawer{max-width:100%;width:100%;height:92vh;border-radius:20px 20px 0 0}
+  .cust-drawer-hdr{border-radius:20px 20px 0 0}
+
+  /* Overview stats 2-col */
+  [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
+}
+
 /* ═══════ NEW FEATURE CSS ═══════ */
 /* Generic card grid */
 .feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px;width:100%;box-sizing:border-box}
@@ -1129,6 +1164,9 @@ tbody td{padding:12px 16px;vertical-align:middle}
   <!-- MAIN -->
   <div id="main-area">
     <header id="top-header">
+      <button id="mob-back-btn" onclick="goBack()" title="Back" aria-label="Go back">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
       <button id="ham-btn" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
       <div class="header-page-title" id="header-page-title"><span>Overview</span></div>
       <!-- Notification bell -->
@@ -3326,7 +3364,7 @@ function switchView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function showSection(name){
+function showSection(name, fromPopstate = false){
   document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));
   document.getElementById('section-'+name)?.classList.add('active');
   document.querySelectorAll('.sb-link').forEach(l=>l.classList.toggle('active',l.dataset.section===name));
@@ -3343,11 +3381,18 @@ function showSection(name){
   document.getElementById('header-page-title').innerHTML=`<span>${T[name]||name}</span>`;
   closeSidebar();
 
+  /* ── Back button visibility (mobile) ── */
+  const backBtn = document.getElementById('mob-back-btn');
+  if (backBtn) backBtn.classList.toggle('hidden', name === 'overview');
+
+  /* ── Push browser history state (skip if called from popstate to avoid loop) ── */
+  if (!fromPopstate) {
+    history.pushState({ section: name }, '', '');
+  }
+
   /* ── Track section navigation — only meaningful transitions, not raw "opened" events ── */
   if (name !== 'audit' && name !== _lastSection) {
     _lastSection = name;
-    // Navigation is not logged — it creates noise with zero actionable value.
-    // Only data mutations (ADD / EDIT / DELETE) and auth events are logged.
   }
 
   /* ── Section-specific init (safe: functions defined later in same script) ── */
@@ -3371,7 +3416,30 @@ function showSection(name){
     if (name==='pricelist')     { attachDealerListener(); renderPriceList(); }
   }, 0);
 }
-let _lastSection = null;  /* prevents duplicate navigation logs */
+let _lastSection = null;
+
+/* ── Hardware/browser back button navigation ── */
+window.addEventListener('popstate', (e) => {
+  if (e.state?.section) {
+    showSection(e.state.section, true);
+  } else {
+    /* No state = went back past our initial entry point → show exit dialog */
+    history.pushState({ section: 'overview' }, '', '');
+    showSection('overview', true);
+    document.getElementById('modal-exit-confirm')?.classList.add('open');
+  }
+});
+
+function goBack() {
+  history.back();
+}
+
+function exitAdminPanel() {
+  document.getElementById('modal-exit-confirm')?.classList.remove('open');
+  /* window.close() works when opened by script; fallback to blank for direct tabs */
+  try { window.close(); } catch(e) {}
+  setTimeout(() => { window.location.href = 'about:blank'; }, 300);
+}
 function togglePw(id,btn){
   const inp=document.getElementById(id), ic=btn.querySelector('i'), h=inp.type==='password';
   inp.type=h?'text':'password'; ic.className=h?'fa-regular fa-eye-slash':'fa-regular fa-eye';
@@ -3447,6 +3515,7 @@ auth.onAuthStateChanged(async user=>{
       ['sb-admin-nav','stat-admins-card'].forEach(id=>document.getElementById(id).style.display=sa?'block':'none');
       document.getElementById('welcome-name').textContent=`Welcome back, ${a.name||user.email}!`;
       switchView('view-dashboard');
+      history.replaceState({ section: 'overview' }, '', '');  /* set base nav state */
       attachProductsListener(); attachOrdersListener(); attachReviewsListener(); attachLoyaltyListener(); attachSearchAnalyticsListener(); attachCustomersListener();
       if(sa) { attachAdminsListener(); attachAuditListeners(); }
       /* Start presence heartbeat + listener for ALL admins */
@@ -5872,7 +5941,7 @@ function renderCustomerTable(filter) {
       </div>
 
       <!-- ── Stats strip ── -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 10px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+      <div class="cust-stat-strip" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 10px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
         <div style="text-align:center">
           <div style="font-size:18px;font-weight:900;color:var(--text)">${c.orders}</div>
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Orders</div>
@@ -8641,5 +8710,29 @@ document.addEventListener('click', (e) => {
 });
 
 </script>
+
+    <!-- ══════════════════════════════════════
+         EXIT CONFIRM MODAL
+    ══════════════════════════════════════ -->
+    <div class="modal-backdrop" id="modal-exit-confirm">
+      <div class="modal sm">
+        <div class="modal-header">
+          <div class="modal-hicon amber"><i class="fa-solid fa-door-open"></i></div>
+          <div class="modal-title">Exit Admin Panel?</div>
+        </div>
+        <div class="modal-body" style="text-align:center;padding:24px">
+          <p style="color:var(--muted);font-size:14px;line-height:1.6">You are on the dashboard.<br>Do you want to close the admin panel?</p>
+        </div>
+        <div class="modal-footer" style="justify-content:center;gap:12px">
+          <button class="btn-secondary" onclick="document.getElementById('modal-exit-confirm').classList.remove('open');history.pushState({section:'overview'},'','')">
+            <i class="fa-solid fa-xmark"></i> Stay
+          </button>
+          <button class="btn-primary" style="background:var(--red);border-color:var(--red)" onclick="exitAdminPanel()">
+            <i class="fa-solid fa-right-from-bracket"></i> Exit
+          </button>
+        </div>
+      </div>
+    </div>
+
 </body>
 </html>
