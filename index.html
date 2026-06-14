@@ -1049,6 +1049,57 @@ tbody td{padding:12px 16px;vertical-align:middle}
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     NEW SECURE ADMIN NOTICE
+═══════════════════════════════════════════════════════════════════ -->
+<div id="new-admin-notice" style="
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="
+    background:#fff;border-radius:20px;padding:36px 32px 28px;max-width:420px;width:100%;
+    box-shadow:0 24px 64px rgba(0,0,0,0.25);text-align:center;font-family:'Sora',sans-serif">
+    <!-- Icon -->
+    <div style="
+      width:64px;height:64px;border-radius:50%;background:#EAFBF1;
+      display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:28px">
+      🔒
+    </div>
+    <!-- Heading -->
+    <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#111827">
+      New Secure Admin Portal
+    </h2>
+    <p style="margin:0 0 6px;font-size:13px;color:#6B7280;line-height:1.6">
+      The admin panel has been migrated to a secure Next.js application
+      with password protection and encrypted sessions.
+    </p>
+    <p style="margin:0 0 24px;font-size:12px;color:#9CA3AF">
+      This file no longer contains live credentials and is for reference only.
+    </p>
+    <!-- Primary CTA -->
+    <a href="https://alfonex.vercel.app/admin" target="_blank" style="
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      background:#2EA056;color:#fff;border-radius:12px;padding:13px 24px;
+      font-size:14px;font-weight:600;text-decoration:none;margin-bottom:10px;
+      transition:background 0.2s" onmouseover="this.style.background='#1d7a40'" onmouseout="this.style.background='#2EA056'">
+      <span>🔒</span> Open Secure Admin
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+    </a>
+    <!-- Dismiss -->
+    <button onclick="document.getElementById('new-admin-notice').remove()" style="
+      display:block;width:100%;background:none;border:1.5px solid #E5E7EB;border-radius:12px;
+      padding:11px 24px;font-size:13px;color:#6B7280;cursor:pointer;font-family:inherit;
+      transition:border-color 0.2s" onmouseover="this.style.borderColor='#9CA3AF'" onmouseout="this.style.borderColor='#E5E7EB'">
+      Continue with this page (credentials stripped)
+    </button>
+  </div>
+</div>
+
 <!-- LOADER -->
 <div id="loader">
   <div class="admin-preloader">
@@ -3260,13 +3311,13 @@ tbody td{padding:12px 16px;vertical-align:middle}
    ① FIREBASE CONFIG
 ═══════════════════════════════════════════════ */
 const firebaseConfig = {
-  apiKey:'AIzaSyCTM2dhEVY5lFq7bNkIR7Gne-phh0nABXQ',
-  authDomain:'update1-b4bf5.firebaseapp.com',
-  databaseURL:'https://update1-b4bf5-default-rtdb.firebaseio.com',
-  projectId:'update1-b4bf5',
-  storageBucket:'update1-b4bf5.firebasestorage.app',
-  messagingSenderId:'1049308656123',
-  appId:'1:1049308656123:web:c966f04f25a0322ac71b5e'
+  apiKey:'YOUR_FIREBASE_API_KEY',
+  authDomain:'YOUR_FIREBASE_AUTH_DOMAIN',
+  databaseURL:'YOUR_FIREBASE_DATABASE_URL',
+  projectId:'YOUR_FIREBASE_PROJECT_ID',
+  storageBucket:'YOUR_FIREBASE_STORAGE_BUCKET',
+  messagingSenderId:'YOUR_MESSAGING_SENDER_ID',
+  appId:'YOUR_FIREBASE_APP_ID'
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -3276,7 +3327,7 @@ const db   = firebase.database();
    ② CLOUDINARY — unsigned upload only, no secret
 ═══════════════════════════════════════════════ */
 const CLD = {
-  cloud:'saheerbabu', preset:'Alfonex',
+  cloud:'YOUR_CLOUDINARY_CLOUD_NAME', preset:'YOUR_CLOUDINARY_UPLOAD_PRESET',
   get url(){ return `https://api.cloudinary.com/v1_1/${this.cloud}/image/upload`; }
 };
 
