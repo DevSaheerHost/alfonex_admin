@@ -6057,6 +6057,8 @@ async function saveCustomer() {
     }
     closeAddCustomerModal();
     renderCustomerTable();
+    /* If edit was opened from the drawer, reopen it with fresh data */
+    if (_openCustKey) setTimeout(() => openCustDrawer(encodeURIComponent(_openCustKey)), 150);
   } catch(e) {
     showToast(e.message, 'error');
   } finally {
@@ -6190,7 +6192,9 @@ function toggleOrderHistory(hdr) {
 function editCustomerFromDrawer() {
   const list = buildCustomerList();
   const c    = list.find(x => (x.key||x.phone||x.name) === _openCustKey);
-  if (c) openAddCustomerModal(c);
+  if (!c) return;
+  document.getElementById('cust-detail-backdrop').classList.remove('open');
+  openAddCustomerModal(c);
 }
 
 /* ── Invoice generators ── */
