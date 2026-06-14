@@ -469,6 +469,22 @@ tbody td{padding:12px 16px;vertical-align:middle}
 .btn-var-img{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn-var-img:hover{border-color:var(--green);color:var(--green)}
 .btn-rm-val{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 7px;border-radius:6px;transition:all .15s;line-height:1;white-space:nowrap}
+/* ── Customer detail drawer ─────────────────────────────────────────────── */
+.cust-drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.46);z-index:600;display:none;justify-content:flex-end;backdrop-filter:blur(2px)}
+.cust-drawer-backdrop.open{display:flex}
+.cust-drawer{background:var(--surface);width:100%;max-width:540px;height:100%;overflow-y:auto;display:flex;flex-direction:column;animation:slideInRight .22s ease both;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+@keyframes slideInRight{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+.cust-drawer-hdr{padding:18px 20px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:2;display:flex;align-items:center;gap:12px}
+.cust-drawer-body{flex:1;padding:18px 20px}
+.order-history-item{border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden;transition:border-color .15s}
+.order-history-item:hover{border-color:var(--green)}
+.order-history-hdr{padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--surface2)}
+.order-history-items{padding:10px 14px;border-top:1px solid var(--border);display:none;font-size:12px}
+.order-history-items.open{display:block}
+.inv-items-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.inv-items-table th{text-align:left;padding:5px 8px;border-bottom:1.5px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.inv-items-table td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+@media(max-width:600px){.cust-drawer{max-width:100%}}
 .btn-rm-val:hover{background:#fef2f2;color:var(--red)}
 .btn-add-val{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:none;border:1.5px dashed var(--border);border-radius:var(--radius-sm);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;margin-top:2px}
 .btn-add-val:hover{border-color:var(--green);color:var(--green)}
@@ -1739,6 +1755,7 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <div class="sec-header">
         <div><div class="sec-title">Customer Analytics</div><div class="sec-sub">Every customer, their orders, spending, and live online status</div></div>
         <div class="sec-header-right">
+          <button class="btn-primary btn-sm" onclick="openAddCustomerModal()"><i class="fa-solid fa-user-plus"></i> Add Customer</button>
           <button class="btn-ghost btn-sm" onclick="exportCustomers()"><i class="fa-solid fa-download"></i> Export</button>
         </div>
       </div>
@@ -1788,6 +1805,69 @@ tbody td{padding:12px 16px;vertical-align:middle}
       <!-- Legacy tbody kept for filterOrdersByCustomer compatibility -->
       <table style="display:none"><tbody id="customer-tbody"></tbody></table>
     </section>
+
+    <!-- ══════════════════════════════════════
+         ADD CUSTOMER MODAL
+    ══════════════════════════════════════ -->
+    <div class="modal-backdrop" id="modal-add-customer">
+      <div class="modal sm">
+        <div class="modal-header">
+          <div class="modal-hicon"><i class="fa-solid fa-user-plus"></i></div>
+          <div class="modal-title" id="add-cust-title">Add Customer</div>
+          <button class="modal-close" onclick="closeAddCustomerModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="edit-cust-id">
+          <div class="mf-group">
+            <label class="mf-label"><i class="fa-solid fa-user" style="color:var(--green)"></i> Full Name *</label>
+            <input type="text" id="cust-name" class="mf-input" placeholder="e.g. Rahul Sharma">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label"><i class="fa-solid fa-phone" style="color:var(--green)"></i> Phone / WhatsApp</label>
+            <input type="tel" id="cust-phone" class="mf-input" placeholder="+971 50 123 4567">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label"><i class="fa-solid fa-envelope" style="color:var(--green)"></i> Email</label>
+            <input type="email" id="cust-email" class="mf-input" placeholder="customer@email.com">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label"><i class="fa-solid fa-earth-asia" style="color:var(--green)"></i> Country</label>
+            <input type="text" id="cust-country" class="mf-input" placeholder="UAE, India…">
+          </div>
+          <div class="mf-group">
+            <label class="mf-label"><i class="fa-solid fa-note-sticky" style="color:var(--green)"></i> Notes</label>
+            <textarea id="cust-notes" class="mf-input" rows="3" placeholder="Preferences, special requirements…" style="resize:vertical"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="closeAddCustomerModal()">Cancel</button>
+          <button class="btn-primary" id="btn-save-customer" onclick="saveCustomer()">
+            <i class="fa-solid fa-floppy-disk"></i> Save Customer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         CUSTOMER DETAIL DRAWER
+    ══════════════════════════════════════ -->
+    <div class="cust-drawer-backdrop" id="cust-detail-backdrop" onclick="closeCustDrawer(event)">
+      <div class="cust-drawer" id="cust-detail-drawer">
+        <div class="cust-drawer-hdr">
+          <div id="cust-detail-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div id="cust-detail-name" style="font-weight:800;font-size:15px"></div>
+            <div id="cust-detail-sub"  style="font-size:11px;color:var(--muted);margin-top:1px"></div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-ghost btn-sm" id="cust-detail-wa" target="_blank" title="WhatsApp" style="color:#25D366;border-color:#25D366;display:none" onclick="window.open(this.dataset.href,'_blank')"><i class="fa-brands fa-whatsapp"></i></button>
+            <button class="btn-ghost btn-sm" onclick="editCustomerFromDrawer()" title="Edit"><i class="fa-solid fa-pen"></i></button>
+            <button class="modal-close" onclick="document.getElementById('cust-detail-backdrop').classList.remove('open')" style="font-size:22px">&times;</button>
+          </div>
+        </div>
+        <div class="cust-drawer-body" id="cust-detail-body"></div>
+      </div>
+    </div>
 
     <!-- ══════════════════════════════════════
          10. MEETING SCHEDULER
@@ -3222,7 +3302,7 @@ function cldThumb(u, t='f_auto,q_auto,w_200'){ return u ? u.replace('/upload/',`
 ═══════════════════════════════════════════════ */
 const APP = {
   user:null, role:null,
-  products:{}, orders:{}, admins:{}, banners:{}, reviews:{}, loyaltyUsers:{}, loyaltyHistory:{}, searchAnalytics:{},
+  products:{}, orders:{}, admins:{}, banners:{}, reviews:{}, loyaltyUsers:{}, loyaltyHistory:{}, searchAnalytics:{}, customers:{},
   deleteTarget:null,
   activeOrderId:null,
   orderFilter:'all',
@@ -3367,7 +3447,7 @@ auth.onAuthStateChanged(async user=>{
       ['sb-admin-nav','stat-admins-card'].forEach(id=>document.getElementById(id).style.display=sa?'block':'none');
       document.getElementById('welcome-name').textContent=`Welcome back, ${a.name||user.email}!`;
       switchView('view-dashboard');
-      attachProductsListener(); attachOrdersListener(); attachReviewsListener(); attachLoyaltyListener(); attachSearchAnalyticsListener();
+      attachProductsListener(); attachOrdersListener(); attachReviewsListener(); attachLoyaltyListener(); attachSearchAnalyticsListener(); attachCustomersListener();
       if(sa) { attachAdminsListener(); attachAuditListeners(); }
       /* Start presence heartbeat + listener for ALL admins */
       initPresence(user);
@@ -5613,6 +5693,23 @@ function isClientOnline(userId) {
 function buildCustomerList() {
   const orders = Object.entries(APP.orders || {});
   const map = {};
+
+  /* Seed with manually-added customers first (so they appear even with 0 orders) */
+  Object.entries(APP.customers || {}).forEach(([id, c]) => {
+    const phone = (c.phone || '').replace(/\D/g,'');
+    const key   = phone || (c.name||'').toLowerCase().trim() || id;
+    if (!map[key]) {
+      map[key] = {
+        key, manualId: id,
+        name: c.name || 'Unknown', phone: c.phone || '', email: c.email || '',
+        country: c.country || '', notes: c.notes || '',
+        userId: '', currency: 'AED',
+        orders: 0, completed: 0, pending: 0, cancelled: 0, revenue: 0,
+        lastTs: 0, firstTs: Infinity, orderIds: [], productCounts: {},
+      };
+    }
+  });
+
   orders.forEach(([oid, o]) => {
     const phone = (o.customerPhone || o.whatsapp || o.phone || '').replace(/\D/g, '');
     const name  = o.customerName || o.userName || o.name || 'Unknown';
@@ -5620,40 +5717,35 @@ function buildCustomerList() {
 
     if (!map[key]) {
       map[key] = {
+        key, manualId: null,
         name, phone,
         email:    o.email || o.customerEmail || '',
         country:  o.customerCountry || o.country || '',
+        notes:    '',
         userId:   o.userId || o.createdBy || '',
-        currency: o.currency || 'USD',
-        orders:   0, completed: 0, pending: 0, cancelled: 0,
-        revenue:  0,
-        lastTs:   0, firstTs: Infinity,
-        orderIds: [],
-        productCounts: {},   /* productTitle → count */
-        allItems: [],
+        currency: o.currency || 'AED',
+        orders:   0, completed: 0, pending: 0, cancelled: 0, revenue: 0,
+        lastTs:   0, firstTs: Infinity, orderIds: [], productCounts: {},
       };
     }
     const c = map[key];
+    if (!c.userId && (o.userId || o.createdBy)) c.userId = o.userId || o.createdBy;
     c.orders++;
     c.orderIds.push(oid);
-    if (o.status === 'delivered' || o.status === 'completed') { c.completed++; c.revenue += Number(o.total || 0); }
-    else if (o.status === 'pending') c.pending++;
-    else if (o.status === 'cancelled') c.cancelled++;
-    else c.revenue += Number(o.total || 0);  /* count non-cancelled */
+    if (o.status === 'Delivered') { c.completed++; c.revenue += Number(o.total || 0); }
+    else if (o.status === 'Pending') c.pending++;
+    else c.revenue += Number(o.total || 0);
     if ((o.createdAt || 0) > c.lastTs) { c.lastTs = o.createdAt || 0; c.currency = o.currency || c.currency; }
     if ((o.createdAt || Infinity) < c.firstTs) c.firstTs = o.createdAt || Infinity;
-    /* Track products ordered */
     (o.items || []).forEach(item => {
       const t = item.title || item.name || 'Item';
       c.productCounts[t] = (c.productCounts[t] || 0) + (item.qty || 1);
     });
   });
-  /* Compute top product per customer */
+
   Object.values(map).forEach(c => {
     const entries = Object.entries(c.productCounts);
-    if (entries.length) {
-      c.topProduct = entries.sort((a,b) => b[1]-a[1])[0][0];
-    }
+    if (entries.length) c.topProduct = entries.sort((a,b) => b[1]-a[1])[0][0];
   });
   return Object.values(map);
 }
@@ -5736,11 +5828,12 @@ function renderCustomerTable(filter) {
     /* Member since */
     const sinceStr = c.firstTs < Infinity ? fmtDate(c.firstTs) : '—';
 
-    return `<div style="
+    const safeKey = encodeURIComponent(c.key || c.phone || c.name);
+    return `<div onclick="openCustDrawer('${safeKey}')" style="
       background:var(--surface);border-radius:var(--radius);
       border:1.5px solid ${online?'var(--green)':'var(--border)'};
-      padding:16px;margin-bottom:12px;
-      transition:border-color .2s;
+      padding:16px;margin-bottom:12px;cursor:pointer;
+      transition:border-color .2s,box-shadow .2s;
       ${online?'box-shadow:0 0 0 3px rgba(34,197,94,.1)':''}">
 
       <div style="display:flex;align-items:flex-start;gap:12px">
@@ -5769,7 +5862,7 @@ function renderCustomerTable(filter) {
         </div>
 
         <!-- Actions -->
-        <div style="display:flex;gap:5px;flex-shrink:0">
+        <div style="display:flex;gap:5px;flex-shrink:0" onclick="event.stopPropagation()">
           ${c.phone ? `<a href="https://wa.me/${c.phone.replace(/\D/g,'')}" target="_blank"
             class="btn-ghost btn-sm" style="color:#25D366;border-color:#25D366;text-decoration:none"
             title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>` : ''}
@@ -5848,6 +5941,348 @@ function filterOrdersByCustomer(phoneOrName) {
     if (input) { input.value = phoneOrName; input.dispatchEvent(new Event('input')); }
   }, 100);
 }
+/* ─── CUSTOMER MANAGEMENT ────────────────────────────────────────────────── */
+
+function attachCustomersListener() {
+  db.ref('customers').on('value', snap => {
+    APP.customers = snap.val() || {};
+    if (document.getElementById('section-customers')?.classList.contains('active')) renderCustomerTable();
+  });
+}
+
+/* ── Add / Edit Customer modal ── */
+let _editCustKey = null;
+
+function openAddCustomerModal(custObj = null) {
+  _editCustKey = custObj?.manualId || null;
+  document.getElementById('add-cust-title').textContent = custObj ? 'Edit Customer' : 'Add Customer';
+  document.getElementById('edit-cust-id').value   = _editCustKey || '';
+  document.getElementById('cust-name').value      = custObj?.name    || '';
+  document.getElementById('cust-phone').value     = custObj?.phone   || '';
+  document.getElementById('cust-email').value     = custObj?.email   || '';
+  document.getElementById('cust-country').value   = custObj?.country || '';
+  document.getElementById('cust-notes').value     = custObj?.notes   || '';
+  document.getElementById('modal-add-customer').classList.add('open');
+  setTimeout(() => document.getElementById('cust-name').focus(), 100);
+}
+
+function closeAddCustomerModal() {
+  document.getElementById('modal-add-customer').classList.remove('open');
+  _editCustKey = null;
+}
+
+async function saveCustomer() {
+  const name    = document.getElementById('cust-name').value.trim();
+  const phone   = document.getElementById('cust-phone').value.trim();
+  const email   = document.getElementById('cust-email').value.trim();
+  const country = document.getElementById('cust-country').value.trim();
+  const notes   = document.getElementById('cust-notes').value.trim();
+  if (!name) { showToast('Name is required.', 'error'); return; }
+  const btn = setBtnLoading('btn-save-customer');
+  try {
+    const payload = { name, phone, email, country, notes, updatedAt: Date.now() };
+    if (_editCustKey) {
+      await db.ref(`customers/${_editCustKey}`).update(payload);
+      showToast('Customer updated!', 'success');
+    } else {
+      payload.createdAt = Date.now();
+      await db.ref('customers').push(payload);
+      showToast('Customer added!', 'success');
+    }
+    closeAddCustomerModal();
+    renderCustomerTable();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally {
+    resetBtn(btn, '<i class="fa-solid fa-floppy-disk"></i> Save Customer');
+  }
+}
+
+/* ── Customer detail drawer ── */
+let _openCustKey = null;
+
+function openCustDrawer(safeKey) {
+  const key = decodeURIComponent(safeKey);
+  _openCustKey = key;
+  const list = buildCustomerList();
+  const c    = list.find(x => (x.key||x.phone||x.name) === key);
+  if (!c) return;
+
+  const initials = c.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase() || '?';
+  document.getElementById('cust-detail-avatar').textContent = initials;
+  document.getElementById('cust-detail-name').textContent   = c.name;
+  document.getElementById('cust-detail-sub').textContent    =
+    [c.phone, c.email, c.country].filter(Boolean).join(' · ');
+
+  const waBtn = document.getElementById('cust-detail-wa');
+  if (c.phone) {
+    waBtn.dataset.href    = 'https://wa.me/' + c.phone.replace(/\D/g,'');
+    waBtn.style.display   = 'inline-flex';
+  } else {
+    waBtn.style.display = 'none';
+  }
+
+  // Build order history
+  const SYMS = { USD:'$', AED:'AED ', INR:'₹' };
+  const orders = c.orderIds
+    .map(id => ({ id, ...APP.orders[id] }))
+    .filter(o => o.createdAt)
+    .sort((a,b) => b.createdAt - a.createdAt);
+
+  const STATUS_COLORS = {
+    'Delivered':'#16a34a','Shipped':'#2563eb','In Transit':'#7c3aed',
+    'Dispatched':'#d97706','Packed':'#0891b2','Pending':'#6b7280'
+  };
+
+  const ordersHTML = orders.length ? orders.map(o => {
+    const sym       = SYMS[(o.currency||'AED').toUpperCase()] || 'AED ';
+    const statColor = STATUS_COLORS[o.status] || '#6b7280';
+    const itemsHTML = (o.items||[]).map(it => `
+      <tr>
+        <td>${esc(it.title||it.name||'Item')}</td>
+        <td style="text-align:center">${it.qty||1}</td>
+        <td style="text-align:right">${sym}${Number(it.unitPrice||it.price||0).toLocaleString()}</td>
+        <td style="text-align:right;font-weight:700">${sym}${Number(it.lineTotal||((it.unitPrice||it.price||0)*(it.qty||1))).toLocaleString()}</td>
+      </tr>`).join('');
+    return `
+    <div class="order-history-item">
+      <div class="order-history-hdr" onclick="toggleOrderHistory(this)">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;color:var(--text)">Order #${o.id.slice(-6).toUpperCase()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtDate(o.createdAt)} · ${o.items?.length||0} item(s)</div>
+        </div>
+        <span style="background:${statColor}22;color:${statColor};font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">${o.status||'—'}</span>
+        <div style="font-weight:800;color:var(--green);font-size:14px;margin-left:8px">${sym}${Number(o.total||0).toLocaleString()}</div>
+        <button class="btn-ghost btn-sm" onclick="event.stopPropagation();generateOrderInvoice('${o.id}')" title="Generate Invoice" style="margin-left:4px">
+          <i class="fa-solid fa-file-invoice"></i>
+        </button>
+        <i class="fa-solid fa-chevron-down" style="color:var(--muted);font-size:10px;margin-left:4px;transition:transform .2s"></i>
+      </div>
+      <div class="order-history-items">
+        <table class="inv-items-table">
+          <thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit</th><th style="text-align:right">Total</th></tr></thead>
+          <tbody>${itemsHTML}</tbody>
+        </table>
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:16px;font-size:12px">
+          ${o.shipping ? `<span>Shipping: <strong>${sym}${Number(o.shipping).toLocaleString()}</strong></span>` : ''}
+          <span>Total: <strong style="color:var(--green)">${sym}${Number(o.total||0).toLocaleString()}</strong></span>
+        </div>
+        <div style="margin-top:8px;display:flex;justify-content:flex-end">
+          <button class="btn-primary" onclick="generateOrderInvoice('${o.id}')">
+            <i class="fa-solid fa-file-invoice"></i> Print Invoice
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted)"><i class="fa-solid fa-bag-shopping" style="font-size:28px;display:block;margin-bottom:8px;opacity:.3"></i>No orders yet</div>`;
+
+  const notesHTML = c.notes ? `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted)"><i class="fa-solid fa-note-sticky" style="margin-right:6px"></i>${esc(c.notes)}</div>` : '';
+
+  document.getElementById('cust-detail-body').innerHTML = `
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;text-align:center">
+        <div style="font-size:20px;font-weight:900;color:var(--text)">${c.orders}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Orders</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;text-align:center">
+        <div style="font-size:20px;font-weight:900;color:var(--green)">${SYMS[(c.currency||'AED').toUpperCase()]||'AED '}${Math.round(c.revenue).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Spent</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;text-align:center">
+        <div style="font-size:20px;font-weight:900;color:#2563eb">${c.completed}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Completed</div>
+      </div>
+    </div>
+    ${notesHTML}
+    <!-- Order History -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Purchase History</div>
+    ${ordersHTML}
+    <!-- Full history invoice -->
+    ${orders.length ? `<div style="margin-top:12px;display:flex;justify-content:flex-end">
+      <button class="btn-secondary" onclick="generateCustomerInvoice('${encodeURIComponent(key)}')">
+        <i class="fa-solid fa-file-invoice-dollar"></i> Full Customer Invoice
+      </button>
+    </div>` : ''}
+  `;
+
+  document.getElementById('cust-detail-backdrop').classList.add('open');
+}
+
+function closeCustDrawer(e) {
+  if (e.target === document.getElementById('cust-detail-backdrop'))
+    document.getElementById('cust-detail-backdrop').classList.remove('open');
+}
+
+function toggleOrderHistory(hdr) {
+  const items  = hdr.nextElementSibling;
+  const icon   = hdr.querySelector('.fa-chevron-down');
+  const isOpen = items.classList.toggle('open');
+  if (icon) icon.style.transform = isOpen ? 'rotate(180deg)' : '';
+}
+
+function editCustomerFromDrawer() {
+  const list = buildCustomerList();
+  const c    = list.find(x => (x.key||x.phone||x.name) === _openCustKey);
+  if (c) openAddCustomerModal(c);
+}
+
+/* ── Invoice generators ── */
+
+function generateOrderInvoice(orderId) {
+  const o = APP.orders[orderId];
+  if (!o) { showToast('Order not found', 'error'); return; }
+  const SYMS = { USD:'$', AED:'AED ', INR:'₹' };
+  const sym  = SYMS[(o.currency||'AED').toUpperCase()] || 'AED ';
+  const itemsHTML = (o.items||[]).map(it => `
+    <tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb">${esc(it.title||it.name||'Item')}${it.variantLabel?`<br><span style="font-size:10px;color:#6b7280">${esc(it.variantLabel)}</span>`:''}${it.grade?`<br><span style="font-size:10px;color:#2563eb">${esc(it.grade)}</span>`:''}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${it.qty||1}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right">${sym}${Number(it.unitPrice||it.price||0).toLocaleString()}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700">${sym}${Number(it.lineTotal||((it.unitPrice||it.price||0)*(it.qty||1))).toLocaleString()}</td>
+    </tr>`).join('');
+
+  const win = window.open('','_blank');
+  win.document.write(buildInvoiceHTML({
+    invoiceNo:  orderId.slice(-8).toUpperCase(),
+    date:       fmtDate(o.createdAt),
+    name:       o.customerName||'—',
+    phone:      o.customerPhone||'',
+    country:    [o.customerPlace, o.customerDistrict, o.customerState, o.customerCountry].filter(Boolean).join(', '),
+    payMethod:  o.payMethod||'',
+    status:     o.status||'',
+    itemsHTML,
+    subtotal:   sym + Number(o.cost||o.total||0).toLocaleString(),
+    shipping:   o.shipping ? sym + Number(o.shipping).toLocaleString() : null,
+    total:      sym + Number(o.total||0).toLocaleString(),
+    notes:      o.notes||'',
+  }));
+  win.document.close();
+  setTimeout(() => win.print(), 600);
+}
+
+function generateCustomerInvoice(safeKey) {
+  const key    = decodeURIComponent(safeKey);
+  const list   = buildCustomerList();
+  const c      = list.find(x => (x.key||x.phone||x.name) === key);
+  if (!c) return;
+  const SYMS   = { USD:'$', AED:'AED ', INR:'₹' };
+  const sym    = SYMS[(c.currency||'AED').toUpperCase()] || 'AED ';
+  const orders = c.orderIds
+    .map(id => ({ id, ...APP.orders[id] }))
+    .filter(o => o.createdAt)
+    .sort((a,b) => b.createdAt - a.createdAt);
+
+  const itemsHTML = orders.map(o => {
+    const oSym = SYMS[(o.currency||'AED').toUpperCase()] || 'AED ';
+    const orderHeader = `<tr><td colspan="4" style="padding:10px;background:#f3f4f6;font-size:11px;font-weight:700;color:#374151;border-bottom:1px solid #e5e7eb">
+      Order #${o.id.slice(-6).toUpperCase()} — ${fmtDate(o.createdAt)} — <span style="color:#16a34a">${o.status||''}</span>
+    </td></tr>`;
+    const rows = (o.items||[]).map(it => `
+      <tr>
+        <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb">${esc(it.title||it.name||'Item')}${it.variantLabel?`<br><span style="font-size:10px;color:#6b7280">${esc(it.variantLabel)}</span>`:''}</td>
+        <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${it.qty||1}</td>
+        <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:right">${oSym}${Number(it.unitPrice||it.price||0).toLocaleString()}</td>
+        <td style="padding:7px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700">${oSym}${Number(it.lineTotal||((it.unitPrice||it.price||0)*(it.qty||1))).toLocaleString()}</td>
+      </tr>`).join('');
+    return orderHeader + rows;
+  }).join('');
+
+  const win = window.open('','_blank');
+  win.document.write(buildInvoiceHTML({
+    invoiceNo:  'CUST-' + (c.phone||c.name).slice(-6).toUpperCase(),
+    date:       fmtDate(Date.now()),
+    name:       c.name,
+    phone:      c.phone||'',
+    country:    c.country||'',
+    payMethod:  '',
+    status:     '',
+    itemsHTML,
+    subtotal:   sym + Math.round(c.revenue).toLocaleString(),
+    shipping:   null,
+    total:      sym + Math.round(c.revenue).toLocaleString(),
+    notes:      c.notes||'',
+    title:      'Customer Purchase Summary',
+  }));
+  win.document.close();
+  setTimeout(() => win.print(), 600);
+}
+
+function buildInvoiceHTML({ invoiceNo, date, name, phone, country, payMethod, status, itemsHTML, subtotal, shipping, total, notes, title }) {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Invoice ${invoiceNo}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111827;padding:32px;font-size:13px}
+    .inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #e5e7eb}
+    .inv-brand{font-size:22px;font-weight:900;color:#2EA056;letter-spacing:-.5px}
+    .inv-brand span{color:#111827}
+    .inv-meta{text-align:right;font-size:12px;color:#6b7280}
+    .inv-meta strong{color:#111827;font-size:14px}
+    .inv-parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+    .inv-party-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:6px}
+    .inv-party-name{font-weight:700;font-size:14px;margin-bottom:3px}
+    .inv-party-detail{font-size:12px;color:#6b7280;line-height:1.5}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px}
+    thead th{background:#f3f4f6;padding:9px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280}
+    thead th:nth-child(2){text-align:center}
+    thead th:nth-child(3),thead th:nth-child(4){text-align:right}
+    .totals{width:260px;margin-left:auto;font-size:13px}
+    .totals tr td{padding:5px 0}
+    .totals tr td:last-child{text-align:right;font-weight:600}
+    .totals tr.grand td{font-size:16px;font-weight:900;color:#2EA056;padding-top:10px;border-top:2px solid #e5e7eb}
+    .inv-footer{margin-top:28px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
+    .badge-green{background:#dcfce7;color:#16a34a}
+    .no-print{display:block;margin-bottom:20px}
+    @media print{.no-print{display:none!important}@page{size:A4;margin:12mm}}
+  </style></head><body>
+  <div class="no-print" style="text-align:right">
+    <button onclick="window.print()" style="background:#2EA056;color:#fff;border:none;padding:9px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer">🖨 Print / Save PDF</button>
+  </div>
+  <div class="inv-header">
+    <div>
+      <div class="inv-brand">i<span>Alfonex</span></div>
+      <div style="font-size:11px;color:#6b7280;margin-top:3px">Your Electronics Partner</div>
+      <div style="font-size:11px;color:#6b7280">alfonex.com</div>
+    </div>
+    <div class="inv-meta">
+      <div style="font-size:11px;margin-bottom:4px">${title||'INVOICE'}</div>
+      <strong>#${invoiceNo}</strong>
+      <div style="margin-top:4px">${date}</div>
+      ${status?`<div style="margin-top:6px"><span class="badge badge-green">${esc(status)}</span></div>`:''}
+    </div>
+  </div>
+  <div class="inv-parties">
+    <div>
+      <div class="inv-party-label">Bill To</div>
+      <div class="inv-party-name">${esc(name)}</div>
+      <div class="inv-party-detail">
+        ${phone?esc(phone)+'<br>':''}
+        ${country?esc(country):''}
+      </div>
+    </div>
+    <div>
+      <div class="inv-party-label">Payment</div>
+      <div class="inv-party-detail" style="color:#111827">
+        ${payMethod?`<strong>${esc(payMethod.toUpperCase())}</strong><br>`:''}
+        ${notes?`<em>${esc(notes)}</em>`:''}
+      </div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
+    <tbody>${itemsHTML}</tbody>
+  </table>
+  <table class="totals">
+    <tr><td style="color:#6b7280">Subtotal</td><td>${subtotal}</td></tr>
+    ${shipping?`<tr><td style="color:#6b7280">Shipping</td><td>${shipping}</td></tr>`:''}
+    <tr class="grand"><td>Total</td><td>${total}</td></tr>
+  </table>
+  <div class="inv-footer">Thank you for shopping with Alfonex · alfonex.com</div>
+  </body></html>`;
+}
+
 
 /* ─── WAREHOUSE SYSTEM ───────────────────────────────────── */
 let _warehouseListenerAttached = false;
@@ -7946,7 +8381,7 @@ async function clearSearchAnalytics() {
 /* ── VAPID key ──────────────────────────────────────────────────────────────────
    Get yours from: Firebase Console → Project Settings → Cloud Messaging tab
    → Web Push certificates → Generate key pair → copy the Key pair value.    */
-const VAPID_KEY = 'BPkjwllhibVtxHfsbhcS64609zmyHcuXR7EsJ-73Wd6Caf5w54NIzRcHs7eSW1DcrNSjSsX796XuFn1rL30Ej7A'; // ← Replace this
+const VAPID_KEY = 'YOUR_VAPID_KEY_HERE'; // ← Replace this
 
 /* ── In-memory notification list (shown in the bell panel) ── */
 let _notifItems = JSON.parse(localStorage.getItem('admin_notifs') || '[]');
